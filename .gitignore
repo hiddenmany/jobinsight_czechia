@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+venv/
+.env
+scraper.log
+debug_*.html
+*.png
