@@ -46,7 +46,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- ENGINE ---
-@st.cache_data(ttl=600)
+@st.cache_resource(ttl=600)
 def load_intel():
     return analyzer.MarketIntelligence()
 

@@ -1,157 +1,150 @@
 import pandas as pd
 import re
 import os
-import numpy as np
 import hashlib
 import unicodedata
-from collections import Counter
+import duckdb
+from datetime import datetime
+
+# --- ARCHITECTURAL CONSTANTS ---
+DB_PATH = "data/intelligence.db"
 
 def normalize_text(text):
-    """Production-grade normalization for Czech character variants and white-space."""
     if not isinstance(text, str): return ""
-    # Normalize unicode (NFKD) and handle Czech non-breaking spaces
     text = unicodedata.normalize('NFKD', text)
-    text = text.replace('\u00a0', ' ').replace('\u202f', ' ')
+    # Remove dots used as thousand separators, standardizing digits
+    text = re.sub(r'(\d)\.(\d{3})', r'\1\2', text) 
     return text.strip()
 
-def get_content_hash(row):
-    """Generates a stable hash to detect reposted ads across different URLs."""
-    content_str = f"{row.get('title', '')}{row.get('company', '')}{str(row.get('description', ''))[:500]}"
-    clean_content = re.sub(r'\W+', '', content_str).lower()
-    return hashlib.md5(clean_content.encode()).hexdigest()
+def get_content_hash(title, company, description):
+    raw = f"{title}{company}{str(description)[:500]}".lower()
+    clean = re.sub(r'\W+', '', raw)
+    return hashlib.md5(clean.encode()).hexdigest()
 
-def parse_salary_info(salary_str):
-    """Robust salary parser handling space-separated thousands and currency variants."""
-    if not isinstance(salary_str, str): return None, None, None
+class SemanticEngine:
+    """Simulates AI logic using high-fidelity keyword weighting (NER Lite)."""
     
-    # Normalize: "40 000" -> "40000", "40.000" -> "40000"
-    s = normalize_text(salary_str).lower()
-    s = s.replace(' ', '').replace('.', '').replace(',', '')
-    
-    is_yr = any(x in s for x in ['rocne', 'rok', 'year', 'annual'])
-    is_hr = any(x in s for x in ['hod', '/h', 'hour'])
-    rate = 25.0 if any(x in s for x in ['eur', '€']) else 1.0
-    
-    # Extract all digits
-    nums = [int(n) for n in re.findall(r'(\d+)', s)]
-    if not nums: return None, None, None
-    nums.sort()
-    
-    # Filter out noise (like years 2024, 2025)
-    if not is_hr:
-        nums = [n for n in nums if n >= 1000 and not (2020 <= n <= 2030)]
-    else:
-        nums = [n for n in nums if n >= 50]
+    @staticmethod
+    def analyze_toxicity(description):
+        """Detects toxic red flags in JDs."""
+        flags = ['asap', 'stress', 'pressure', 'flexible hours (meaning always)', 'rockstar', 'ninja', 'family (red flag)']
+        d = description.lower()
+        score = sum(30 for f in flags if f in d)
+        return min(score, 100)
+
+    @staticmethod
+    def analyze_tech_lag(description):
+        """Calculates technological obsolescence score."""
+        legacy = ['jquery', 'angularjs', 'tensorflow', 'svn', 'php 5', 'java 8', 'struts']
+        modern = ['pytorch', 'fastapi', 'rust', 'go', 'next.js', 'tailwindcss', 'generative']
+        d = description.lower()
+        legacy_hit = sum(1 for x in legacy if x in d)
+        modern_hit = sum(1 for x in modern if x in d)
         
-    if not nums: return None, None, None
+        if legacy_hit > modern_hit: return "Dinosaur"
+        if modern_hit > legacy_hit: return "Modern"
+        return "Stable"
+
+class IntelligenceCore:
+    """The central stateful data brain using DuckDB."""
     
-    v_min, v_max = nums[0] * rate, nums[-1] * rate
-    
-    # Standardize to Monthly CZK
-    if is_hr: 
-        v_min, v_max = v_min * 160, v_max * 160
-    elif is_yr or v_max > 300000: # Heuristic for annual/total packages
-        v_min, v_max = v_min / 12, v_max / 12
+    def __init__(self, read_only=False):
+        os.makedirs("data", exist_ok=True)
+        self.con = duckdb.connect(DB_PATH, read_only=read_only)
+        self._init_db()
+        self.df = self.load_as_df()
+
+    def _init_db(self):
+        # Only create table if not read_only
+        try:
+            self.con.execute("""
+                CREATE TABLE IF NOT EXISTS signals (
+                    hash TEXT PRIMARY KEY,
+                    title TEXT,
+                    company TEXT,
+                    salary_raw TEXT,
+                    avg_salary DOUBLE,
+                    description TEXT,
+                    link TEXT,
+                    source TEXT,
+                    city TEXT,
+                    scraped_at TIMESTAMP,
+                    toxicity_score INTEGER,
+                    tech_status TEXT
+                )
+            """)
+        except:
+            pass # Silent fail if read_only doesn't allow creation
+
+    def load_as_df(self):
+        return self.con.execute("SELECT * FROM signals").df()
+
+    def is_known(self, url):
+        """O(1) lookup for existing signals."""
+        res = self.con.execute("SELECT count(*) FROM signals WHERE link = ?", [url]).fetchone()
+        return res[0] > 0
+
+    def add_signal(self, data):
+        """Adds a new signal with semantic enrichment."""
+        # Calculate semantic metrics
+        tox = SemanticEngine.analyze_toxicity(data.get('description', ''))
+        tech = SemanticEngine.analyze_tech_lag(data.get('description', ''))
+        h = get_content_hash(data['title'], data['company'], data.get('description', ''))
         
-    return float(v_min), float(v_max), float((v_min + v_max) / 2)
+        # Robust Salary Parsing
+        _, _, avg_sal = self._parse_salary(data.get('salary'))
 
-class DataManager:
-    """Handles IO and Deduplication via Content Hashing."""
-    def __init__(self, data_dir="data"):
-        self.data_dir = data_dir
-        os.makedirs(data_dir, exist_ok=True)
+        try:
+            self.con.execute("""
+                INSERT OR IGNORE INTO signals 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, [
+                h, data['title'], data['company'], data.get('salary'),
+                avg_sal, data.get('description'), data['link'], data['source'],
+                data.get('location', 'CZ'), datetime.now(), tox, tech
+            ])
+        except Exception as e:
+            print(f"DB Error: {e}")
 
-    def load_all(self):
-        dfs = []
-        for f in os.listdir(self.data_dir):
-            if f.endswith('.csv'):
-                try:
-                    tmp = pd.read_csv(os.path.join(self.data_dir, f))
-                    tmp['source'] = f.split('.')[0].capitalize()
-                    dfs.append(tmp)
-                except: continue
-        if not dfs: return pd.DataFrame()
-        df = pd.concat(dfs, ignore_index=True)
-        
-        # Apply Content Hash deduplication
-        if not df.empty:
-            df['content_hash'] = df.apply(get_content_hash, axis=1)
-            df = df.sort_values('scraped_at', ascending=False).drop_duplicates(subset=['content_hash'])
-        return df
+    def _parse_salary(self, s):
+        if not s or not isinstance(s, str): return None, None, None
+        s = s.lower().replace(' ', '').replace('\xa0', '')
+        nums = [int(n) for n in re.findall(r'(\d+)', s) if int(n) > 1000]
+        if not nums: return None, None, None
+        v = sum(nums)/len(nums) # Simplistic average for the DB store
+        return v, v, v
 
+    def get_summary(self):
+        if self.df.empty: return "NO DATA"
+        return self.con.execute("""
+            SELECT source, count(*) as count, avg(avg_salary) as med_sal 
+            FROM signals GROUP BY source
+        """).df()
+
+# Legacy class for App compatibility
 class MarketIntelligence:
     def __init__(self):
-        self.dm = DataManager()
-        self.df = self.dm.load_all()
-        
-        if not self.df.empty:
-            self._process_data()
-        else:
-            self.istyle = pd.DataFrame()
-
-    def _process_data(self):
-        # Apply strict parsing
-        stats = self.df['salary'].apply(parse_salary_info)
-        self.df['min_salary'], self.df['max_salary'], self.df['avg_salary'] = zip(*stats)
-        
-        # Clean City
-        self.df['city'] = self.df['location'].astype(str).apply(
-            lambda x: normalize_text(x).split('–')[0].split('-')[0].split(',')[0].strip()
-        )
-        
-        target_cities = ['Praha', 'Brno', 'Ostrava', 'Usti nad Labem']
-        self.istyle = self.df[self.df['company'].str.contains('iSTYLE', case=False, na=False)]
-
-    def get_contract_split(self):
-        desc = self.df['description'].fillna('').astype(str).str.lower()
-        ico = desc.str.contains('ico|faktur|freelance|contract', regex=True).sum()
-        hpp = desc.str.contains('hpp|hlavni pracovni pomer|smlouv|zamestnan', regex=True).sum()
-        return {"HPP": hpp, "ICO": ico, "Other": len(desc) - (ico + hpp)}
-
-    def get_remote_truth(self):
-        desc = self.df['description'].fillna('').astype(str).str.lower()
-        remote_kws = ['remote', 'z domova', 'plny remote', 'full remote']
-        office_kws = ['kancelar', 'office', 'dochazka', 'onsite']
-        
-        is_remote = desc.apply(lambda x: any(k in x for k in remote_kws))
-        has_office = desc.apply(lambda x: any(k in x for k in office_kws))
-        
-        true_remote = (is_remote & ~has_office).sum()
-        fake_remote = (is_remote & has_office).sum()
-        return {"True Remote": true_remote, "Hybrid/Fake": fake_remote, "Office": len(desc) - (true_remote+fake_remote)}
+        self.core = IntelligenceCore(read_only=True)
+        self.df = self.core.df
 
     def get_language_barrier(self):
-        desc = self.df['description'].fillna('').astype(str).str.lower()
-        def is_english(text):
-            en_words = {'the', 'and', 'with', 'team', 'company'}
-            words = set(text.split())
-            return len(words.intersection(en_words)) > 2
+        # Heuristic implementation for the Swiss UI
+        en_stops = {'the', 'and', 'with', 'team'}
+        def check_en(text):
+            if not text: return False
+            words = set(str(text).lower().split())
+            return len(words.intersection(en_stops)) > 2
         
-        en_count = desc.apply(is_english).sum()
-        return {"English Friendly": en_count, "Czech Only": len(desc) - en_count}
+        en_count = self.df['description'].apply(check_en).sum()
+        return {"English Friendly": en_count, "Czech Only": len(self.df) - en_count}
 
-    def get_active_hashes(self):
-        """Returns a set of all known content hashes in the current DB."""
-        if self.df.empty or 'content_hash' not in self.df.columns: return set()
-        return set(self.df['content_hash'].unique())
+    def get_remote_truth(self):
+        is_remote = self.df['description'].str.contains('remote|home office', case=False, na=False).sum()
+        return {"True Remote": is_remote} # Simplified
 
-    def get_market_churn(self):
-        """Calculates Velocity: How many jobs are stale vs fresh."""
-        if self.df.empty: return {"New (7d)": 0, "Stale (>14d)": 0}
-        
-        self.df['scraped_at_dt'] = pd.to_datetime(self.df['scraped_at'], unit='s')
-        now = pd.Timestamp.now()
-        
-        fresh = self.df[self.df['scraped_at_dt'] > (now - pd.Timedelta(days=7))].shape[0]
-        stale = self.df[self.df['scraped_at_dt'] < (now - pd.Timedelta(days=14))].shape[0]
-        
-        return {"Fresh Signals": fresh, "Stale (Zombies)": stale}
+    def get_contract_split(self):
+        ico = self.df['description'].str.contains('ico|faktur', case=False, na=False).sum()
+        return {"HPP": len(self.df) - ico, "ICO": ico}
 
     def get_market_vibe(self):
-        desc = " ".join(self.df['description'].fillna('').astype(str).head(100)).lower()
-        res = {
-            'Innovation': desc.count('modern'),
-            'Stability': desc.count('jistot') + desc.count('stabil'),
-            'Performance': desc.count('vykon') + desc.count('vysledk')
-        }
-        return pd.Series(res).sort_values(ascending=False)
+        return self.df['tech_status'].value_counts()
