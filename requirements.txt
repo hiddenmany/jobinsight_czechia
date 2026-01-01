@@ -1,10 +1,9 @@
-requests
-beautifulsoup4
-pandas
-streamlit
-plotly
-lxml
 playwright
-matplotlib
-wordcloud
+playwright-stealth
+pandas
+duckdb
+streamlit
+altair
+plotly
 tqdm
+lxml
