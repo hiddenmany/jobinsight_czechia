@@ -18,8 +18,10 @@ A high-end Executive Intelligence Dashboard designed for **iSTYLE HR**. It track
 - **Backend:** Python, Playwright (Sync Mode), Pandas.
 - **Frontend:** Streamlit (Custom Executive UI), Plotly.
 - **Data:** Append-only CSV storage for historical analysis.
+- **CI/CD:** GitHub Actions (Weekly Cloud Scraper).
 
 ## Recently Added (v14.1)
+- **Project Cleanup:** Removed legacy debug files, redundant dashboards (`app_signal.py`), and CLI scripts to streamline the codebase.
 - **Cloud Runner Integration:** Added GitHub Actions workflow (`.github/workflows/weekly_scrape.yml`) for automated weekly scraping and data updates.
 - **Omniscrape v2:** Enhanced selectors for Prace.cz and FajnBrigady.
 - **Deep Scrape Depth:** Configured for 100-page depth across all high-volume sources.
@@ -27,4 +29,4 @@ A high-end Executive Intelligence Dashboard designed for **iSTYLE HR**. It track
 
 ## Next Steps
 - [ ] **Data Cleaning Pipeline:** Refine deduplication logic for cross-posted ads between Jobs.cz and Prace.cz.
-- [ ] **Deploy to Cloud:** Push the repository to GitHub to activate the automated scraping schedule.
+- [ ] **Data Persistence:** Verify the Cloud Scraper commits data correctly next Monday.
