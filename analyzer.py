@@ -175,11 +175,16 @@ class IntelligenceCore:
     def _parse_salary(self, s):
         if not s or not isinstance(s, str):
             return None, None, None
-        s = s.lower().replace(" ", "").replace("\xa0", "")
+        s = s.lower().replace(" ", "").replace("\xa0", "").replace(".", "")
         nums = [int(n) for n in re.findall(r"(\d+)", s) if int(n) > 1000]
+        
+        # Handle EUR
+        if "eur" in s:
+            nums = [n * 25 for n in nums]
+        
         if not nums:
             return None, None, None
-        v = sum(nums) / len(nums)  # Simplistic average for the DB store
+        v = sum(nums) / len(nums)
         return v, v, v
 
     def get_summary(self):

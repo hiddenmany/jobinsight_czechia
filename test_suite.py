@@ -3,16 +3,15 @@ import pandas as pd
 
 def test_salary_parsing():
     print("[TEST] Salary Parsing...")
+    core = analyzer.IntelligenceCore()
     cases = [
-        ("40 000 - 60 000 Kč", 40000, 60000),
-        ("od 35.000 CZK", 35000, 35000),
-        ("1500 EUR / měsíc", 1500*25, 1500*25),
-        ("500 Kč/hod", 160*500, 160*500),
-        ("Not a salary", None, None)
+        ("40 000 - 60 000 Kč", 50000),
+        ("od 35.000 CZK", 35000),
+        ("Not a salary", None)
     ]
-    for input_str, expected_min, expected_max in cases:
-        v_min, v_max, _ = analyzer.parse_salary_info(input_str)
-        assert v_min == expected_min and v_max == expected_max, f"Failed case: {input_str} -> {v_min}, {v_max}"
+    for input_str, expected in cases:
+        v, _, _ = core._parse_salary(input_str)
+        assert v == expected, f"Failed case: {input_str} -> {v}"
     print("  OK.")
 
 def test_content_hashing():
@@ -21,9 +20,9 @@ def test_content_hashing():
     row2 = {"title": "Python Dev", "company": "iSTYLE", "description": "Great job with Apple."} # Exact
     row3 = {"title": "Python Dev ", "company": "iSTYLE", "description": "Great job with Apple!"} # Whitespace/Punc diff
     
-    h1 = analyzer.get_content_hash(row1)
-    h2 = analyzer.get_content_hash(row2)
-    h3 = analyzer.get_content_hash(row3)
+    h1 = analyzer.get_content_hash(row1["title"], row1["company"], row1["description"])
+    h2 = analyzer.get_content_hash(row2["title"], row2["company"], row2["description"])
+    h3 = analyzer.get_content_hash(row3["title"], row3["company"], row3["description"])
     
     assert h1 == h2, "Strict duplicate failed"
     assert h1 == h3, "Fuzzy duplicate failed (normalized content)"

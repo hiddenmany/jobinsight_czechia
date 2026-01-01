@@ -11,7 +11,7 @@
 - **Type Safety:** [PASS] - `JobSignal` dataclasses enforced across ingestion pipeline.
 
 ## Recent Upgrades
-- **DevOps:** Fixed `ModuleNotFoundError` in GitHub Actions by debugging dependency installation and caching.
+- **DevOps:** Fixed `ModuleNotFoundError: tqdm` in GitHub Actions by explicitly ensuring it's in `requirements.txt`.
 - **Refactoring:** Complete rewrite of `scraper.py` into testable, isolated classes.
 - **Resilience:** Improved error handling in main loop; failed scrapers won't crash the entire job.
 - **Hygiene:** Pruned dependencies and standardized on Black-style formatting.
