@@ -1,15 +1,15 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import altair as alt
 import analyzer
 import os
 
-# --- SWISS DESIGN SYSTEM (MINIMALIST) ---
-st.set_page_config(page_title="Market Overview // 2026", layout="wide")
+# --- SWISS DESIGN CONFIG ---
+st.set_page_config(page_title="Market Pulse // 2026", layout="wide")
 
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=JetBrains+Mono:wght@400&display=swap');
     
     html, body, [class*="st-"] {
         font-family: 'Inter', sans-serif;
@@ -17,130 +17,103 @@ st.markdown("""
         color: #000000;
     }
     
-    /* Header */
-    .header-text {
-        font-size: 80px;
+    /* Stark Header */
+    .header {
+        font-size: 120px;
         font-weight: 700;
-        letter-spacing: -4px;
-        line-height: 0.9;
-        margin-bottom: 20px;
+        letter-spacing: -8px;
+        line-height: 0.8;
+        margin-bottom: 40px;
         color: #000;
     }
     
-    .sub-header {
-        font-size: 18px;
-        font-weight: 400;
-        color: #666;
-        margin-bottom: 60px;
-        border-top: 1px solid #000;
+    /* Modular KPI */
+    .kpi-box {
+        border-top: 2px solid #000;
         padding-top: 10px;
-        width: 300px;
+        margin-bottom: 30px;
     }
+    .kpi-val { font-family: 'JetBrains Mono', monospace; font-size: 42px; font-weight: 700; }
+    .kpi-lab { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #666; }
 
-    /* KPI Cards */
-    .kpi-card {
-        border-left: 4px solid #000;
-        padding-left: 20px;
-        margin-bottom: 40px;
-    }
-    .kpi-value {
-        font-size: 48px;
-        font-weight: 700;
-        line-height: 1;
-    }
-    .kpi-label {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: #888;
-    }
-
-    /* Minimalist Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #f9f9f9;
-        border-right: 1px solid #eee;
-    }
+    /* Tables */
+    .stDataFrame { border: none !important; }
     
-    /* Hide default Streamlit elements */
+    /* Remove noise */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- DATA KERNEL ---
-@st.cache_data(ttl=3600)
-def get_intel():
+# --- ENGINE ---
+@st.cache_data(ttl=600)
+def load_intel():
     return analyzer.MarketIntelligence()
 
-intel = get_intel()
+intel = load_intel()
 df = intel.df
 
-# --- HEADER ---
-st.markdown('<div class="header-text">Job Market<br>Snapshot</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">Czechia // Q1 2026<br>Analytical Intelligence</div>', unsafe_allow_html=True)
+# --- TOP SECTION ---
+st.markdown('<div class="header">Market<br>Pulse.</div>', unsafe_allow_html=True)
 
 if df.empty:
-    st.error("No data found. Please run the scraper.")
+    st.warning("SYSTEM OFFLINE // NO DATA DETECTED")
+    if st.button("EXECUTE SCRAPE"):
+        os.system("python scraper.py")
+        st.rerun()
     st.stop()
 
-# --- TOP KPI LINE ---
-c1, c2, c3, c4 = st.columns(4)
+# --- KPI STRIP ---
+cols = st.columns(5)
+metrics = [
+    ("Signals", len(df)),
+    ("Median CZK", f"{int(df[df['avg_salary']>0]['avg_salary'].median()/1000)}k" if not df[df['avg_salary']>0].empty else "N/A"),
+    ("English %", f"{int(intel.get_language_barrier()['English Friendly'] / len(df) * 100)}%"),
+    ("Remote %", f"{int(intel.get_remote_truth()['True Remote'] / len(df) * 100)}%"),
+    ("Stability", f"{int(intel.get_contract_split()['HPP'] / len(df) * 100)}%")
+]
+
+for i, (label, val) in enumerate(metrics):
+    with cols[i]:
+        st.markdown(f'<div class="kpi-box"><div class="kpi-val">{val}</div><div class="kpi-lab">{label}</div></div>', unsafe_allow_html=True)
+
+st.markdown("---")
+
+# --- ANALYTICAL GRID ---
+c1, c2 = st.columns([1, 1])
+
 with c1:
-    st.markdown(f'<div class="kpi-card"><div class="kpi-value">{len(df)}</div><div class="kpi-label">Active Signals</div></div>', unsafe_allow_html=True)
+    st.markdown("### // GEOGRAPHIC VOLUME")
+    geo_data = df['city'].value_counts().reset_index().head(10)
+    chart = alt.Chart(geo_data).mark_bar(color='#000').encode(
+        x=alt.X('count:Q', title=None),
+        y=alt.Y('city:N', sort='-x', title=None),
+    ).properties(height=300)
+    st.altair_chart(chart, use_container_width=True)
+
+    st.markdown("### // BENEFIT SATURATION")
+    benefits = ['multisport', 'sick day', 'flexibil', 'home office', 'akademie', 'stravenk']
+    desc_blob = " ".join(df['description'].fillna('').astype(str)).lower()
+    ben_stats = pd.DataFrame([{"Benefit": b, "Signal": desc_blob.count(b)} for b in benefits]).sort_values('Signal', ascending=False)
+    st.dataframe(ben_stats, hide_index=True, use_container_width=True)
+
 with c2:
-    med_sal = df[df['avg_salary']>0]['avg_salary'].median()
-    st.markdown(f'<div class="kpi-card"><div class="kpi-value">{int(med_sal/1000) if pd.notna(med_sal) else "N/A"}k</div><div class="kpi-label">Median Wage (CZK)</div></div>', unsafe_allow_html=True)
-with c3:
-    en_share = int(intel.get_language_barrier()['English Friendly (Ocean)'] / len(df) * 100)
-    st.markdown(f'<div class="kpi-card"><div class="kpi-value">{en_share}%</div><div class="kpi-label">English Adoption</div></div>', unsafe_allow_html=True)
-with c4:
-    remote_share = int(intel.get_remote_truth()['True Remote'] / len(df) * 100)
-    st.markdown(f'<div class="kpi-card"><div class="kpi-value">{remote_share}%</div><div class="kpi-label">True Remote</div></div>', unsafe_allow_html=True)
+    st.markdown("### // CONTRACT REALITY")
+    contracts = pd.DataFrame(list(intel.get_contract_split().items()), columns=['Type', 'Count'])
+    pie = alt.Chart(contracts).mark_arc(innerRadius=50).encode(
+        theta=alt.Theta(field="Count", type="quantitative"),
+        color=alt.Color(field="Type", type="nominal", scale=alt.Scale(range=['#000', '#666', '#ccc'])),
+    ).properties(height=300)
+    st.altair_chart(pie, use_container_width=True)
+
+    st.markdown("### // MARKET VIBE")
+    vibe = intel.get_market_vibe().reset_index()
+    vibe.columns = ['Metric', 'Intensity']
+    vibe_chart = alt.Chart(vibe).mark_bar(color='#ff0000').encode(
+        x=alt.X('Intensity:Q', title=None),
+        y=alt.Y('Metric:N', sort='-x', title=None)
+    ).properties(height=150)
+    st.altair_chart(vibe_chart, use_container_width=True)
 
 st.markdown("---")
-
-# --- TRENDS & ANALYSIS ---
-col_left, col_right = st.columns([1, 1])
-
-with col_left:
-    st.markdown("### 01 // Platform Distribution")
-    vol_stats = df['source'].value_counts()
-    fig_vol = px.bar(vol_stats, orientation='h', color_discrete_sequence=['#000'])
-    fig_vol.update_layout(
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        xaxis_visible=False,
-        yaxis_title=None,
-        showlegend=False,
-        margin=dict(l=0,r=0,t=0,b=0),
-        height=300
-    )
-    st.plotly_chart(fig_vol, use_container_width=True)
-
-    st.markdown("### 02 // Common Benefits")
-    benefits_kws = ['stravenk', 'multisport', 'sick day', 'flexibil', 'home office', 'akademie', 'vzdělávání', 'notebook', 'telefon', 'psí']
-    desc_all = " ".join(df['description'].fillna('').astype(str)).lower()
-    ben_counts = {k: desc_all.count(k) for k in benefits_kws}
-    df_ben = pd.DataFrame(list(ben_counts.items()), columns=['Benefit', 'Count']).sort_values('Count', ascending=False)
-    st.dataframe(df_ben, hide_index=True, use_container_width=True)
-
-with col_right:
-    st.markdown("### 03 // JD Writing Trends")
-    # Length analysis
-    df['jd_len'] = df['description'].fillna('').apply(len)
-    avg_len = int(df['jd_len'].mean())
-    
-    st.markdown(f"**Average Description Length:** {avg_len} characters")
-    
-    # Contract focus
-    contracts = intel.get_contract_split()
-    fig_cont = px.pie(values=list(contracts.values()), names=list(contracts.keys()), color_discrete_sequence=['#000', '#666', '#ccc', '#eee'])
-    fig_cont.update_layout(height=300, showlegend=True, margin=dict(l=0,r=0,t=0,b=0))
-    st.plotly_chart(fig_cont, use_container_width=True)
-
-    st.markdown("### 04 // Market Sentiment")
-    vibe = intel.get_market_vibe()
-    st.dataframe(vibe, use_container_width=True)
-
-st.markdown("---")
-st.caption("Data Source: Jobs.cz, Prace.cz, WTTJ, StartupJobs, Cocuma, LinkedIn. Refreshed: 2026-01-01.")
+st.caption("JobsCzInsight v15.0 // Production Ready // Swiss Design System")
