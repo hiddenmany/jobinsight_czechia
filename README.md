@@ -49,7 +49,20 @@ The scraper is configured to run automatically using **GitHub Actions**.
 
 - **Schedule:** Every Monday at 08:00 UTC.
 - **Workflow:** `.github/workflows/weekly_scrape.yml`
-- **Output:** New data is automatically committed to the `data/` folder in this repository.
+- **Actions:**
+    1.  Runs `scraper.py` to get fresh data.
+    2.  Commits new CSVs to the repo.
+    3.  Generates a static HTML report.
+    4.  Deploys the report to GitHub Pages.
+
+## 🌐 Live Static Snapshot
+
+This repo automatically publishes a static "Market Snapshot" report after every scrape.
+To enable it:
+1.  Go to your GitHub Repo -> **Settings** -> **Pages**.
+2.  Under "Build and deployment", select **Source**: `Deploy from a branch`.
+3.  Select **Branch**: `gh-pages` / `(root)`.
+4.  Your report will be live at: `https://hiddenmany.github.io/jobinsight_czechia/`
 
 ## 📊 Data Sources
 
