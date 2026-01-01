@@ -5,6 +5,7 @@ import re
 from playwright.async_api import async_playwright
 from playwright_stealth import stealth
 import analyzer
+from analyzer import JobSignal # Explicit import for type hints
 from tqdm.asyncio import tqdm
 
 # --- CORE ARCHITECTURE ---
@@ -106,7 +107,7 @@ async def scrape_standard(browser, name, base_url, card_sel, title_sel, limit=10
                 break
 
             batch_tasks = []
-            metadata_list = []
+            signals_list = [] # Renamed for clarity
             for card in cards:
                 title_el = await card.query_selector(title_sel)
                 if not title_el:
@@ -128,23 +129,23 @@ async def scrape_standard(browser, name, base_url, card_sel, title_sel, limit=10
                 )
                 sal_raw = await sal_el.inner_text() if sal_el else None
 
-                metadata_list.append(
-                    {
-                        "title": await title_el.inner_text(),
-                        "company": "Market Signal",
-                        "link": link,
-                        "source": name,
-                        "salary": sal_raw,
-                    }
+                # Create Typesafe Object
+                sig = JobSignal(
+                    title=await title_el.inner_text(),
+                    company="Market Signal",
+                    link=link,
+                    source=name,
+                    salary=sal_raw
                 )
+                signals_list.append(sig)
                 batch_tasks.append(scrape_detail(context, link, semaphore))
 
             if batch_tasks:
                 results = await asyncio.gather(*batch_tasks)
                 for i, (desc, bens) in enumerate(results):
-                    metadata_list[i]["description"] = desc
-                    metadata_list[i]["benefits"] = bens
-                    CORE.add_signal(metadata_list[i])
+                    signals_list[i].description = desc
+                    signals_list[i].benefits = bens
+                    CORE.add_signal(signals_list[i])
             pbar.update(1)
             if not batch_tasks and page_num > 5:
                 break
@@ -179,7 +180,7 @@ async def scrape_startupjobs(browser, limit=1000):
         last_count = len(cards)
 
     cards = await page.query_selector_all("a[href*='/nabidka/']")
-    metadata_list = []
+    signals_list = []
     batch_tasks = []
     for card in cards[:limit]:
         link = "https://www.startupjobs.cz" + await card.get_attribute("href")
@@ -195,23 +196,22 @@ async def scrape_startupjobs(browser, limit=1000):
                 salary = txt.strip()
                 break
 
-        metadata_list.append(
-            {
-                "title": (await card.inner_text()).split("\n")[0],
-                "company": "Startup",
-                "link": link,
-                "source": name,
-                "salary": salary,
-            }
+        sig = JobSignal(
+            title=(await card.inner_text()).split("\n")[0],
+            company="Startup",
+            link=link,
+            source=name,
+            salary=salary
         )
+        signals_list.append(sig)
         batch_tasks.append(scrape_detail(context, link, semaphore))
 
     if batch_tasks:
         results = await asyncio.gather(*batch_tasks)
         for i, (desc, bens) in enumerate(results):
-            metadata_list[i]["description"] = desc
-            metadata_list[i]["benefits"] = bens
-            CORE.add_signal(metadata_list[i])
+            signals_list[i].description = desc
+            signals_list[i].benefits = bens
+            CORE.add_signal(signals_list[i])
     await context.close()
 
 
@@ -229,7 +229,7 @@ async def scrape_wttj(browser, limit=500):
         await asyncio.sleep(1)
 
     cards = await page.query_selector_all("li.ais-Hits-item")
-    metadata_list = []
+    signals_list = []
     batch_tasks = []
     for card in cards[:limit]:
         try:
@@ -239,15 +239,15 @@ async def scrape_wttj(browser, limit=500):
             )
             if CORE.is_known(link):
                 continue
-            metadata_list.append(
-                {
-                    "title": await (await card.query_selector("h4")).inner_text(),
-                    "company": "WTTJ Partner",
-                    "link": link,
-                    "source": name,
-                    "salary": None,
-                }
+            
+            sig = JobSignal(
+                title=await (await card.query_selector("h4")).inner_text(),
+                company="WTTJ Partner",
+                link=link,
+                source=name,
+                salary=None
             )
+            signals_list.append(sig)
             batch_tasks.append(scrape_detail(context, link, semaphore))
             pbar.update(1)
         except:
@@ -256,9 +256,9 @@ async def scrape_wttj(browser, limit=500):
     if batch_tasks:
         results = await asyncio.gather(*batch_tasks)
         for i, (desc, bens) in enumerate(results):
-            metadata_list[i]["description"] = desc
-            metadata_list[i]["benefits"] = bens
-            CORE.add_signal(metadata_list[i])
+            signals_list[i].description = desc
+            signals_list[i].benefits = bens
+            CORE.add_signal(signals_list[i])
     await context.close()
 
 
@@ -277,7 +277,7 @@ async def scrape_cocuma(browser, limit=100):
             cards = await page.query_selector_all("a.job-thumbnail")
             if not cards:
                 break
-            metadata_list = []
+            signals_list = []
             batch_tasks = []
             for card in cards:
                 link = "https://www.cocuma.cz" + await card.get_attribute("href")
@@ -285,22 +285,22 @@ async def scrape_cocuma(browser, limit=100):
                     continue
                 title_el = await card.query_selector(".job-thumbnail-title")
                 comp_el = await card.query_selector(".job-thumbnail-company")
-                metadata_list.append(
-                    {
-                        "title": await title_el.inner_text(),
-                        "company": await comp_el.inner_text(),
-                        "link": link,
-                        "source": name,
-                        "salary": None,
-                    }
+                
+                sig = JobSignal(
+                    title=await title_el.inner_text(),
+                    company=await comp_el.inner_text(),
+                    link=link,
+                    source=name,
+                    salary=None
                 )
+                signals_list.append(sig)
                 batch_tasks.append(scrape_detail(context, link, semaphore))
             if batch_tasks:
                 results = await asyncio.gather(*batch_tasks)
                 for i, (desc, bens) in enumerate(results):
-                    metadata_list[i]["description"] = desc
-                    metadata_list[i]["benefits"] = bens
-                    CORE.add_signal(metadata_list[i])
+                    signals_list[i].description = desc
+                    signals_list[i].benefits = bens
+                    CORE.add_signal(signals_list[i])
             pbar.update(1)
         except:
             break
@@ -326,17 +326,17 @@ async def scrape_linkedin(browser, limit=200):
             )[0]
             if CORE.is_known(link):
                 continue
-            CORE.add_signal(
-                {
-                    "title": await (await card.query_selector("h3")).inner_text(),
-                    "company": await (await card.query_selector("h4")).inner_text(),
-                    "link": link,
-                    "source": name,
-                    "description": "LinkedIn Market Signal",
-                    "salary": None,
-                    "benefits": "",
-                }
+            
+            sig = JobSignal(
+                title=await (await card.query_selector("h3")).inner_text(),
+                company=await (await card.query_selector("h4")).inner_text(),
+                link=link,
+                source=name,
+                description="LinkedIn Market Signal",
+                salary=None,
+                benefits=""
             )
+            CORE.add_signal(sig)
             pbar.update(1)
         except:
             continue

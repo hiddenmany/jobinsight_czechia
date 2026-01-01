@@ -5,9 +5,24 @@ import hashlib
 import unicodedata
 import duckdb
 from datetime import datetime
+from dataclasses import dataclass
+from typing import Optional
 
 # --- ARCHITECTURAL CONSTANTS ---
 DB_PATH = "data/intelligence.db"
+
+
+@dataclass
+class JobSignal:
+    """Strict schema for a market signal to prevent typos."""
+    title: str
+    company: str
+    link: str
+    source: str
+    salary: Optional[str] = None
+    description: str = ""
+    benefits: str = ""
+    location: str = "CZ"
 
 
 def normalize_text(text):
@@ -120,17 +135,17 @@ class IntelligenceCore:
         ).fetchone()
         return res[0] > 0
 
-    def add_signal(self, data):
+    def add_signal(self, signal: JobSignal):
         """Adds a new signal with semantic enrichment."""
         # Calculate semantic metrics
-        tox = SemanticEngine.analyze_toxicity(data.get("description", ""))
-        tech = SemanticEngine.analyze_tech_lag(data.get("description", ""))
+        tox = SemanticEngine.analyze_toxicity(signal.description)
+        tech = SemanticEngine.analyze_tech_lag(signal.description)
         h = get_content_hash(
-            data["title"], data["company"], data.get("description", "")
+            signal.title, signal.company, signal.description
         )
 
         # Robust Salary Parsing
-        _, _, avg_sal = self._parse_salary(data.get("salary"))
+        _, _, avg_sal = self._parse_salary(signal.salary)
 
         try:
             self.con.execute(
@@ -140,15 +155,15 @@ class IntelligenceCore:
             """,
                 [
                     h,
-                    data["title"],
-                    data["company"],
-                    data.get("salary"),
+                    signal.title,
+                    signal.company,
+                    signal.salary,
                     avg_sal,
-                    data.get("description"),
-                    data.get("benefits", ""),
-                    data["link"],
-                    data["source"],
-                    data.get("location", "CZ"),
+                    signal.description,
+                    signal.benefits,
+                    signal.link,
+                    signal.source,
+                    signal.location,
                     datetime.now(),
                     tox,
                     tech,
