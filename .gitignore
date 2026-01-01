@@ -5,3 +5,5 @@ venv/
 scraper.log
 debug_*.html
 *.png
+*.wal
+debug_audit.py
