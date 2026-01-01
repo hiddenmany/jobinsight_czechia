@@ -19,25 +19,39 @@ html_template = """
     <title>Job Market Snapshot 2026</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
-        body {{ font-family: 'Inter', sans-serif; background: #f4f4f4; margin: 0; padding: 20px; color: #111; }}
-        .container {{ max-width: 1200px; margin: 0 auto; background: #fff; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-radius: 8px; }}
-        h1 {{ font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 0.2em; }}
-        .subtitle {{ color: #666; font-size: 1.1rem; margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px; }}
-        .kpi-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; }}
-        .kpi-card {{ background: #fafafa; padding: 20px; border-radius: 4px; border-left: 4px solid #000; }}
-        .kpi-val {{ font-size: 2.5rem; font-weight: 700; line-height: 1; }}
-        .kpi-label {{ font-size: 0.8rem; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-top: 5px; }}
-        .chart-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }}
-        .section-title {{ font-size: 1.5rem; font-weight: 700; margin-bottom: 20px; border-left: 4px solid #333; padding-left: 10px; }}
-        .footer {{ margin-top: 60px; font-size: 0.8rem; color: #888; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }}
-        .badge {{ background: #000; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }}
-        @media(max-width: 768px) {{ .kpi-grid, .chart-grid {{ grid-template-columns: 1fr; }} }}
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body {{ font-family: 'Inter', sans-serif; background: #f8f9fa; margin: 0; padding: 40px 20px; color: #111; }}
+        .container {{ max-width: 1200px; margin: 0 auto; background: #fff; padding: 60px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border-radius: 12px; }}
+        
+        h1 {{ font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; margin-bottom: 0.1em; color: #111; }}
+        h1 span {{ color: #0055FF; }}
+        
+        .subtitle {{ color: #666; font-size: 1.2rem; margin-bottom: 60px; border-bottom: 3px solid #111; padding-bottom: 20px; display: flex; justify-content: space-between; }}
+        
+        .kpi-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; margin-bottom: 60px; }}
+        .kpi-card {{ background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #eee; border-left: 4px solid #0055FF; transition: transform 0.2s; }}
+        .kpi-card:hover {{ transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }}
+        
+        .kpi-val {{ font-size: 2.8rem; font-weight: 700; line-height: 1; color: #111; }}
+        .kpi-label {{ font-size: 0.85rem; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-top: 10px; font-weight: 600; }}
+        
+        .chart-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin-bottom: 60px; }}
+        .section-title {{ font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; border-left: 4px solid #111; padding-left: 15px; display: flex; align-items: center; }}
+        .section-title span {{ color: #0055FF; margin-right: 10px; }}
+        
+        .footer {{ margin-top: 80px; font-size: 0.9rem; color: #888; text-align: center; border-top: 1px solid #eee; padding-top: 30px; }}
+        
+        @media(max-width: 768px) {{ .kpi-grid, .chart-grid {{ grid-template-columns: 1fr; }} .container {{ padding: 20px; }} }}
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Jobs.cz Insight</h1>
-        <div class="subtitle">Weekly Market Intelligence Report // Generated: {date}</div>
+        <h1>Jobs.cz <span>Insight</span></h1>
+        <div class="subtitle">
+            <span>Weekly Market Intelligence Report</span>
+            <span>{date}</span>
+        </div>
 
         <div class="kpi-grid">
             <div class="kpi-card">
@@ -60,28 +74,28 @@ html_template = """
 
         <div class="chart-grid">
             <div>
-                <div class="section-title">01 // Source Distribution</div>
+                <div class="section-title"><span>01</span> Source Distribution</div>
                 <div id="chart_source"></div>
             </div>
             <div>
-                <div class="section-title">02 // Contract Types</div>
+                <div class="section-title"><span>02</span> Contract Types</div>
                 <div id="chart_contract"></div>
             </div>
         </div>
 
         <div class="chart-grid">
             <div>
-                <div class="section-title">03 // Tech Stack Gap</div>
+                <div class="section-title"><span>03</span> Tech Stack Gap</div>
                 <div id="chart_tech"></div>
             </div>
             <div>
-                <div class="section-title">04 // Salary by Platform</div>
+                <div class="section-title"><span>04</span> Salary by Platform</div>
                 <div id="chart_salary"></div>
             </div>
         </div>
 
         <div class="footer">
-            Generated by <a href="https://github.com/hiddenmany/jobinsight_czechia" style="color:#000; font-weight:bold;">JobsCzInsight</a> Cloud Scraper.
+            Generated by <a href="https://github.com/hiddenmany/jobinsight_czechia" style="color:#0055FF; font-weight:bold; text-decoration:none;">JobsCzInsight</a> Cloud Scraper.
         </div>
     </div>
     
@@ -109,30 +123,47 @@ remote_share = int(intel.get_remote_truth()['True Remote'] / len(df) * 100)
 en_share = int(intel.get_language_barrier()['English Friendly (Ocean)'] / len(df) * 100)
 
 # --- CHART GENERATION (JSON) ---
+# Common layout settings
+layout_defaults = dict(
+    margin=dict(l=0,r=0,t=0,b=0),
+    height=300,
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    font=dict(family='Inter, sans-serif', color='#111')
+)
+
 # 1. Source Distribution
 vol_stats = df['source'].value_counts()
 fig_vol = px.bar(vol_stats, orientation='h', color_discrete_sequence=['#111'])
-fig_vol.update_layout(margin=dict(l=0,r=0,t=0,b=0), height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+fig_vol.update_layout(**layout_defaults)
+fig_vol.update_traces(marker_color='#0055FF') # Blue bars
 
 # 2. Contract Types
 contracts = intel.get_contract_split()
-fig_cont = px.pie(values=list(contracts.values()), names=list(contracts.keys()), hole=0.5, color_discrete_sequence=px.colors.sequential.Gray)
-fig_cont.update_layout(margin=dict(l=0,r=0,t=0,b=0), height=300)
+# Palette: Blue (Main), Dark Gray, Light Gray
+fig_cont = px.pie(
+    values=list(contracts.values()), 
+    names=list(contracts.keys()), 
+    hole=0.6, 
+    color_discrete_sequence=['#0055FF', '#333333', '#CCCCCC'] 
+)
+fig_cont.update_layout(**layout_defaults)
 
 # 3. Tech Stack
 stack = intel.get_tech_stack_lag()
 df_stack = pd.DataFrame([{"Type": "Modern", "Count": sum(stack['Modern'].values())}, {"Type": "Legacy", "Count": sum(stack['Legacy'].values())}])
-fig_tech = px.bar(df_stack, x="Count", y="Type", color="Type", color_discrete_map={"Modern": "#111", "Legacy": "#888"})
-fig_tech.update_layout(margin=dict(l=0,r=0,t=0,b=0), height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+fig_tech = px.bar(df_stack, x="Count", y="Type", color="Type", color_discrete_map={"Modern": "#0055FF", "Legacy": "#333333"})
+fig_tech.update_layout(**layout_defaults)
 
 # 4. Salary by Platform
 plat_stats = df[df['avg_salary'] > 0].groupby('source')['avg_salary'].median().sort_values(ascending=True)
-fig_sal = px.bar(plat_stats, orientation='h', color_discrete_sequence=['#111'])
-fig_sal.update_layout(margin=dict(l=0,r=0,t=0,b=0), height=300, xaxis_title="Median Salary (CZK)", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+fig_sal = px.bar(plat_stats, orientation='h', color_discrete_sequence=['#333'])
+fig_sal.update_layout(**layout_defaults)
+fig_sal.update_traces(marker_color='#111')
 
 # --- RENDER ---
 output_html = html_template.format(
-    date=datetime.date.today(),
+    date=datetime.date.today().strftime("%d. %B %Y"),
     total_jobs=len(df),
     med_salary=med_sal_fmt,
     remote_share=remote_share,
