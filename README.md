@@ -1,8 +1,15 @@
 # JobsCzInsight: Czech Market Intelligence
 
+[![Market Scraper](https://github.com/hiddenmany/jobinsight_czechia/actions/workflows/weekly_scrape.yml/badge.svg)](https://github.com/hiddenmany/jobinsight_czechia/actions/workflows/weekly_scrape.yml)
+[![Live Dashboard](https://img.shields.io/badge/Live-Market_Snapshot-0055FF?style=for-the-badge&logo=github)](https://hiddenmany.github.io/jobinsight_czechia/)
+
 **A high-end Executive Intelligence Dashboard designed for HR strategy and market analysis.**
 
-This tool tracks major Czech job boards (Jobs.cz, Prace.cz, StartupJobs, Cocuma, WTTJ, LinkedIn) to provide strategic "combat moves" against competitors. It extracts deep content from job listings to analyze salaries, benefits, and keyword trends.
+## 🌐 Live Market Overview
+The latest market situation is automatically updated every Monday and can be viewed here:
+👉 **[https://hiddenmany.github.io/jobinsight_czechia/](https://hiddenmany.github.io/jobinsight_czechia/)**
+
+---
 
 ## 🚀 Core Capabilities
 
