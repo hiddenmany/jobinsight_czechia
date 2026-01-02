@@ -25,7 +25,13 @@ med_sal_fmt = int(med_sal/1000) if pd.notna(med_sal) else "N/A"
 # Tech Premium (Modern vs Dinosaur)
 modern_sal = valid_salaries[valid_salaries['tech_status'] == 'Modern']['avg_salary'].median()
 legacy_sal = valid_salaries[valid_salaries['tech_status'] == 'Dinosaur']['avg_salary'].median()
-tech_premium = int(((modern_sal / legacy_sal) - 1) * 100) if pd.notna(modern_sal) and pd.notna(legacy_sal) and legacy_sal > 0 else 0
+
+# Calculate premium value and format with proper sign
+if pd.notna(modern_sal) and pd.notna(legacy_sal) and legacy_sal > 0:
+    tech_premium_val = int(((modern_sal / legacy_sal) - 1) * 100)
+    tech_premium = f"+{tech_premium_val}%" if tech_premium_val >= 0 else f"{tech_premium_val}%"
+else:
+    tech_premium = "N/A"
 
 # Robust KPI extraction
 lang_barrier = intel.get_language_barrier()
@@ -81,8 +87,8 @@ fig_sal = px.bar(plat_stats, y='Label', x='median_salary', orientation='h', colo
 fig_sal.update_layout(**layout_defaults)
 fig_sal.update_yaxes(title="") # Remove "Label" axis title
 
-# 5. Top Innovators
-modern_df = df[df['tech_status'] == 'Modern']
+# 5. Top Innovators (exclude Unknown Employer and clean bullet characters)
+modern_df = df[(df['tech_status'] == 'Modern') & (df['company'] != 'Unknown Employer')]
 top_innovators = modern_df.groupby('company').agg(
     count=('hash', 'count'),
     avg_sal=('avg_salary', lambda x: x[x>0].median())
@@ -90,10 +96,14 @@ top_innovators = modern_df.groupby('company').agg(
 
 innovators = []
 for company, row in top_innovators.iterrows():
+    # Clean company name (remove bullet characters and extra whitespace)
+    clean_company = company.lstrip('•\u2022\u2023\u25E6\u25AA\u25AB').strip()
+    clean_company = ' '.join(clean_company.split())  # Normalize whitespace
+    
     sal_display = f"{int(row['avg_sal']/1000)}k" if pd.notna(row['avg_sal']) and row['avg_sal'] > 0 else "N/A"
     innovators.append({
-        "company": company,
-        "count": row['count'],
+        "company": clean_company,
+        "count": int(row['count']),
         "avg_sal": sal_display
     })
 

@@ -173,8 +173,11 @@ class BaseScraper:
             el = await card.query_selector(sel)
             if el:
                 txt = (await el.inner_text()).strip()
+                # Remove bullet characters and normalize whitespace
+                txt = txt.lstrip('•\u2022\u2023\u25E6\u25AA\u25AB').strip()
+                txt = ' '.join(txt.split())
                 if txt and len(txt) > 1:
-                    return txt
+                    return sanitize_text(txt)
         return "Unknown Employer"
     
     async def extract_city(self, card):
