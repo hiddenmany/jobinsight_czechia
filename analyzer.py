@@ -199,11 +199,9 @@ class IntelligenceCore:
         """Removes signals that haven't been seen in the current scrape session."""
         before = self.con.execute("SELECT count(*) FROM signals").fetchone()[0]
         
-        # We delete anything that wasn't updated in the last X minutes
-        # This assumes the scraper just finished running.
+        # Fixed DuckDB syntax for interval subtraction with parameters
         self.con.execute(
-            "DELETE FROM signals WHERE last_seen_at < (CURRENT_TIMESTAMP - INTERVAL ? MINUTE)",
-            [threshold_minutes]
+            f"DELETE FROM signals WHERE last_seen_at < (CURRENT_TIMESTAMP - INTERVAL '{threshold_minutes}' MINUTE)"
         )
         
         after = self.con.execute("SELECT count(*) FROM signals").fetchone()[0]
