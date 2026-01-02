@@ -125,7 +125,7 @@ remote_truth = intel.get_remote_truth()
 remote_share = int(remote_truth.get('True Remote', 0) / len(df) * 100) if len(df) > 0 else 0
 
 lang_barrier = intel.get_language_barrier()
-en_friendly = lang_barrier.get('English Friendly (Ocean)', 0) or lang_barrier.get('English Friendly', 0)
+en_friendly = lang_barrier.get('English Friendly', 0)
 en_share = int(en_friendly / len(df) * 100) if len(df) > 0 else 0
 
 # --- CHART GENERATION (JSON) ---

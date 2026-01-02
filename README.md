@@ -14,6 +14,8 @@ The latest market situation is automatically updated every Monday and can be vie
 ## 🚀 Core Capabilities
 
 - **Deep Scrape Engine:** "Vacuums" the market, visiting detail pages to extract full description text.
+- **Semantic Engine (NER Lite):** Analyzes technological obsolescence (Tech Lag) and toxic work environments via keyword weighting.
+- **DuckDB Persistence:** High-performance analytical database for local and cloud data storage.
 - **Strategic Intelligence:** Analyzes salary data (median vs average), benefit keywords (Remote, English, etc.), and market sentiment.
 - **Historical Tracking:** Tracks market signals over time to identify trends.
 - **Cloud Automation:** Runs automatically every week via GitHub Actions to keep data fresh without manual intervention.
@@ -22,6 +24,7 @@ The latest market situation is automatically updated every Monday and can be vie
 
 - **Python 3.10+**
 - **Playwright:** For robust, headless browser scraping (handles infinite scroll & dynamic JS).
+- **DuckDB:** Local analytical database engine.
 - **Streamlit:** For the interactive executive dashboard.
 - **Pandas & Plotly:** For data processing and visualization.
 - **GitHub Actions:** For automated weekly data harvesting.
