@@ -295,7 +295,14 @@ class LinkedinScraper:
 
 
 async def main():
-    logger.info("--- OMNISCRAPE v6.0: MODULAR ARCHITECTURE ---")
+    logger.info("--- OMNISCRAPE v6.1: INCREMENTAL SYNC MODE ---")
+    
+    # Ensure schema is up to date (DuckDB doesn't do migrations easily, so we try to add the column)
+    try:
+        CORE.con.execute("ALTER TABLE signals ADD COLUMN last_seen_at TIMESTAMP")
+    except:
+        pass # Column likely exists
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         engine = ScrapeEngine(browser)
@@ -315,8 +322,14 @@ async def main():
             cocuma.run(limit=10),
             linkedin.run(limit=100)
         )
+        
         await browser.close()
+    
+    # Post-scrape cleanup
+    CORE.cleanup_expired(threshold_minutes=30)
     logger.info("--- INTEL CORE SYNCHRONIZED ---")
 
 if __name__ == "__main__":
+    # Migration: Update existing data if requested
+    CORE.reanalyze_all()
     asyncio.run(main())

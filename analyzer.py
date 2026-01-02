@@ -110,7 +110,8 @@ class IntelligenceCore:
                     city TEXT,
                     scraped_at TIMESTAMP,
                     toxicity_score INTEGER,
-                    tech_status TEXT
+                    tech_status TEXT,
+                    last_seen_at TIMESTAMP
                 )
             """
             )
@@ -121,11 +122,14 @@ class IntelligenceCore:
         return self.con.execute("SELECT * FROM signals").df()
 
     def is_known(self, url):
-        """O(1) lookup for existing signals."""
+        """O(1) lookup for existing signals and updates last_seen timestamp."""
         res = self.con.execute(
             "SELECT count(*) FROM signals WHERE link = ?", [url]
         ).fetchone()
-        return res[0] > 0
+        if res[0] > 0:
+            self.con.execute("UPDATE signals SET last_seen_at = ? WHERE link = ?", [datetime.now(), url])
+            return True
+        return False
 
     def add_signal(self, signal: JobSignal):
         """Adds a new signal with semantic enrichment."""
@@ -139,11 +143,12 @@ class IntelligenceCore:
         # Robust Salary Parsing
         _, _, avg_sal = self._parse_salary(signal.salary)
 
+        now = datetime.now()
         try:
             self.con.execute(
                 """
                 INSERT OR IGNORE INTO signals 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 [
                     h,
@@ -156,9 +161,10 @@ class IntelligenceCore:
                     signal.link,
                     signal.source,
                     signal.location,
-                    datetime.now(),
+                    now,
                     tox,
                     tech,
+                    now,
                 ],
             )
         except Exception as e:
@@ -188,6 +194,35 @@ class IntelligenceCore:
             FROM signals GROUP BY source
         """
         ).df()
+
+    def cleanup_expired(self, threshold_minutes=60):
+        """Removes signals that haven't been seen in the current scrape session."""
+        before = self.con.execute("SELECT count(*) FROM signals").fetchone()[0]
+        
+        # We delete anything that wasn't updated in the last X minutes
+        # This assumes the scraper just finished running.
+        self.con.execute(
+            "DELETE FROM signals WHERE last_seen_at < (CURRENT_TIMESTAMP - INTERVAL ? MINUTE)",
+            [threshold_minutes]
+        )
+        
+        after = self.con.execute("SELECT count(*) FROM signals").fetchone()[0]
+        removed = before - after
+        print(f"Cleanup: Removed {removed} expired listings. {after} active signals remaining.")
+
+    def reanalyze_all(self):
+        """Re-runs semantic analysis on all existing records to update metrics."""
+        print("Re-analyzing all stored signals with updated NLP logic...")
+        rows = self.con.execute("SELECT hash, description FROM signals").fetchall()
+        for h, desc in rows:
+            tox = SemanticEngine.analyze_toxicity(desc)
+            tech = SemanticEngine.analyze_tech_lag(desc)
+            self.con.execute(
+                "UPDATE signals SET toxicity_score = ?, tech_status = ? WHERE hash = ?",
+                [tox, tech, h]
+            )
+        self.df = self.load_as_df()
+        print(f"Migration complete: {len(rows)} signals updated.")
 
 
 # Legacy class for App compatibility
