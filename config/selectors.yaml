@@ -57,7 +57,7 @@ scrapers:
       - "header span" # Fallback
 
   Cocuma:
-    base_url: "https://www.cocuma.cz/jobs/"
+    base_url: "https://www.cocuma.cz/jobs/page/"
     card: "a.job-thumbnail" # Reverted to 'a' tag
     title: ".job-thumbnail-title"
     company: ".job-thumbnail-company"

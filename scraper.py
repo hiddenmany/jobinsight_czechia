@@ -137,7 +137,12 @@ class PagedScraper(BaseScraper):
 
         for page_num in range(1, limit + 1):
             try:
-                await page.goto(f"{base_url}{page_num}", timeout=60000)
+                url = f"{base_url}{page_num}"
+                # Cocuma special handling: Page 1 is just /jobs/, Page 2 is /jobs/page/2/
+                if "cocuma" in base_url and page_num == 1:
+                    url = "https://www.cocuma.cz/jobs/"
+                
+                await page.goto(url, timeout=60000)
                 await page.wait_for_selector(card_sel, timeout=10000)
                 cards = await page.query_selector_all(card_sel)
                 if not cards: break
@@ -376,9 +381,7 @@ async def main():
         # Initialize scrapers via the new strategy pattern
         jobs_cz = PagedScraper(engine, "Jobs.cz")
         prace_cz = PagedScraper(engine, "Prace.cz")
-        # Cocuma uses infinite scroll, so we switch it to the StartupJobs engine (which handles scroll)
-        # We rename the class instance but use the StartupJobsScraper class logic
-        cocuma = StartupJobsScraper(engine, "Cocuma") 
+        cocuma = PagedScraper(engine, "Cocuma") 
         startup = StartupJobsScraper(engine, "StartupJobs")
         wttj = WttjScraper(engine, "WTTJ")
         linkedin = LinkedinScraper(engine, "LinkedIn")
@@ -388,7 +391,7 @@ async def main():
             prace_cz.run(limit=100),   # 100 pages * 20 ads = 2000
             startup.run(limit=500),
             wttj.run(limit=500),
-            cocuma.run(limit=500),    # Will naturally stop at max available (~50)
+            cocuma.run(limit=20),     # Cocuma has ~13 pages
             linkedin.run(limit=500)
         )
         

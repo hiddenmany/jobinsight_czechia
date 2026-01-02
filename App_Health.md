@@ -11,7 +11,8 @@
 - **Reporting:** [FIXED] - Solved "Unknown Employer" & "Negative HPP" bugs.
 
 ## Recent Upgrades
-- **Volume Expansion:** Increased scrape depth to 2000 for Jobs.cz/Prace.cz and 500 for secondary sources.
+- **Cocuma BREAKTHROUGH:** Discovered standard pagination (`/jobs/page/X/`) hidden behind UI. Switched from Infinite Scroll to Paged Scraper.
+- **Volume Expansion:** Increased scrape depth to 2000 for Jobs.cz/Prace.cz and 500 for others.
 - **Throughput:** Increased detail-scrape concurrency to 10 to maintain speed with higher volume.
 - **Cocuma:** Fixed `base_url` (removed `?page=`) and increased limit to 500 (max available).
 - **Cleanup:** 180-minute threshold to support the longer, deeper scrape sessions.
