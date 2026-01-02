@@ -7,5 +7,6 @@ altair
 plotly
 tqdm
 lxml
-# Cache buster 2026-01-01pyyaml
+pyyaml
 Jinja2
+# Cache buster 2026-01-02
