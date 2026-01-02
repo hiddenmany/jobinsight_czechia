@@ -293,9 +293,9 @@ class WttjScraper(BaseScraper):
         pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
         
         # Scroll loop
-        for _ in range(10): 
-            await page.keyboard.press("PageDown")
-            await asyncio.sleep(2) # Increased wait
+        for _ in range(25): 
+            await page.keyboard.press("End")
+            await asyncio.sleep(1.5)
         
         card_sel = self.config['card']
         cards = await page.query_selector_all(card_sel)
@@ -336,9 +336,9 @@ class LinkedinScraper(BaseScraper):
         page = await context.new_page()
         await page.goto(self.config['base_url'])
         pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
-        for _ in range(15):
+        for _ in range(30):
             await page.keyboard.press("End")
-            await asyncio.sleep(2)
+            await asyncio.sleep(1.5)
         
         card_sel = self.config['card']
         cards = await page.query_selector_all(card_sel)
@@ -388,13 +388,14 @@ async def main():
             prace_cz.run(limit=50),
             startup.run(limit=500),
             wttj.run(limit=200),
-            cocuma.run(limit=10), # Cocuma needs fewer ads
+            cocuma.run(limit=50), # Cocuma: Increase limit to catch all listings
             linkedin.run(limit=100)
         )
         
         await browser.close()
     
-    CORE.cleanup_expired(threshold_minutes=30)
+    # Increase threshold to 180 minutes to account for long scrape runs and prevent premature deletion
+    CORE.cleanup_expired(threshold_minutes=180)
     logger.info("--- INTEL CORE SYNCHRONIZED ---")
 
 if __name__ == "__main__":
