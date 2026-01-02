@@ -5,37 +5,17 @@ import yaml
 import os
 from typing import List, Optional, Dict
 
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
+from playwright.async_api import async_playwright
 from playwright_stealth import stealth
 from tqdm.asyncio import tqdm
 
 import analyzer
 from analyzer import JobSignal, IntelligenceCore
-import scraper_utils
-from scraper_utils import (
-    get_random_user_agent,
-    sanitize_text,
-    rate_limit,
-    retry,
-    CircuitBreaker,
-    validate_scraper_config,
-    shutdown_handler
-)
 
 # --- CONFIGURATION ---
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config", "selectors.yaml")
-
-try:
-    with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
-        CONFIG = yaml.safe_load(f)
-    if not CONFIG:
-        raise ValueError("Config file is empty")
-    # Validate config on startup
-    for scraper_name, scraper_config in CONFIG.get('scrapers', {}).items():
-        validate_scraper_config(scraper_config, scraper_name)
-except Exception as e:
-    logging.error(f"Failed to load/validate config: {e}")
-    raise
+with open(CONFIG_PATH, 'r') as f:
+    CONFIG = yaml.safe_load(f)
 
 # --- CONSTANTS ---
 CONCURRENCY = 10
@@ -47,23 +27,17 @@ STALL_THRESHOLD = 3              # Number of stalls before giving up
 DESCRIPTION_MAX_LENGTH = 5000    # Max characters for job description
 VIEWPORT_WIDTH = 1920
 VIEWPORT_HEIGHT = 1080
-
-# Compiled regex for performance
-SALARY_PATTERN = re.compile(r'(\d+(?:\s\d+)*)\s*[–-]\s*(\d+(?:\s\d+)*)\s*(?:Kč|EUR)')
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
 CORE = IntelligenceCore()
-CIRCUIT_BREAKER = CircuitBreaker(failure_threshold=5, timeout_seconds=300)
 
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
+    format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[logging.FileHandler("scraper.log"), logging.StreamHandler()]
 )
 logger = logging.getLogger("OmniScrape")
-
-# Setup graceful shutdown
-shutdown_handler.setup_signal_handlers()
 
 
 class ScrapeEngine:
@@ -77,7 +51,7 @@ class ScrapeEngine:
     async def get_context(self):
         context = await self.browser.new_context(
             viewport={"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT},
-            user_agent=get_random_user_agent(),  # Randomized UA to avoid bot detection
+            user_agent=USER_AGENT,
         )
         return context
 
@@ -93,23 +67,17 @@ class ScrapeEngine:
         else:
             await route.continue_()
 
-    @retry(max_attempts=3, exceptions=(PlaywrightTimeout, PlaywrightError))
     async def scrape_detail(self, context, signal: JobSignal):
         """Fetches the full JD and benefits for a signal."""
         if not signal.link or "linkedin.com" in signal.link:
             return
 
-        page = None
         async with self.semaphore:
+            page = await context.new_page()
             try:
-                page = await context.new_page()
                 if callable(stealth):
                     await stealth(page)
                 await page.route("**/*", self.intercept_noise)
-                
-                # Add rate limiting
-                await rate_limit(1.0, 2.0)
-                
                 await page.goto(signal.link, timeout=DETAIL_TIMEOUT_MS, wait_until="domcontentloaded")
 
                 # Expand "Read More"
@@ -124,34 +92,25 @@ class ScrapeEngine:
                         logger.debug(f"Read more button click failed for {sel}: {e}")
 
                 # Extraction logic
-                raw_description = await page.evaluate("""() => {
+                signal.description = await page.evaluate("""() => {
                     const s = ['div.JobDescription', 'article', 'main', '.jd-content', '.job-detail__description'];
                     for (let x of s) { let el = document.querySelector(x); if (el) return el.innerText; }
                     return document.body.innerText;
                 }""")
                 
-                raw_benefits = await page.evaluate("""() => {
+                signal.benefits = await page.evaluate("""() => {
                     const tags = Array.from(document.querySelectorAll('.benefit-item, .Tag--success, .Badge--success, [data-test*="benefit"]'));
                     return tags.map(t => t.innerText.trim()).filter(t => t.length > 1).join(', ');
                 }""")
 
-                # Sanitize extracted text (security fix)
-                signal.description = sanitize_text(raw_description, max_length=DESCRIPTION_MAX_LENGTH)
-                signal.benefits = sanitize_text(raw_benefits)
-                
-            except (PlaywrightTimeout, PlaywrightError) as e:
-                logger.warning(f"Failed to fetch details for {signal.link}: {e}")
+                signal.description = signal.description.strip()[:DESCRIPTION_MAX_LENGTH]
             except Exception as e:
-                logger.error(f"Unexpected error fetching details for {signal.link}: {e}")
+                logger.debug(f"Failed detail fetch for {signal.link}: {e}")
             finally:
-                # Proper cleanup to prevent memory leaks
-                if page:
-                    try:
-                        await page.close()
-                    except Exception as e:
-                        logger.debug(f"Failed to close page: {e}")
-                    finally:
-                        page = None
+                try:
+                    await page.close()
+                except Exception as close_error:
+                    logger.debug(f"Failed to close page: {close_error}")
 
 
 class BaseScraper:
@@ -193,11 +152,11 @@ class BaseScraper:
             except Exception:
                 continue
         
-        # Fallback to text-based city detection using config
+        # Fallback to text-based city detection for major Czech cities
         try:
             card_text = (await card.inner_text()).lower()
-            fallback_cities = CONFIG.get('common', {}).get('fallback_cities', [])
-            for city in fallback_cities:
+            major_cities = ['praha', 'brno', 'ostrava', 'plzeň', 'liberec', 'olomouc', 'hradec králové', 'české budějovice', 'pardubice', 'zlín']
+            for city in major_cities:
                 if city in card_text:
                     return city.title()
         except Exception:
@@ -209,11 +168,6 @@ class BaseScraper:
 class PagedScraper(BaseScraper):
     """Handles scrapers with numbered pagination (Jobs.cz, Prace.cz, Cocuma)."""
     async def run(self, limit=50):
-        # Check circuit breaker
-        if CIRCUIT_BREAKER.is_open(self.site_name):
-            logger.warning(f"Skipping {self.site_name} - circuit breaker is open")
-            return
-        
         context = await self.engine.get_context()
         page = await context.new_page()
         pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="pg")
@@ -227,21 +181,12 @@ class PagedScraper(BaseScraper):
             await context.close()
             return
 
-        consecutive_failures = 0  # Track consecutive failures
-        
         for page_num in range(1, limit + 1):
-            if shutdown_handler.is_shutdown_requested():
-                logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
-                break
-            
             try:
-                # Use first_page_url if configured (fix for Cocuma)
-                if page_num == 1 and 'first_page_url' in self.config:
-                    url = self.config['first_page_url']
-                else:
-                    url = f"{base_url}{page_num}"
-                
-                await rate_limit(1.0, 2.0)  # Add rate limiting
+                url = f"{base_url}{page_num}"
+                # Cocuma special handling: Page 1 is just /jobs/, Page 2 is /jobs/page/2/
+                if "cocuma" in base_url and page_num == 1:
+                    url = "https://www.cocuma.cz/jobs/"
                 
                 await page.goto(url, timeout=PAGE_TIMEOUT_MS)
                 await page.wait_for_selector(card_sel, timeout=SELECTOR_TIMEOUT_MS)
@@ -271,7 +216,7 @@ class PagedScraper(BaseScraper):
                         salary = await sal_el.inner_text() if sal_el else None
                     
                     sig = JobSignal(
-                        title=sanitize_text(await title_el.inner_text()),
+                        title=await title_el.inner_text(),
                         company=company_name,
                         link=link,
                         source=self.site_name,
@@ -285,32 +230,16 @@ class PagedScraper(BaseScraper):
                     for s in batch: CORE.add_signal(s)
                 
                 pbar.update(1)
-                consecutive_failures = 0  # Reset on success
-                CIRCUIT_BREAKER.record_success(self.site_name)
-                
-                if not batch and page_num > 5:
-                    break
-                    
-            except (PlaywrightTimeout, PlaywrightError) as e:
-                consecutive_failures += 1
-                logger.warning(f"{self.site_name} page {page_num} error: {e}")
-                
-                # Continue instead of break, with failure threshold
-                if consecutive_failures >= 3:
-                    logger.error(f"{self.site_name}: {consecutive_failures} consecutive failures, stopping")
-                    CIRCUIT_BREAKER.record_failure(self.site_name)
-                    break
-                continue  # Try next page
+                if not batch and page_num > 5: break
+            except Exception as e:
+                logger.debug(f"Error in {self.site_name} loop: {e}")
+                break
         
         await context.close()
 
 
 class StartupJobsScraper(BaseScraper):
     async def run(self, limit=500):
-        if CIRCUIT_BREAKER.is_open(self.site_name):
-            logger.warning(f"Skipping {self.site_name} - circuit breaker is open")
-            return
-        
         context = await self.engine.get_context()
         page = await context.new_page()
         
@@ -342,10 +271,7 @@ class StartupJobsScraper(BaseScraper):
                 logger.warning(f"{self.site_name}: Timed out waiting for {card_sel}: {e}")
 
             # Robust Infinite Scroll with Button Click and Stall Detection
-            for _ in range(50):
-                if shutdown_handler.is_shutdown_requested():
-                    logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
-                    break 
+            for _ in range(50): 
                 await page.keyboard.press("End")
                 await asyncio.sleep(SCROLL_DELAY_SEC * 1.3)
                 
@@ -402,14 +328,14 @@ class StartupJobsScraper(BaseScraper):
                     city = await self.extract_city(card)
 
                     salary = None
-                    # StartupJobs specific salary extraction attempt (using compiled regex)
+                    # StartupJobs specific salary extraction attempt
                     txt = await card.inner_text()
-                    match = SALARY_PATTERN.search(txt)
+                    match = re.search(r'(\d+(?:\s\d+)*)\s*–\s*(\d+(?:\s\d+)*)\s*(?:Kč|EUR)', txt)
                     if match:
                         salary = match.group(0)
 
                     sig = JobSignal(
-                        title=sanitize_text((await card.inner_text()).split("\n")[0]),
+                        title=(await card.inner_text()).split("\n")[0],
                         company=company_name,
                         link=link,
                         source=self.site_name,
@@ -425,22 +351,15 @@ class StartupJobsScraper(BaseScraper):
                 await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
                 for s in batch:
                     CORE.add_signal(s)
-            
-            CIRCUIT_BREAKER.record_success(self.site_name)
                 
         except Exception as e:
             logger.error(f"StartupJobs failed: {e}")
-            CIRCUIT_BREAKER.record_failure(self.site_name)
         finally:
             await context.close()
 
 
 class WttjScraper(BaseScraper):
     async def run(self, limit=200):
-        if CIRCUIT_BREAKER.is_open(self.site_name):
-            logger.warning(f"Skipping {self.site_name} - circuit breaker is open")
-            return
-        
         context = await self.engine.get_context()
         page = await context.new_page()
         
@@ -468,10 +387,7 @@ class WttjScraper(BaseScraper):
             stall_count = 0
             
             # Scroll loop with stall detection
-            for _ in range(40):
-                if shutdown_handler.is_shutdown_requested():
-                    logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
-                    break 
+            for _ in range(40): 
                 await page.keyboard.press("End")
                 await asyncio.sleep(SCROLL_DELAY_SEC)
                 
@@ -510,7 +426,7 @@ class WttjScraper(BaseScraper):
                     title = await title_el.inner_text() if title_el else "Unknown Role"
 
                     sig = JobSignal(
-                        title=sanitize_text(title),
+                        title=title,
                         company=company_name,
                         link=link,
                         source=self.site_name,
@@ -526,22 +442,12 @@ class WttjScraper(BaseScraper):
                 await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
                 for s in batch:
                     CORE.add_signal(s)
-            
-            CIRCUIT_BREAKER.record_success(self.site_name)
-            
-        except Exception as e:
-            logger.warning(f"WTTJ scraping failed: {e}")
-            CIRCUIT_BREAKER.record_failure(self.site_name)
         finally:
             await context.close()
 
 
 class LinkedinScraper(BaseScraper):
     async def run(self, limit=100):
-        if CIRCUIT_BREAKER.is_open(self.site_name):
-            logger.warning(f"Skipping {self.site_name} - circuit breaker is open")
-            return
-        
         context = await self.engine.get_context()
         page = await context.new_page()
         
@@ -564,10 +470,6 @@ class LinkedinScraper(BaseScraper):
             
             # Scroll loop with stall detection
             for _ in range(50):
-                if shutdown_handler.is_shutdown_requested():
-                    logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
-                    break
-                
                 await page.keyboard.press("End")
                 await asyncio.sleep(SCROLL_DELAY_SEC)
                 
@@ -585,8 +487,6 @@ class LinkedinScraper(BaseScraper):
                 last_count = len(cards)
             
             cards = await page.query_selector_all(card_sel)
-            batch = []  # Collect signals first, then fetch details
-            
             for card in cards[:limit]:
                 try:
                     link_el = await card.query_selector(link_sel)
@@ -602,46 +502,31 @@ class LinkedinScraper(BaseScraper):
                     title_el = await card.query_selector(title_sel)
                     title = await title_el.inner_text() if title_el else "Unknown Role"
                     
-                    sig = JobSignal(
-                        title=sanitize_text(title),
+                    CORE.add_signal(JobSignal(
+                        title=title,
                         company=company_name,
                         link=link,
                         source=self.site_name,
+                        description="LinkedIn Market Signal",
                         location=city
-                    )
-                    batch.append(sig)
+                    ))
                     pbar.update(1)
                 except Exception as e:
                     logger.debug(f"Failed to process LinkedIn card: {e}")
                     continue
-            
-            # Actually fetch details for LinkedIn jobs
-            if batch:
-                logger.info(f"Fetching details for {len(batch)} LinkedIn jobs")
-                await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
-                for s in batch:
-                    CORE.add_signal(s)
-            
-            CIRCUIT_BREAKER.record_success(self.site_name)
-            
-        except Exception as e:
-            logger.warning(f"LinkedIn scraping failed: {e}")
-            CIRCUIT_BREAKER.record_failure(self.site_name)
         finally:
             await context.close()
 
 
 async def main():
-    logger.info("=== OMNISCRAPE v18.0: Enhanced Security & Reliability ===")
-    
-    # Register cleanup callbacks
-    shutdown_handler.register_cleanup(lambda: logger.info("Cleanup: Saving progress..."))
+    logger.info("--- OMNISCRAPE v7.0: STRATEGY PATTERN & CONFIG-DRIVEN ---")
+    # Note: last_seen_at column is created in analyzer.py _init_db() - no migration needed here
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         engine = ScrapeEngine(browser)
         
-        # Initialize scrapers
+        # Initialize scrapers via the new strategy pattern
         jobs_cz = PagedScraper(engine, "Jobs.cz")
         prace_cz = PagedScraper(engine, "Prace.cz")
         cocuma = PagedScraper(engine, "Cocuma") 
@@ -649,24 +534,20 @@ async def main():
         wttj = WttjScraper(engine, "WTTJ")
         linkedin = LinkedinScraper(engine, "LinkedIn")
         
-        try:
-            await asyncio.gather(
-                jobs_cz.run(limit=100),    # 100 pages * 20 ads = 2000
-                prace_cz.run(limit=100),   # 100 pages * 20 ads = 2000
-                startup.run(limit=500),
-                wttj.run(limit=500),
-                cocuma.run(limit=20),
-                linkedin.run(limit=500)
-            )
-        except KeyboardInterrupt:
-            logger.warning("Received interrupt signal, initiating graceful shutdown...")
-            shutdown_handler.request_shutdown()
-        finally:
-            await browser.close()
-            await shutdown_handler.cleanup()
+        await asyncio.gather(
+            jobs_cz.run(limit=100),    # 100 pages * 20 ads = 2000
+            prace_cz.run(limit=100),   # 100 pages * 20 ads = 2000
+            startup.run(limit=500),
+            wttj.run(limit=500),
+            cocuma.run(limit=20),     # Cocuma has ~13 pages
+            linkedin.run(limit=500)
+        )
+        
+        await browser.close()
     
+    # Increase threshold to 180 minutes to account for long scrape runs and prevent premature deletion
     CORE.cleanup_expired(threshold_minutes=180)
-    logger.info("=== SCRAPING COMPLETE ===")
+    logger.info("--- INTEL CORE SYNCHRONIZED ---")
 
 if __name__ == "__main__":
     CORE.reanalyze_all()

@@ -13,10 +13,6 @@ from typing import Optional
 DB_PATH = "data/intelligence.db"
 TAXONOMY_PATH = os.path.join(os.path.dirname(__file__), "config", "taxonomy.yaml")
 
-# Compiled regex patterns for performance (Fix 4.3)
-SALARY_DIGITS_PATTERN = re.compile(r"(\d+)")
-THOUSAND_SEP_PATTERN = re.compile(r"(\d)\.(\d{3})")
-
 def load_taxonomy():
     with open(TAXONOMY_PATH, 'r') as f:
         return yaml.safe_load(f)
@@ -41,8 +37,8 @@ def normalize_text(text: str) -> str:
     if not isinstance(text, str):
         return ""
     text = unicodedata.normalize("NFKD", text)
-    # Remove dots used as thousand separators, standardizing digits (using compiled pattern)
-    text = THOUSAND_SEP_PATTERN.sub(r"\1\2", text)
+    # Remove dots used as thousand separators, standardizing digits
+    text = re.sub(r"(\d)\.(\d{3})", r"\1\2", text)
     return text.strip()
 
 
@@ -164,17 +160,20 @@ class IntelligenceCore:
 
     def is_known(self, url: str) -> bool:
         """O(1) lookup for existing signals and updates last_seen timestamp atomically."""
-        # Use UPDATE...RETURNING pattern for atomic check-and-update
-        # This prevents race conditions in concurrent scenarios
-        now = datetime.now()
-        
-        # Try to update first - if it updates 0 rows, URL doesn't exist
-        result = self.con.execute(
-            "UPDATE signals SET last_seen_at = ? WHERE link = ? RETURNING 1",
-            [now, url]
+        # First check if URL exists, then update in single transaction-like flow
+        # DuckDB doesn't support RETURNING clause for UPDATE, so we do a conditional update
+        res = self.con.execute(
+            "SELECT 1 FROM signals WHERE link = ? LIMIT 1", [url]
         ).fetchone()
         
-        return result is not None
+        if res is not None:
+            # URL exists, update the timestamp
+            self.con.execute(
+                "UPDATE signals SET last_seen_at = ? WHERE link = ?", 
+                [datetime.now(), url]
+            )
+            return True
+        return False
 
     def add_signal(self, signal: JobSignal):
         """Adds a new signal with semantic enrichment."""
@@ -225,8 +224,7 @@ class IntelligenceCore:
         if not s or not isinstance(s, str):
             return None, None, None
         s = s.lower().replace(" ", "").replace("\xa0", "").replace(".", "")
-        # Use compiled regex pattern for performance
-        nums = [int(n) for n in SALARY_DIGITS_PATTERN.findall(s) if int(n) > 1000]
+        nums = [int(n) for n in re.findall(r"(\d+)", s) if int(n) > 1000]
         
         # Handle EUR conversion to CZK (approximate rate)
         if "eur" in s:
