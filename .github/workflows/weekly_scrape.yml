@@ -50,7 +50,7 @@ jobs:
         run: |
           git config --global user.name 'Scraper Bot'
           git config --global user.email 'bot@noreply.github.com'
-          git add data/*.csv data/*.db
+          git add data/*.csv data/*.db public/
           # Only commit if there are changes
           if git diff --staged --quiet; then
             echo "No changes to commit"
