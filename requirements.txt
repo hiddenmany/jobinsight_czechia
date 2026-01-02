@@ -1,12 +1,14 @@
-playwright
-playwright-stealth
-pandas
-duckdb
-streamlit
-altair
-plotly
-tqdm
-lxml
-pyyaml
-Jinja2
-# Cache buster 2026-01-02
+# Pinned dependencies for reproducible builds
+# Last updated: 2026-01-02 (v18.0)
+
+playwright==1.57.0
+playwright-stealth==2.0.0
+pandas==2.3.3
+duckdb==1.4.3
+streamlit==1.52.2
+altair==6.0.0
+plotly==6.5.0
+tqdm==4.67.1
+lxml==6.0.2
+PyYAML==6.0.3
+Jinja2==3.1.6
