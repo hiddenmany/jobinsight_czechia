@@ -199,17 +199,27 @@ class StartupJobsScraper(BaseScraper):
             last_count = 0
             card_sel = self.config['card']
             
-            # Robust Infinite Scroll
-            for _ in range(20): # Try 20 scroll attempts
+            # Robust Infinite Scroll with Button Click
+            for _ in range(20): 
                 await page.keyboard.press("End")
-                await page.wait_for_timeout(3000) # Explicit wait 3s for hydration
+                await asyncio.sleep(2)
+                
+                # Try to click "Load more" button if it exists
+                try:
+                    load_more = page.locator("button:has-text('Načíst další'), button:has-text('Zobrazit více'), a.more-jobs")
+                    if await load_more.count() > 0 and await load_more.first.is_visible():
+                        await load_more.first.click(force=True)
+                        await asyncio.sleep(2)
+                except: pass
                 
                 cards = await page.query_selector_all(card_sel)
                 if len(cards) >= limit: break
                 
-                # If count didn't change, maybe we hit bottom or need to scroll up a bit to trigger
                 if len(cards) == last_count:
-                    await page.mouse.wheel(0, -100)
+                    # If stuck, try scrolling up and down
+                    await page.mouse.wheel(0, -500)
+                    await asyncio.sleep(0.5)
+                    await page.mouse.wheel(0, 500)
                     await asyncio.sleep(1)
                 
                 pbar.update(min(len(cards) - last_count, limit - last_count))
@@ -353,7 +363,9 @@ async def main():
         # Initialize scrapers via the new strategy pattern
         jobs_cz = PagedScraper(engine, "Jobs.cz")
         prace_cz = PagedScraper(engine, "Prace.cz")
-        cocuma = PagedScraper(engine, "Cocuma")
+        # Cocuma uses infinite scroll, so we switch it to the StartupJobs engine (which handles scroll)
+        # We rename the class instance but use the StartupJobsScraper class logic
+        cocuma = StartupJobsScraper(engine, "Cocuma") 
         startup = StartupJobsScraper(engine, "StartupJobs")
         wttj = WttjScraper(engine, "WTTJ")
         linkedin = LinkedinScraper(engine, "LinkedIn")
@@ -363,7 +375,7 @@ async def main():
             prace_cz.run(limit=50),
             startup.run(limit=500),
             wttj.run(limit=200),
-            cocuma.run(limit=10),
+            cocuma.run(limit=10), # Cocuma needs fewer ads
             linkedin.run(limit=100)
         )
         
