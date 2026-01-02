@@ -18,6 +18,23 @@ common:
       - "media"
       - "font"
       - "stylesheet" # Aggressively block styles for speed on WTTJ
+  # Fix 3.7: Fallback cities moved from hardcoded to config
+  fallback_cities:
+    - "praha"
+    - "brno"
+    - "ostrava"
+    - "plzeň"
+    - "liberec"
+    - "olomouc"
+    - "hradec králové"
+    - "české budějovice"
+    - "pardubice"
+    - "zlín"
+    - "havířov"
+    - "kladno"
+    - "most"
+    - "opava"
+    - "karviná"
 
 scrapers:
   Jobs.cz:
@@ -78,6 +95,7 @@ scrapers:
   Cocuma:
     base_url: "https://www.cocuma.cz/jobs/page/"
     domain: "https://www.cocuma.cz"
+    first_page_url: "https://www.cocuma.cz/jobs/"  # Fix 3.3: Non-standard first page
     card: "a.job-thumbnail" # Reverted to 'a' tag
     title: ".job-thumbnail-title"
     company: ".job-thumbnail-company"
