@@ -64,7 +64,9 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Auto-update: Job market data and intelligence DB [$(date +'%Y-%m-%d')]"
-            git push
+            # Pull before pushing to handle cases where the repo changed during the scrape
+            git pull --rebase origin main
+            git push origin main
           fi
 
       - name: Deploy to GitHub Pages
