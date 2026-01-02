@@ -119,8 +119,14 @@ html_template = """
 # --- KPI CALCULATION ---
 med_sal = df[df['avg_salary']>0]['avg_salary'].median()
 med_sal_fmt = int(med_sal/1000) if pd.notna(med_sal) else "N/A"
-remote_share = int(intel.get_remote_truth()['True Remote'] / len(df) * 100)
-en_share = int(intel.get_language_barrier()['English Friendly (Ocean)'] / len(df) * 100)
+
+# Robust KPI extraction
+remote_truth = intel.get_remote_truth()
+remote_share = int(remote_truth.get('True Remote', 0) / len(df) * 100) if len(df) > 0 else 0
+
+lang_barrier = intel.get_language_barrier()
+en_friendly = lang_barrier.get('English Friendly (Ocean)', 0) or lang_barrier.get('English Friendly', 0)
+en_share = int(en_friendly / len(df) * 100) if len(df) > 0 else 0
 
 # --- CHART GENERATION (JSON) ---
 # Common layout settings
@@ -151,7 +157,10 @@ fig_cont.update_layout(**layout_defaults)
 
 # 3. Tech Stack
 stack = intel.get_tech_stack_lag()
-df_stack = pd.DataFrame([{"Type": "Modern", "Count": sum(stack['Modern'].values())}, {"Type": "Legacy", "Count": sum(stack['Legacy'].values())}])
+df_stack = pd.DataFrame([
+    {"Type": "Modern", "Count": stack.get('Modern', 0)}, 
+    {"Type": "Legacy", "Count": stack.get('Dinosaur', 0)}
+])
 fig_tech = px.bar(df_stack, x="Count", y="Type", color="Type", color_discrete_map={"Modern": "#0055FF", "Legacy": "#333333"})
 fig_tech.update_layout(**layout_defaults)
 
