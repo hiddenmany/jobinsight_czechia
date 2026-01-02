@@ -1,10 +1,8 @@
 import asyncio
-import random
 import re
 import logging
 import yaml
 import os
-from dataclasses import dataclass
 from typing import List, Optional, Dict
 
 from playwright.async_api import async_playwright
@@ -19,7 +17,18 @@ CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config", "selectors.yaml"
 with open(CONFIG_PATH, 'r') as f:
     CONFIG = yaml.safe_load(f)
 
+# --- CONSTANTS ---
 CONCURRENCY = 10
+PAGE_TIMEOUT_MS = 60000          # 60 seconds for page loads
+SELECTOR_TIMEOUT_MS = 10000      # 10 seconds for selectors
+DETAIL_TIMEOUT_MS = 30000        # 30 seconds for detail pages
+SCROLL_DELAY_SEC = 1.5           # Delay between scroll actions
+STALL_THRESHOLD = 3              # Number of stalls before giving up
+DESCRIPTION_MAX_LENGTH = 5000    # Max characters for job description
+VIEWPORT_WIDTH = 1920
+VIEWPORT_HEIGHT = 1080
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+
 CORE = IntelligenceCore()
 
 # Setup logging
@@ -41,8 +50,8 @@ class ScrapeEngine:
 
     async def get_context(self):
         context = await self.browser.new_context(
-            viewport={"width": 1920, "height": 1080},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            viewport={"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT},
+            user_agent=USER_AGENT,
         )
         return context
 
@@ -69,7 +78,7 @@ class ScrapeEngine:
                 if callable(stealth):
                     await stealth(page)
                 await page.route("**/*", self.intercept_noise)
-                await page.goto(signal.link, timeout=30000, wait_until="domcontentloaded")
+                await page.goto(signal.link, timeout=DETAIL_TIMEOUT_MS, wait_until="domcontentloaded")
 
                 # Expand "Read More"
                 buttons = self.common_config.get('read_more_buttons', [])
@@ -79,7 +88,8 @@ class ScrapeEngine:
                         if await btn.is_visible():
                             await btn.click(force=True)
                             await asyncio.sleep(0.5)
-                    except: pass
+                    except Exception as e:
+                        logger.debug(f"Read more button click failed for {sel}: {e}")
 
                 # Extraction logic
                 signal.description = await page.evaluate("""() => {
@@ -93,11 +103,14 @@ class ScrapeEngine:
                     return tags.map(t => t.innerText.trim()).filter(t => t.length > 1).join(', ');
                 }""")
 
-                signal.description = signal.description.strip()[:5000]
-                await page.close()
+                signal.description = signal.description.strip()[:DESCRIPTION_MAX_LENGTH]
             except Exception as e:
                 logger.debug(f"Failed detail fetch for {signal.link}: {e}")
-                await page.close()
+            finally:
+                try:
+                    await page.close()
+                except Exception as close_error:
+                    logger.debug(f"Failed to close page: {close_error}")
 
 
 class BaseScraper:
@@ -122,6 +135,34 @@ class BaseScraper:
                 if txt and len(txt) > 1:
                     return txt
         return "Unknown Employer"
+    
+    async def extract_city(self, card):
+        """Extract city from job card using configured selectors."""
+        selectors = self.config.get('city_selectors', [])
+        
+        for sel in selectors:
+            try:
+                el = await card.query_selector(sel)
+                if el:
+                    txt = (await el.inner_text()).strip()
+                    # Clean up common patterns
+                    txt = txt.replace(',', '').split('-')[0].split('(')[0].strip()
+                    if txt and len(txt) > 1 and len(txt) < 50:  # Reasonable city name length
+                        return txt
+            except Exception:
+                continue
+        
+        # Fallback to text-based city detection for major Czech cities
+        try:
+            card_text = (await card.inner_text()).lower()
+            major_cities = ['praha', 'brno', 'ostrava', 'plzeň', 'liberec', 'olomouc', 'hradec králové', 'české budějovice', 'pardubice', 'zlín']
+            for city in major_cities:
+                if city in card_text:
+                    return city.title()
+        except Exception:
+            pass
+        
+        return "CZ"  # Default fallback
 
 
 class PagedScraper(BaseScraper):
@@ -134,6 +175,11 @@ class PagedScraper(BaseScraper):
         base_url = self.config.get('base_url')
         card_sel = self.config.get('card')
         title_sel = self.config.get('title')
+        
+        if not base_url or not card_sel or not title_sel:
+            logger.error(f"{self.site_name}: Missing required config (base_url, card, or title)")
+            await context.close()
+            return
 
         for page_num in range(1, limit + 1):
             try:
@@ -142,8 +188,8 @@ class PagedScraper(BaseScraper):
                 if "cocuma" in base_url and page_num == 1:
                     url = "https://www.cocuma.cz/jobs/"
                 
-                await page.goto(url, timeout=60000)
-                await page.wait_for_selector(card_sel, timeout=10000)
+                await page.goto(url, timeout=PAGE_TIMEOUT_MS)
+                await page.wait_for_selector(card_sel, timeout=SELECTOR_TIMEOUT_MS)
                 cards = await page.query_selector_all(card_sel)
                 if not cards: break
 
@@ -153,11 +199,11 @@ class PagedScraper(BaseScraper):
                     if not title_el: continue
                     
                     company_name = await self.extract_company(card)
+                    city = await self.extract_city(card)
                     
                     link = await title_el.get_attribute("href")
                     if not link.startswith("http"):
-                        domain = "https://www.jobs.cz" if "jobs" in base_url else "https://www.prace.cz"
-                        if "cocuma" in base_url: domain = "https://www.cocuma.cz"
+                        domain = self.config.get('domain', base_url.split('/prace')[0].split('/nabidky')[0].split('/jobs')[0])
                         link = domain + link
                     
                     if CORE.is_known(link): continue
@@ -174,7 +220,8 @@ class PagedScraper(BaseScraper):
                         company=company_name,
                         link=link,
                         source=self.site_name,
-                        salary=salary
+                        salary=salary,
+                        location=city
                     )
                     batch.append(sig)
 
@@ -195,46 +242,69 @@ class StartupJobsScraper(BaseScraper):
     async def run(self, limit=500):
         context = await self.engine.get_context()
         page = await context.new_page()
+        
+        base_url = self.config.get('base_url')
+        card_sel = self.config.get('card')
+        
+        if not base_url or not card_sel:
+            logger.error(f"{self.site_name}: Missing required config (base_url or card)")
+            await context.close()
+            return
+        
         try:
-            await page.goto(self.config['base_url'], timeout=60000)
-            try: await page.get_by_text("Přijmout").click(timeout=5000)
-            except: pass
+            await page.goto(base_url, timeout=PAGE_TIMEOUT_MS)
+            
+            # Handle cookie consent
+            try:
+                await page.get_by_text("Přijmout").click(timeout=5000)
+            except Exception as e:
+                logger.debug(f"Cookie consent button not found or click failed: {e}")
             
             pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
             last_count = 0
-            card_sel = self.config['card']
+            stall_count = 0  # Track consecutive stalls for early exit
             
             # Wait for content to load
             try:
-                await page.wait_for_selector(card_sel, timeout=15000)
-            except:
-                logger.warning(f"{self.site_name}: Timed out waiting for {card_sel}")
+                await page.wait_for_selector(card_sel, timeout=SELECTOR_TIMEOUT_MS * 1.5)
+            except Exception as e:
+                logger.warning(f"{self.site_name}: Timed out waiting for {card_sel}: {e}")
 
-            # Robust Infinite Scroll with Button Click
+            # Robust Infinite Scroll with Button Click and Stall Detection
             for _ in range(50): 
                 await page.keyboard.press("End")
-                await asyncio.sleep(2)
+                await asyncio.sleep(SCROLL_DELAY_SEC * 1.3)
                 
                 # Try to click "Load more" button if it exists
                 try:
                     load_more = page.locator("button:has-text('Načíst další'), button:has-text('Zobrazit více'), a.more-jobs")
                     if await load_more.count() > 0 and await load_more.first.is_visible():
                         await load_more.first.click(force=True)
-                        await asyncio.sleep(2)
-                except: pass
+                        await asyncio.sleep(SCROLL_DELAY_SEC * 1.3)
+                except Exception as e:
+                    logger.debug(f"Load more button click failed: {e}")
                 
                 cards = await page.query_selector_all(card_sel)
                 
-                if len(cards) >= limit: break
+                if len(cards) >= limit:
+                    break
                 
                 if len(cards) == last_count:
+                    stall_count += 1
+                    if stall_count >= STALL_THRESHOLD:
+                        logger.debug(f"{self.site_name}: Scroll stalled after {len(cards)} cards, exiting early")
+                        break
                     # If stuck, try scrolling up and down
                     await page.mouse.wheel(0, -500)
                     await asyncio.sleep(0.5)
                     await page.mouse.wheel(0, 500)
                     await asyncio.sleep(1)
+                else:
+                    stall_count = 0  # Reset on progress
                 
-                pbar.update(min(len(cards) - last_count, limit - last_count))
+                new_cards = len(cards) - last_count
+                if new_cards > 0:
+                    pbar.update(min(new_cards, limit - pbar.n))
                 last_count = len(cards)
             
             cards = await page.query_selector_all(card_sel)
@@ -242,18 +312,20 @@ class StartupJobsScraper(BaseScraper):
             for card in cards[:limit]:
                 try:
                     href = await card.get_attribute("href")
-                    if not href: continue
+                    if not href:
+                        continue
                     
                     if href.startswith("http"):
                         link = href
-                    elif "cocuma" in self.config['base_url']:
-                        link = "https://www.cocuma.cz" + href
                     else:
-                        link = "https://www.startupjobs.cz" + href
+                        domain = self.config.get('domain', 'https://www.startupjobs.cz')
+                        link = domain + href
 
-                    if CORE.is_known(link): continue
+                    if CORE.is_known(link):
+                        continue
                     
                     company_name = await self.extract_company(card)
+                    city = await self.extract_city(card)
 
                     salary = None
                     # StartupJobs specific salary extraction attempt
@@ -267,112 +339,188 @@ class StartupJobsScraper(BaseScraper):
                         company=company_name,
                         link=link,
                         source=self.site_name,
-                        salary=salary
+                        salary=salary,
+                        location=city
                     )
                     batch.append(sig)
-                except: continue
+                except Exception as e:
+                    logger.debug(f"Failed to process StartupJobs card: {e}")
+                    continue
             
             if batch:
                 await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
-                for s in batch: CORE.add_signal(s)
+                for s in batch:
+                    CORE.add_signal(s)
                 
         except Exception as e:
             logger.error(f"StartupJobs failed: {e}")
-            
-        await context.close()
+        finally:
+            await context.close()
 
 
 class WttjScraper(BaseScraper):
     async def run(self, limit=200):
         context = await self.engine.get_context()
         page = await context.new_page()
-        # WTTJ is heavy, wait for commit first then load
-        try:
-            await page.goto(self.config['base_url'], timeout=60000, wait_until="commit")
-            await page.wait_for_selector(self.config['card'], timeout=20000)
-        except:
-            logger.warning("WTTJ failed initial load")
+        
+        base_url = self.config.get('base_url')
+        card_sel = self.config.get('card')
+        link_sel = self.config.get('link')
+        title_sel = self.config.get('title')
+        
+        if not base_url or not card_sel or not link_sel:
+            logger.error(f"{self.site_name}: Missing required config")
             await context.close()
             return
-
-        pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
         
-        # Scroll loop
-        for _ in range(40): 
-            await page.keyboard.press("End")
-            await asyncio.sleep(1.5)
-        
-        card_sel = self.config['card']
-        cards = await page.query_selector_all(card_sel)
-        batch = []
-        for card in cards[:limit]:
+        try:
+            # WTTJ is heavy, wait for commit first then load
             try:
-                link_el = await card.query_selector(self.config['link'])
-                if not link_el: continue
-                
-                link = "https://www.welcometothejungle.com" + await link_el.get_attribute("href")
-                if CORE.is_known(link): continue
-                
-                company_name = await self.extract_company(card)
-                
-                title_el = await card.query_selector(self.config['title'])
-                title = await title_el.inner_text() if title_el else "Unknown Role"
+                await page.goto(base_url, timeout=PAGE_TIMEOUT_MS, wait_until="commit")
+                await page.wait_for_selector(card_sel, timeout=SELECTOR_TIMEOUT_MS * 2)
+            except Exception as e:
+                logger.warning(f"WTTJ failed initial load: {e}")
+                return
 
-                sig = JobSignal(
-                    title=title,
-                    company=company_name,
-                    link=link,
-                    source=self.site_name
-                )
-                batch.append(sig)
-                pbar.update(1)
-            except Exception as e: 
-                continue
-        
-        if batch:
-            await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
-            for s in batch: CORE.add_signal(s)
-        await context.close()
+            pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
+            last_count = 0
+            stall_count = 0
+            
+            # Scroll loop with stall detection
+            for _ in range(40): 
+                await page.keyboard.press("End")
+                await asyncio.sleep(SCROLL_DELAY_SEC)
+                
+                cards = await page.query_selector_all(card_sel)
+                if len(cards) >= limit:
+                    break
+                    
+                if len(cards) == last_count:
+                    stall_count += 1
+                    if stall_count >= STALL_THRESHOLD:
+                        logger.debug(f"WTTJ: Scroll stalled after {len(cards)} cards")
+                        break
+                else:
+                    stall_count = 0
+                last_count = len(cards)
+            
+            cards = await page.query_selector_all(card_sel)
+            batch = []
+            for card in cards[:limit]:
+                try:
+                    link_el = await card.query_selector(link_sel)
+                    if not link_el:
+                        continue
+                    
+                    domain = self.config.get('domain', 'https://www.welcometothejungle.com')
+                    href = await link_el.get_attribute("href")
+                    link = domain + href if not href.startswith("http") else href
+                    
+                    if CORE.is_known(link):
+                        continue
+                    
+                    company_name = await self.extract_company(card)
+                    city = await self.extract_city(card)
+                    
+                    title_el = await card.query_selector(title_sel) if title_sel else None
+                    title = await title_el.inner_text() if title_el else "Unknown Role"
+
+                    sig = JobSignal(
+                        title=title,
+                        company=company_name,
+                        link=link,
+                        source=self.site_name,
+                        location=city
+                    )
+                    batch.append(sig)
+                    pbar.update(1)
+                except Exception as e:
+                    logger.debug(f"Failed to process WTTJ card: {e}")
+                    continue
+            
+            if batch:
+                await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
+                for s in batch:
+                    CORE.add_signal(s)
+        finally:
+            await context.close()
 
 
 class LinkedinScraper(BaseScraper):
     async def run(self, limit=100):
         context = await self.engine.get_context()
         page = await context.new_page()
-        await page.goto(self.config['base_url'])
-        pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
-        for _ in range(50):
-            await page.keyboard.press("End")
-            await asyncio.sleep(1.5)
         
-        card_sel = self.config['card']
-        cards = await page.query_selector_all(card_sel)
-        for card in cards[:limit]:
-            try:
-                link = (await (await card.query_selector(self.config['link'])).get_attribute("href")).split('?')[0]
-                if CORE.is_known(link): continue
+        base_url = self.config.get('base_url')
+        card_sel = self.config.get('card')
+        link_sel = self.config.get('link')
+        title_sel = self.config.get('title')
+        
+        if not base_url or not card_sel or not link_sel or not title_sel:
+            logger.error(f"{self.site_name}: Missing required config")
+            await context.close()
+            return
+        
+        try:
+            await page.goto(base_url, timeout=PAGE_TIMEOUT_MS)
+            pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
+            
+            last_count = 0
+            stall_count = 0
+            
+            # Scroll loop with stall detection
+            for _ in range(50):
+                await page.keyboard.press("End")
+                await asyncio.sleep(SCROLL_DELAY_SEC)
                 
-                company_name = await self.extract_company(card)
-                
-                CORE.add_signal(JobSignal(
-                    title=await (await card.query_selector(self.config['title'])).inner_text(),
-                    company=company_name,
-                    link=link,
-                    source=self.site_name,
-                    description="LinkedIn Market Signal"
-                ))
-                pbar.update(1)
-            except: continue
-        await context.close()
+                cards = await page.query_selector_all(card_sel)
+                if len(cards) >= limit:
+                    break
+                    
+                if len(cards) == last_count:
+                    stall_count += 1
+                    if stall_count >= STALL_THRESHOLD:
+                        logger.debug(f"LinkedIn: Scroll stalled after {len(cards)} cards")
+                        break
+                else:
+                    stall_count = 0
+                last_count = len(cards)
+            
+            cards = await page.query_selector_all(card_sel)
+            for card in cards[:limit]:
+                try:
+                    link_el = await card.query_selector(link_sel)
+                    if not link_el:
+                        continue
+                    link = (await link_el.get_attribute("href")).split('?')[0]
+                    if CORE.is_known(link):
+                        continue
+                    
+                    company_name = await self.extract_company(card)
+                    city = await self.extract_city(card)
+                    
+                    title_el = await card.query_selector(title_sel)
+                    title = await title_el.inner_text() if title_el else "Unknown Role"
+                    
+                    CORE.add_signal(JobSignal(
+                        title=title,
+                        company=company_name,
+                        link=link,
+                        source=self.site_name,
+                        description="LinkedIn Market Signal",
+                        location=city
+                    ))
+                    pbar.update(1)
+                except Exception as e:
+                    logger.debug(f"Failed to process LinkedIn card: {e}")
+                    continue
+        finally:
+            await context.close()
 
 
 async def main():
     logger.info("--- OMNISCRAPE v7.0: STRATEGY PATTERN & CONFIG-DRIVEN ---")
-    
-    try:
-        CORE.con.execute("ALTER TABLE signals ADD COLUMN last_seen_at TIMESTAMP")
-    except:
-        pass
+    # Note: last_seen_at column is created in analyzer.py _init_db() - no migration needed here
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)

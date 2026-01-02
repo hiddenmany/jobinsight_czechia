@@ -21,7 +21,6 @@ TAXONOMY = load_taxonomy()
 
 @dataclass
 class JobSignal:
-# ... (rest of the dataclass and functions)
     """Strict schema for a market signal to prevent typos."""
     title: str
     company: str
@@ -33,7 +32,8 @@ class JobSignal:
     location: str = "CZ"
 
 
-def normalize_text(text):
+def normalize_text(text: str) -> str:
+    """Normalize text by removing Unicode variations and thousand separators."""
     if not isinstance(text, str):
         return ""
     text = unicodedata.normalize("NFKD", text)
@@ -42,17 +42,18 @@ def normalize_text(text):
     return text.strip()
 
 
-def get_content_hash(title, company, description):
+def get_content_hash(title: str, company: str, description: str) -> str:
+    """Generate a unique hash for content deduplication using SHA256."""
     raw = f"{title}{company}{str(description)[:500]}".lower()
     clean = re.sub(r"\W+", "", raw)
-    return hashlib.md5(clean.encode()).hexdigest()
+    return hashlib.sha256(clean.encode()).hexdigest()
 
 
 class SemanticEngine:
     """Simulates AI logic using high-fidelity keyword weighting (NER Lite)."""
 
     @staticmethod
-    def is_tech_relevant(title, description):
+    def is_tech_relevant(title: str, description: str) -> bool:
         """Filters out non-tech signals to keep the report focused."""
         # Using a subset of modern/legacy for relevance check
         tech_keywords = set(TAXONOMY['tech_stack']['modern'] + TAXONOMY['tech_stack']['legacy'])
@@ -60,19 +61,19 @@ class SemanticEngine:
         return any(k in text for k in tech_keywords)
 
     @staticmethod
-    def analyze_toxicity(description):
-        """Detects toxic red flags in JDs."""
+    def analyze_toxicity(description: str) -> int:
+        """Detects toxic red flags in JDs. Returns score 0-100."""
         flags = TAXONOMY.get('toxicity', {}).get('red_flags', [])
-        d = description.lower()
+        d = description.lower() if description else ""
         score = sum(30 for f in flags if f in d)
         return min(score, 100)
 
     @staticmethod
-    def analyze_tech_lag(description):
-        """Calculates technological obsolescence score."""
+    def analyze_tech_lag(description: str) -> str:
+        """Calculates technological obsolescence score. Returns 'Modern', 'Stable', or 'Dinosaur'."""
         legacy = TAXONOMY['tech_stack']['legacy']
         modern = TAXONOMY['tech_stack']['modern']
-        d = description.lower()
+        d = description.lower() if description else ""
         legacy_hit = sum(1 for x in legacy if x in d)
         modern_hit = sum(1 for x in modern if x in d)
 
@@ -90,7 +91,8 @@ class IntelligenceCore:
         os.makedirs("data", exist_ok=True)
         self.con = duckdb.connect(DB_PATH, read_only=read_only)
         self._init_db()
-        self.df = self.load_as_df()
+        self._df_cache = None  # Lazy loading cache
+        self._cache_timestamp = None
 
     def _init_db(self):
         # Only create table if not read_only
@@ -115,19 +117,61 @@ class IntelligenceCore:
                 )
             """
             )
-        except:
-            pass  # Silent fail if read_only doesn't allow creation
+            
+            # Create indexes for frequently queried columns
+            # These dramatically improve performance for analytics queries
+            indexes = [
+                "CREATE INDEX IF NOT EXISTS idx_link ON signals(link)",
+                "CREATE INDEX IF NOT EXISTS idx_source ON signals(source)",
+                "CREATE INDEX IF NOT EXISTS idx_company ON signals(company)",
+                "CREATE INDEX IF NOT EXISTS idx_tech_status ON signals(tech_status)",
+                "CREATE INDEX IF NOT EXISTS idx_scraped_at ON signals(scraped_at)",
+                "CREATE INDEX IF NOT EXISTS idx_last_seen_at ON signals(last_seen_at)",
+                "CREATE INDEX IF NOT EXISTS idx_city ON signals(city)"
+            ]
+            
+            for idx_sql in indexes:
+                try:
+                    self.con.execute(idx_sql)
+                except Exception as e:
+                    # Index might already exist or read_only mode
+                    pass
+                    
+        except Exception as e:
+            # Silent fail if read_only doesn't allow table creation
+            import logging
+            logging.debug(f"Database initialization skipped (read-only mode): {e}")
 
+    @property
+    def df(self):
+        """Lazy-loaded DataFrame with caching to avoid repeated DB queries."""
+        # Cache is valid for 60 seconds
+        if self._df_cache is None or (self._cache_timestamp and 
+                                      (datetime.now() - self._cache_timestamp).seconds > 60):
+            self._df_cache = self.con.execute("SELECT * FROM signals").df()
+            self._cache_timestamp = datetime.now()
+        return self._df_cache
+    
     def load_as_df(self):
-        return self.con.execute("SELECT * FROM signals").df()
+        """Force reload from database, bypassing cache."""
+        self._df_cache = self.con.execute("SELECT * FROM signals").df()
+        self._cache_timestamp = datetime.now()
+        return self._df_cache
 
-    def is_known(self, url):
-        """O(1) lookup for existing signals and updates last_seen timestamp."""
+    def is_known(self, url: str) -> bool:
+        """O(1) lookup for existing signals and updates last_seen timestamp atomically."""
+        # First check if URL exists, then update in single transaction-like flow
+        # DuckDB doesn't support RETURNING clause for UPDATE, so we do a conditional update
         res = self.con.execute(
-            "SELECT count(*) FROM signals WHERE link = ?", [url]
+            "SELECT 1 FROM signals WHERE link = ? LIMIT 1", [url]
         ).fetchone()
-        if res[0] > 0:
-            self.con.execute("UPDATE signals SET last_seen_at = ? WHERE link = ?", [datetime.now(), url])
+        
+        if res is not None:
+            # URL exists, update the timestamp
+            self.con.execute(
+                "UPDATE signals SET last_seen_at = ? WHERE link = ?", 
+                [datetime.now(), url]
+            )
             return True
         return False
 
@@ -170,20 +214,29 @@ class IntelligenceCore:
         except Exception as e:
             print(f"DB Error: {e}")
 
-    def _parse_salary(self, s):
+    def _parse_salary(self, s: str) -> tuple:
+        """
+        Parse salary string and return (min_salary, max_salary, avg_salary).
+        
+        Returns:
+            tuple: (min, max, avg) salary values, or (None, None, None) if parsing fails
+        """
         if not s or not isinstance(s, str):
             return None, None, None
         s = s.lower().replace(" ", "").replace("\xa0", "").replace(".", "")
         nums = [int(n) for n in re.findall(r"(\d+)", s) if int(n) > 1000]
         
-        # Handle EUR
+        # Handle EUR conversion to CZK (approximate rate)
         if "eur" in s:
             nums = [n * 25 for n in nums]
         
         if not nums:
             return None, None, None
-        v = sum(nums) / len(nums)
-        return v, v, v
+        
+        min_sal = min(nums)
+        max_sal = max(nums)
+        avg_sal = sum(nums) / len(nums)
+        return min_sal, max_sal, avg_sal
 
     def get_summary(self):
         if self.df.empty:
@@ -195,13 +248,20 @@ class IntelligenceCore:
         """
         ).df()
 
-    def cleanup_expired(self, threshold_minutes=60):
+    def cleanup_expired(self, threshold_minutes: int = 60):
         """Removes signals that haven't been seen in the current scrape session."""
+        if not isinstance(threshold_minutes, int) or threshold_minutes < 0:
+            raise ValueError("threshold_minutes must be a non-negative integer")
+        
         before = self.con.execute("SELECT count(*) FROM signals").fetchone()[0]
         
-        # Fixed DuckDB syntax for interval subtraction with parameters
+        # Calculate the cutoff timestamp in Python to avoid SQL string formatting
+        from datetime import datetime, timedelta
+        cutoff = datetime.now() - timedelta(minutes=threshold_minutes)
+        
         self.con.execute(
-            f"DELETE FROM signals WHERE last_seen_at < (CURRENT_TIMESTAMP - INTERVAL '{threshold_minutes}' MINUTE)"
+            "DELETE FROM signals WHERE last_seen_at < ?",
+            [cutoff]
         )
         
         after = self.con.execute("SELECT count(*) FROM signals").fetchone()[0]
@@ -219,7 +279,8 @@ class IntelligenceCore:
                 "UPDATE signals SET toxicity_score = ?, tech_status = ? WHERE hash = ?",
                 [tox, tech, h]
             )
-        self.df = self.load_as_df()
+        # Invalidate cache after updates
+        self.load_as_df()
         print(f"Migration complete: {len(rows)} signals updated.")
 
 

@@ -7,3 +7,8 @@ debug_*.html
 *.png
 *.wal
 debug_audit.py
+
+# Database files (too large for Git)
+data/intelligence.db
+data/intelligence.db-wal
+data/intelligence.db-shm

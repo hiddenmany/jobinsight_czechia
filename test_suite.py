@@ -5,13 +5,19 @@ def test_salary_parsing():
     print("[TEST] Salary Parsing...")
     core = analyzer.IntelligenceCore()
     cases = [
-        ("40 000 - 60 000 Kč", 50000),
-        ("od 35.000 CZK", 35000),
-        ("Not a salary", None)
+        ("40 000 - 60 000 Kč", 40000, 60000, 50000),  # min, max, avg
+        ("od 35.000 CZK", 35000, 35000, 35000),
+        ("Not a salary", None, None, None)
     ]
-    for input_str, expected in cases:
-        v, _, _ = core._parse_salary(input_str)
-        assert v == expected, f"Failed case: {input_str} -> {v}"
+    for input_str, expected_min, expected_max, expected_avg in cases:
+        min_sal, max_sal, avg_sal = core._parse_salary(input_str)
+        # Handle float/int comparison - both None or approximately equal
+        if expected_avg is None:
+            assert avg_sal is None, f"Failed case: {input_str} -> avg={avg_sal} (expected None)"
+        else:
+            assert avg_sal is not None and abs(avg_sal - expected_avg) < 1, f"Failed case: {input_str} -> avg={avg_sal} (expected {expected_avg})"
+            assert min_sal is not None and abs(min_sal - expected_min) < 1, f"Failed case: {input_str} -> min={min_sal} (expected {expected_min})"
+            assert max_sal is not None and abs(max_sal - expected_max) < 1, f"Failed case: {input_str} -> max={max_sal} (expected {expected_max})"
     print("  OK.")
 
 def test_content_hashing():

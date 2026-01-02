@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+import subprocess
 import analyzer
-import os
 
 # --- SWISS DESIGN CONFIG ---
 st.set_page_config(page_title="Market Pulse // 2026", layout="wide")
@@ -75,7 +75,19 @@ st.markdown('<div class="header">Market<br><span>Pulse.</span></div>', unsafe_al
 if df.empty:
     st.warning("SYSTEM OFFLINE // NO DATA DETECTED")
     if st.button("EXECUTE SCRAPE"):
-        os.system("python scraper.py")
+        try:
+            result = subprocess.run(
+                ["python", "scraper.py"],
+                capture_output=True,
+                text=True,
+                timeout=600  # 10 minute timeout
+            )
+            if result.returncode != 0:
+                st.error(f"Scraper failed: {result.stderr}")
+        except subprocess.TimeoutExpired:
+            st.error("Scraper timed out after 10 minutes")
+        except Exception as e:
+            st.error(f"Failed to run scraper: {e}")
         st.rerun()
     st.stop()
 
@@ -113,8 +125,12 @@ with c1:
 
     st.markdown("### // BENEFIT SATURATION")
     benefits = ['multisport', 'sick day', 'flexibil', 'home office', 'akademie', 'stravenk']
-    desc_blob = " ".join(df['description'].fillna('').astype(str)).lower()
-    ben_stats = pd.DataFrame([{"Benefit": b, "Signal": desc_blob.count(b)} for b in benefits]).sort_values('Signal', ascending=False)
+    # Vectorized approach: O(n*m) instead of O(n²)
+    ben_stats = []
+    for benefit in benefits:
+        count = df['description'].fillna('').str.lower().str.contains(benefit, regex=False).sum()
+        ben_stats.append({"Benefit": benefit, "Signal": count})
+    ben_stats = pd.DataFrame(ben_stats).sort_values('Signal', ascending=False)
     st.dataframe(ben_stats, hide_index=True, use_container_width=True)
 
 with c2:

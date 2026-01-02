@@ -22,23 +22,34 @@ common:
 scrapers:
   Jobs.cz:
     base_url: "https://www.jobs.cz/prace/?page="
+    domain: "https://www.jobs.cz"
     card: "article.SearchResultCard"
     title: "h2.SearchResultCard__title > a"
     company_selectors:
       - "[data-test='employer-name']"
       - ".SearchResultCard__footerItem:not(:has-text('Kč')):not(:has-text('Praha')):not(:has-text('Brno')):not(:has-text('Ostrava'))"
     salary: "span.Tag--success"
+    city_selectors:
+      - ".SearchResultCard__footerItem:has-text('Praha')"
+      - ".SearchResultCard__footerItem:has-text('Brno')"
+      - ".SearchResultCard__footerItem:has-text('Ostrava')"
+      - "[data-test='location']"
     
   Prace.cz:
     base_url: "https://www.prace.cz/nabidky/?page="
+    domain: "https://www.prace.cz"
     card: "li.search-result__advert"
     title: "a.link"
     company_selectors:
       - ".search-result__advert__box__item--company"
     salary: ".search-result__advert__box__item--salary"
+    city_selectors:
+      - ".search-result__advert__box__item--location"
+      - ".ico-map-marker + span"
 
   StartupJobs:
     base_url: "https://www.startupjobs.cz/nabidky"
+    domain: "https://www.startupjobs.cz"
     card: "a[href*='/nabidka/']" # Reverted to generic link selector (proven to work)
     title: "h2"
     company_selectors:
@@ -46,25 +57,41 @@ scrapers:
       - "span.text-gray-500" 
       - "div.flex.items-center span"
     salary_list_item: "li" # Reverted to generic list item
+    city_selectors:
+      - ".location"
+      - "span:has-text('Praha')"
+      - "span:has-text('Brno')"
 
   WTTJ:
     base_url: "https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia"
+    domain: "https://www.welcometothejungle.com"
     card: "li" # Very generic to catch all list items
     title: "h4"
     link: "a[href*='/jobs/']" # More specific link to avoid company links
     company_selectors:
       - "span.sc-688y7f-0"
       - "header span" # Fallback
+    city_selectors:
+      - "[data-testid='job-location']"
+      - "span:has-text('Prague')"
 
   Cocuma:
     base_url: "https://www.cocuma.cz/jobs/page/"
+    domain: "https://www.cocuma.cz"
     card: "a.job-thumbnail" # Reverted to 'a' tag
     title: ".job-thumbnail-title"
     company: ".job-thumbnail-company"
+    city_selectors:
+      - ".job-thumbnail-location"
+      - "span.location"
 
   LinkedIn:
     base_url: "https://www.linkedin.com/jobs/search?keywords=&location=Czechia&f_TPR=r86400"
+    domain: "https://www.linkedin.com"
     card: "li"
     title: "h3"
     company: "h4"
     link: "a"
+    city_selectors:
+      - ".job-card-container__metadata-item"
+      - "span.job-search-card__location"
