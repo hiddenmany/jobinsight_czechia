@@ -62,9 +62,9 @@ html_template = """
                 <div class="kpi-val">{med_salary}k</div>
                 <div class="kpi-label">Median Wage (CZK)</div>
             </div>
-             <div class="kpi-card">
-                <div class="kpi-val">{remote_share}%</div>
-                <div class="kpi-label">True Remote</div>
+             <div class="kpi-card" style="border-left-color: #00FF88;">
+                <div class="kpi-val">+{tech_premium}%</div>
+                <div class="kpi-label">Modern Tech Premium</div>
             </div>
              <div class="kpi-card">
                 <div class="kpi-val">{en_share}%</div>
@@ -117,8 +117,15 @@ html_template = """
 """
 
 # --- KPI CALCULATION ---
-med_sal = df[df['avg_salary']>0]['avg_salary'].median()
+# Base salary metrics
+valid_salaries = df[df['avg_salary'] > 0]
+med_sal = valid_salaries['avg_salary'].median()
 med_sal_fmt = int(med_sal/1000) if pd.notna(med_sal) else "N/A"
+
+# Tech Premium (Modern vs Dinosaur)
+modern_sal = valid_salaries[valid_salaries['tech_status'] == 'Modern']['avg_salary'].median()
+legacy_sal = valid_salaries[valid_salaries['tech_status'] == 'Dinosaur']['avg_salary'].median()
+tech_premium = int(((modern_sal / legacy_sal) - 1) * 100) if pd.notna(modern_sal) and pd.notna(legacy_sal) and legacy_sal > 0 else 0
 
 # Robust KPI extraction
 remote_truth = intel.get_remote_truth()
@@ -175,7 +182,7 @@ output_html = html_template.format(
     date=datetime.date.today().strftime("%d. %B %Y"),
     total_jobs=len(df),
     med_salary=med_sal_fmt,
-    remote_share=remote_share,
+    tech_premium=tech_premium,
     en_share=en_share,
     json_source=fig_vol.to_json(),
     json_contract=fig_cont.to_json(),
