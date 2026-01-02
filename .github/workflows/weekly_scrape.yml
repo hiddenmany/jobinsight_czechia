@@ -53,12 +53,12 @@ jobs:
         run: |
           git config --global user.name 'Scraper Bot'
           git config --global user.email 'bot@noreply.github.com'
-          git add data/*.csv
+          git add data/*.csv data/*.db
           # Only commit if there are changes
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Auto-update: Job market data [$(date +'%Y-%m-%d')]"
+            git commit -m "Auto-update: Job market data and intelligence DB [$(date +'%Y-%m-%d')]"
             git push
           fi
 

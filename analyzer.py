@@ -144,10 +144,6 @@ class IntelligenceCore:
 
     def add_signal(self, signal: JobSignal):
         """Adds a new signal with semantic enrichment."""
-        # Filter out non-tech signals
-        if not SemanticEngine.is_tech_relevant(signal.title, signal.description):
-            return
-
         # Calculate semantic metrics
         tox = SemanticEngine.analyze_toxicity(signal.description)
         tech = SemanticEngine.analyze_tech_lag(signal.description)
@@ -245,22 +241,28 @@ class MarketIntelligence:
         self.df = self.core.df
 
     def get_language_barrier(self):
-        # Improved NLP: common English stop words and punctuation removal
-        en_stops = {"the", "and", "with", "team", "from", "for", "that", "this", "our", "will"}
+        # NLP for general market: inclusive of short JDs but still filtering noise
+        en_stops = {"the", "and", "with", "team", "from", "for", "that", "this", "our", "will", "is", "are"}
 
         def check_en(text):
-            if not text or len(str(text)) < 200: # Short texts are rarely full JDs
+            if not text:
                 return False
-            words = set(re.findall(r'\b\w+\b', str(text).lower()))
-            # Requirement: 5+ unique common English words and at least 50 words total
-            return len(words.intersection(en_stops)) >= 5 and len(words) > 50
+            text_str = str(text).lower()
+            # If the text is very short, we need a higher density of English words
+            # If it's long, 3-5 words is enough
+            words = set(re.findall(r'\b\w+\b', text_str))
+            intersection = words.intersection(en_stops)
+            
+            if len(text_str) < 300:
+                return len(intersection) >= 3
+            return len(intersection) >= 5
 
         en_count = self.df["description"].apply(check_en).sum()
         return {"English Friendly": en_count, "Czech Only": len(self.df) - en_count}
 
     def get_remote_truth(self):
         # Added Czech keywords for Remote work detection
-        remote_pattern = r"remote|home office|prace z domova|praca z domu|vzdalene|full-remote|hybrid"
+        remote_pattern = r"remote|home office|práce z domova|práca z domu|vzdáleně|full-remote|hybrid"
         is_remote = (
             self.df["description"]
             .str.contains(remote_pattern, case=False, na=False, regex=True)
@@ -269,14 +271,15 @@ class MarketIntelligence:
         return {"True Remote": is_remote}
 
     def get_contract_split(self):
-        # Broaden ICO detection
-        ico_pattern = r"ico|faktur|zivnost|osvc"
-        ico = (
-            self.df["description"]
-            .str.contains(ico_pattern, case=False, na=False, regex=True)
-            .sum()
-        )
-        return {"HPP": len(self.df) - ico, "ICO": ico}
+        # Multi-category contract detection for the whole market
+        desc = self.df["description"].str.lower()
+        
+        ico = desc.str.contains(r"ico|faktur|živnost|osvč", na=False).sum()
+        brigada = desc.str.contains(r"dpp|dpč|brigád|vhodné pro studenty", na=False).sum()
+        
+        # Everything else is assumed HPP (Standard)
+        hpp = len(self.df) - ico - brigada
+        return {"HPP": max(0, hpp), "IČO": ico, "Brigáda": brigada}
 
     def get_tech_stack_lag(self):
         """Added missing method for Report compatibility."""

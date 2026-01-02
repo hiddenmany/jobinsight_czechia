@@ -8,6 +8,7 @@ import datetime
 # Setup
 intel = analyzer.MarketIntelligence()
 df = intel.df
+print(f"Generating report with {len(df)} market signals.")
 
 # --- HTML TEMPLATE ---
 html_template = """
@@ -171,12 +172,11 @@ fig_vol.update_traces(marker_color='#0055FF') # Blue bars
 
 # 2. Contract Types
 contracts = intel.get_contract_split()
-# Palette: Blue (Main), Dark Gray, Light Gray
 fig_cont = px.pie(
     values=list(contracts.values()), 
     names=list(contracts.keys()), 
     hole=0.6, 
-    color_discrete_sequence=['#0055FF', '#333333', '#CCCCCC'] 
+    color_discrete_sequence=['#0055FF', '#333333', '#999999'] 
 )
 fig_cont.update_layout(**layout_defaults)
 
