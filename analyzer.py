@@ -230,7 +230,7 @@ class MarketIntelligence:
         self.df = self.core.df
 
     def get_language_barrier(self):
-        # NLP for general market: inclusive of short JDs but still filtering noise
+        # Balanced NLP: requires a high density of English words without strict length penalties
         en_stops = set(TAXONOMY.get('nlp', {}).get('english_stops', []))
 
         def check_en(text):
@@ -240,9 +240,8 @@ class MarketIntelligence:
             words = set(re.findall(r'\b\w+\b', text_str))
             intersection = words.intersection(en_stops)
             
-            if len(text_str) < 300:
-                return len(intersection) >= 3
-            return len(intersection) >= 5
+            # 3 unique English stop words is a very high signal for English-only JDs
+            return len(intersection) >= 3
 
         en_count = self.df["description"].apply(check_en).sum()
         return {"English Friendly": en_count, "Czech Only": len(self.df) - en_count}
