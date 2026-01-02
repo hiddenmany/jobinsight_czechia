@@ -190,51 +190,66 @@ class StartupJobsScraper(BaseScraper):
     async def run(self, limit=500):
         context = await self.engine.get_context()
         page = await context.new_page()
-        await page.goto(self.config['base_url'])
-        try: await page.get_by_text("Přijmout").click(timeout=5000)
-        except: pass
-        
-        pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
-        last_count = 0
-        card_sel = self.config['card']
-        
-        while last_count < limit:
-            await page.keyboard.press("End")
-            await asyncio.sleep(2)
-            cards = await page.query_selector_all(card_sel)
-            if len(cards) == last_count: break
-            pbar.update(min(len(cards) - last_count, limit - last_count))
-            last_count = len(cards)
-        
-        cards = await page.query_selector_all(card_sel)
-        batch = []
-        for card in cards[:limit]:
-            link = "https://www.startupjobs.cz" + await card.get_attribute("href")
-            if CORE.is_known(link): continue
+        try:
+            await page.goto(self.config['base_url'], timeout=60000)
+            try: await page.get_by_text("Přijmout").click(timeout=5000)
+            except: pass
             
-            company_name = await self.extract_company(card)
+            pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
+            last_count = 0
+            card_sel = self.config['card']
+            
+            # Robust Infinite Scroll
+            for _ in range(20): # Try 20 scroll attempts
+                await page.keyboard.press("End")
+                await page.wait_for_timeout(3000) # Explicit wait 3s for hydration
+                
+                cards = await page.query_selector_all(card_sel)
+                if len(cards) >= limit: break
+                
+                # If count didn't change, maybe we hit bottom or need to scroll up a bit to trigger
+                if len(cards) == last_count:
+                    await page.mouse.wheel(0, -100)
+                    await asyncio.sleep(1)
+                
+                pbar.update(min(len(cards) - last_count, limit - last_count))
+                last_count = len(cards)
+            
+            cards = await page.query_selector_all(card_sel)
+            batch = []
+            for card in cards[:limit]:
+                try:
+                    href = await card.get_attribute("href")
+                    if not href: continue
+                    
+                    link = "https://www.startupjobs.cz" + href
+                    if CORE.is_known(link): continue
+                    
+                    company_name = await self.extract_company(card)
 
-            salary = None
-            sal_item = self.config.get('salary_list_item', 'li')
-            items = await card.query_selector_all(sal_item)
-            for item in items:
-                txt = await item.inner_text()
-                if "Kč" in txt or "EUR" in txt:
-                    salary = txt.strip()
-                    break
+                    salary = None
+                    # StartupJobs specific salary extraction attempt
+                    txt = await card.inner_text()
+                    match = re.search(r'(\d+(?:\s\d+)*)\s*–\s*(\d+(?:\s\d+)*)\s*(?:Kč|EUR)', txt)
+                    if match:
+                        salary = match.group(0)
 
-            sig = JobSignal(
-                title=(await card.inner_text()).split("\n")[0],
-                company=company_name,
-                link=link,
-                source=self.site_name,
-                salary=salary
-            )
-            batch.append(sig)
-        
-        if batch:
-            await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
-            for s in batch: CORE.add_signal(s)
+                    sig = JobSignal(
+                        title=(await card.inner_text()).split("\n")[0],
+                        company=company_name,
+                        link=link,
+                        source=self.site_name,
+                        salary=salary
+                    )
+                    batch.append(sig)
+                except: continue
+            
+            if batch:
+                await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
+                for s in batch: CORE.add_signal(s)
+                
+        except Exception as e:
+            logger.error(f"StartupJobs failed: {e}")
             
         await context.close()
 
@@ -243,11 +258,21 @@ class WttjScraper(BaseScraper):
     async def run(self, limit=200):
         context = await self.engine.get_context()
         page = await context.new_page()
-        await page.goto(self.config['base_url'])
+        # WTTJ is heavy, wait for commit first then load
+        try:
+            await page.goto(self.config['base_url'], timeout=60000, wait_until="commit")
+            await page.wait_for_selector(self.config['card'], timeout=20000)
+        except:
+            logger.warning("WTTJ failed initial load")
+            await context.close()
+            return
+
         pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
-        for _ in range(20): 
+        
+        # Scroll loop
+        for _ in range(10): 
             await page.keyboard.press("PageDown")
-            await asyncio.sleep(1)
+            await asyncio.sleep(2) # Increased wait
         
         card_sel = self.config['card']
         cards = await page.query_selector_all(card_sel)
@@ -255,20 +280,26 @@ class WttjScraper(BaseScraper):
         for card in cards[:limit]:
             try:
                 link_el = await card.query_selector(self.config['link'])
+                if not link_el: continue
+                
                 link = "https://www.welcometothejungle.com" + await link_el.get_attribute("href")
                 if CORE.is_known(link): continue
                 
                 company_name = await self.extract_company(card)
                 
+                title_el = await card.query_selector(self.config['title'])
+                title = await title_el.inner_text() if title_el else "Unknown Role"
+
                 sig = JobSignal(
-                    title=await (await card.query_selector(self.config['title'])).inner_text(),
+                    title=title,
                     company=company_name,
                     link=link,
                     source=self.site_name
                 )
                 batch.append(sig)
                 pbar.update(1)
-            except: continue
+            except Exception as e: 
+                continue
         
         if batch:
             await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))

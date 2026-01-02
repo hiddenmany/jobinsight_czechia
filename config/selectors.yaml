@@ -37,12 +37,12 @@ scrapers:
 
   StartupJobs:
     base_url: "https://www.startupjobs.cz/nabidky"
-    card: "a[href*='/nabidka/']"
-    title: "self" # title is within the card itself
+    card: "div.bg-white.shadow-hover"  # Updated selector for 2026 layout
+    title: "h2"
     company_selectors:
-      - "div.flex.items-center.text-sm.text-gray-500 span"
       - ".employer-name"
-    salary_list_item: "li"
+      - "span.text-gray-500" 
+    salary_list_item: "div.text-green-600" # Specific salary div
 
   WTTJ:
     base_url: "https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia"
@@ -54,13 +54,13 @@ scrapers:
 
   Cocuma:
     base_url: "https://www.cocuma.cz/jobs/?page="
-    card: "a.job-thumbnail"
+    card: "div.job-thumbnail" # Changed from 'a' to 'div' container
     title: ".job-thumbnail-title"
     company: ".job-thumbnail-company"
 
   LinkedIn:
-    base_url: "https://www.linkedin.com/jobs/search?keywords=&location=Czechia"
-    card: "div.base-card"
-    title: "h3"
-    company: "h4"
-    link: "a"
+    base_url: "https://www.linkedin.com/jobs/search?keywords=&location=Czechia&f_TPR=r86400" # Added 24h filter to get fresh content
+    card: "li" # Generic list item for public search
+    title: "h3.base-search-card__title"
+    company: "h4.base-search-card__subtitle"
+    link: "a.base-card__full-link"
