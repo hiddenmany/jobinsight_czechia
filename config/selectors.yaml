@@ -11,10 +11,13 @@ common:
       - "facebook"
       - "pixel"
       - "doubleclick"
+      - "sentry"
+      - "segment"
     resource_types:
       - "image"
       - "media"
       - "font"
+      - "stylesheet" # Aggressively block styles for speed on WTTJ
 
 scrapers:
   Jobs.cz:
@@ -37,30 +40,32 @@ scrapers:
 
   StartupJobs:
     base_url: "https://www.startupjobs.cz/nabidky"
-    card: "div.bg-white.shadow-hover"  # Updated selector for 2026 layout
+    card: "a[href*='/nabidka/']" # Reverted to generic link selector (proven to work)
     title: "h2"
     company_selectors:
       - ".employer-name"
       - "span.text-gray-500" 
-    salary_list_item: "div.text-green-600" # Specific salary div
+      - "div.flex.items-center span"
+    salary_list_item: "li" # Reverted to generic list item
 
   WTTJ:
     base_url: "https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia"
-    card: "li.ais-Hits-item"
+    card: "li" # Very generic to catch all list items
     title: "h4"
-    link: "a"
+    link: "a[href*='/jobs/']" # More specific link to avoid company links
     company_selectors:
       - "span.sc-688y7f-0"
+      - "header span" # Fallback
 
   Cocuma:
     base_url: "https://www.cocuma.cz/jobs/?page="
-    card: "div.job-thumbnail" # Changed from 'a' to 'div' container
+    card: "a.job-thumbnail" # Reverted to 'a' tag
     title: ".job-thumbnail-title"
     company: ".job-thumbnail-company"
 
   LinkedIn:
-    base_url: "https://www.linkedin.com/jobs/search?keywords=&location=Czechia&f_TPR=r86400" # Added 24h filter to get fresh content
-    card: "li" # Generic list item for public search
-    title: "h3.base-search-card__title"
-    company: "h4.base-search-card__subtitle"
-    link: "a.base-card__full-link"
+    base_url: "https://www.linkedin.com/jobs/search?keywords=&location=Czechia&f_TPR=r86400"
+    card: "li"
+    title: "h3"
+    company: "h4"
+    link: "a"
