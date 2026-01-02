@@ -63,22 +63,14 @@ class SemanticEngine:
     def analyze_tech_lag(description):
         """Calculates technological obsolescence score."""
         legacy = [
-            "jquery",
-            "angularjs",
-            "tensorflow",
-            "svn",
-            "php 5",
-            "java 8",
-            "struts",
+            "jquery", "angularjs", "tensorflow", "svn", "php 5", "java 8", 
+            "struts", "wordpress", "prestashop", "silverlight", "delphi",
+            "vb6", "cobol", "waterfall"
         ]
         modern = [
-            "pytorch",
-            "fastapi",
-            "rust",
-            "go",
-            "next.js",
-            "tailwindcss",
-            "generative",
+            "pytorch", "fastapi", "rust", "go", "next.js", "tailwindcss", 
+            "generative", "llm", "kubernetes", "docker", "typescript", 
+            "react", "aws", "azure", "serverless", "agile", "scrum"
         ]
         d = description.lower()
         legacy_hit = sum(1 for x in legacy if x in d)
@@ -205,30 +197,36 @@ class MarketIntelligence:
         self.df = self.core.df
 
     def get_language_barrier(self):
-        # Heuristic implementation for the Swiss UI
-        en_stops = {"the", "and", "with", "team"}
+        # Improved NLP: common English stop words and punctuation removal
+        en_stops = {"the", "and", "with", "team", "from", "for", "that", "this", "our", "will"}
 
         def check_en(text):
             if not text:
                 return False
-            words = set(str(text).lower().split())
-            return len(words.intersection(en_stops)) > 2
+            # Normalize: lowercase and remove non-alphanumeric for better matching
+            words = set(re.findall(r'\b\w+\b', str(text).lower()))
+            # Intersection of 3+ words is a strong signal for English JD
+            return len(words.intersection(en_stops)) >= 3
 
         en_count = self.df["description"].apply(check_en).sum()
         return {"English Friendly": en_count, "Czech Only": len(self.df) - en_count}
 
     def get_remote_truth(self):
+        # Added Czech keywords for Remote work detection
+        remote_pattern = r"remote|home office|prace z domova|praca z domu|vzdalene|full-remote|hybrid"
         is_remote = (
             self.df["description"]
-            .str.contains("remote|home office", case=False, na=False)
+            .str.contains(remote_pattern, case=False, na=False, regex=True)
             .sum()
         )
-        return {"True Remote": is_remote}  # Simplified
+        return {"True Remote": is_remote}
 
     def get_contract_split(self):
+        # Broaden ICO detection
+        ico_pattern = r"ico|faktur|zivnost|osvc"
         ico = (
             self.df["description"]
-            .str.contains("ico|faktur", case=False, na=False)
+            .str.contains(ico_pattern, case=False, na=False, regex=True)
             .sum()
         )
         return {"HPP": len(self.df) - ico, "ICO": ico}
