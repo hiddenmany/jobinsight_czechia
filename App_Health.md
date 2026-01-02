@@ -1,18 +1,25 @@
-# App Health Check - JobsCzInsight
+# JobsCzInsight App Health
 
-**Date:** 2026-01-02
-**Status:** Healthy
+## Status: REPORTING FIXES 🛠️
+**Last Verified:** 2026-01-02
+**Version:** 16.3 (Data Integrity Patch)
 
-## Recent Updates
-- **Cocuma Scraper Fix:** Resolved an issue where Cocuma listings were failing to be scraped due to a hardcoded domain in `StartupJobsScraper`. The scraper now dynamically handles Cocuma URLs. Added robust `wait_for_selector` logic to prevent race conditions during page load.
-- **Visual Fix (Charts):** Corrected `generate_report.py` to use `automargin=True` for Plotly charts.
-- **Visual Fix (Layout):** Updated `templates/report.html` to handle text overflows.
-- **Process Management:** Handled a locked DuckDB database file.
+## Core Metrics
+- **Visuals:** [PASS] - Electric Blue accents + Soft Black palette.
+- **Scraper:** [PASS] - Cocuma fixed, Selectors hardened for Jobs.cz.
+- **Database:** [SYNCING] - Local scrape completing, Cloud report being patched.
+- **Reporting:** [FIXED] - Solved "Unknown Employer" & "Negative HPP" bugs.
 
-## Current State
-- **Data Pipeline:** Functional. `analyzer.py` correctly reads from `data/intelligence.db`.
-- **Report Generation:** `generate_report.py` runs successfully.
-- **Frontend:** `templates/report.html` is robust against long text and responsive.
+## Recent Upgrades
+- **Selectors:** Hardened `Jobs.cz` company extraction to ignore "Praha/Location" tags.
+- **Analyzer:** Rewrote Contract Split logic to be mutually exclusive (Priority: ICO > Brigada > HPP).
+- **Visualization:** Added sample size (n=X) to Salary Chart for context.
+- **Reliability:** Auto-trigger `reanalyze_all()` if tech signals are missing in report generation.
 
-## Next Steps
-- Verify the weekly automated scrape on GitHub Actions.
+## Current Activity
+- **Patch Deployment:** Pushing fixes for the "Bad Report" anomalies detected by user.
+- **Local Data:** Scrape near completion, will generate clean local report to verify.
+
+## Known Risks
+- **LinkedIn Rate Limits:** Still a bottleneck.
+- **WTTJ Latency:** Optimized with resource blocking in `selectors.yaml`.

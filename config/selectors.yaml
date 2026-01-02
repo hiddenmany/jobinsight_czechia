@@ -25,9 +25,8 @@ scrapers:
     card: "article.SearchResultCard"
     title: "h2.SearchResultCard__title > a"
     company_selectors:
-      - ".SearchResultCard__footerItem"
       - "[data-test='employer-name']"
-      - "span.Tag--neutral"
+      - ".SearchResultCard__footerItem:not(:has-text('Kč')):not(:has-text('Praha')):not(:has-text('Brno')):not(:has-text('Ostrava'))"
     salary: "span.Tag--success"
     
   Prace.cz:

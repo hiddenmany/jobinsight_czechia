@@ -263,12 +263,16 @@ class MarketIntelligence:
         ico_pat = "|".join(TAXONOMY['contract_keywords']['ico'])
         brig_pat = "|".join(TAXONOMY['contract_keywords']['brigada'])
         
-        ico = desc.str.contains(ico_pat, na=False).sum()
-        brigada = desc.str.contains(brig_pat, na=False).sum()
+        # Priority: ICO > Brigada > HPP (Standard)
+        # This ensures categories are mutually exclusive for the Pie Chart
+        is_ico = desc.str.contains(ico_pat, na=False)
+        is_brigada = desc.str.contains(brig_pat, na=False) & ~is_ico
         
-        # Everything else is assumed HPP (Standard)
-        hpp = len(self.df) - ico - brigada
-        return {"HPP": max(0, hpp), "IČO": ico, "Brigáda": brigada}
+        ico_count = is_ico.sum()
+        brig_count = is_brigada.sum()
+        hpp_count = len(self.df) - ico_count - brig_count
+        
+        return {"HPP": max(0, hpp_count), "IČO": ico_count, "Brigáda": brig_count}
 
     def get_tech_stack_lag(self):
         """Added missing method for Report compatibility."""

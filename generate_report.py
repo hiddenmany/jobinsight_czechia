@@ -11,6 +11,12 @@ intel = analyzer.MarketIntelligence()
 df = intel.df
 print(f"Generating report with {len(df)} market signals.")
 
+# Auto-Recovery: If Tech Status is missing (null or empty), force re-analysis
+if df['tech_status'].isnull().mean() > 0.5 or df.empty:
+    print("⚠️ Detected missing Tech/NLP data. Running emergency re-analysis...")
+    intel.core.reanalyze_all()
+    df = intel.core.load_as_df()
+
 # --- KPI CALCULATION ---
 valid_salaries = df[df['avg_salary'] > 0]
 med_sal = valid_salaries['avg_salary'].median()
@@ -62,10 +68,18 @@ fig_tech = px.bar(stack, x="Count", y="Status", color="Status",
 fig_tech.update_layout(**layout_defaults)
 
 # 4. Salary by Platform
-plat_stats = df[df['avg_salary'] > 0].groupby('source')['avg_salary'].median().sort_values(ascending=True).reset_index()
-plat_stats.columns = ['Source', 'Median Salary']
-fig_sal = px.bar(plat_stats, y='Source', x='Median Salary', orientation='h', color_discrete_sequence=['#111'])
+valid_sal = df[df['avg_salary'] > 0]
+plat_stats = valid_sal.groupby('source').agg(
+    median_salary=('avg_salary', 'median'),
+    count=('avg_salary', 'count')
+).sort_values('median_salary', ascending=True).reset_index()
+
+# Add count to label for context
+plat_stats['Label'] = plat_stats.apply(lambda x: f"{x['source']} (n={x['count']})", axis=1)
+
+fig_sal = px.bar(plat_stats, y='Label', x='median_salary', orientation='h', color_discrete_sequence=['#111'])
 fig_sal.update_layout(**layout_defaults)
+fig_sal.update_yaxes(title="") # Remove "Label" axis title
 
 # 5. Top Innovators
 modern_df = df[df['tech_status'] == 'Modern']
