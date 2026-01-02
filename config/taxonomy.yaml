@@ -1,0 +1,80 @@
+tech_stack:
+  legacy:
+    - "jquery"
+    - "angularjs"
+    - "tensorflow"
+    - "svn"
+    - "php 5"
+    - "java 8"
+    - "struts"
+    - "wordpress"
+    - "prestashop"
+    - "silverlight"
+    - "delphi"
+    - "vb6"
+    - "cobol"
+    - "waterfall"
+  modern:
+    - "pytorch"
+    - "fastapi"
+    - "rust"
+    - "go"
+    - "next.js"
+    - "tailwindcss"
+    - "generative"
+    - "llm"
+    - "kubernetes"
+    - "docker"
+    - "typescript"
+    - "react"
+    - "aws"
+    - "azure"
+    - "serverless"
+    - "agile"
+    - "scrum"
+
+toxicity:
+  red_flags:
+    - "asap"
+    - "stress"
+    - "pressure"
+    - "flexible hours (meaning always)"
+    - "rockstar"
+    - "ninja"
+    - "family (red flag)"
+
+nlp:
+  english_stops:
+    - "the"
+    - "and"
+    - "with"
+    - "team"
+    - "from"
+    - "for"
+    - "that"
+    - "this"
+    - "our"
+    - "will"
+    - "is"
+    - "are"
+
+remote_keywords:
+  - "remote"
+  - "home office"
+  - "práce z domova"
+  - "práca z domu"
+  - "vzdáleně"
+  - "full-remote"
+  - "hybrid"
+
+contract_keywords:
+  ico:
+    - "ico"
+    - "faktur"
+    - "živnost"
+    - "osvč"
+  brigada:
+    - "dpp"
+    - "dpč"
+    - "brigád"
+    - "vhodné pro studenty"

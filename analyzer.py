@@ -4,16 +4,24 @@ import os
 import hashlib
 import unicodedata
 import duckdb
+import yaml
 from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional
 
 # --- ARCHITECTURAL CONSTANTS ---
 DB_PATH = "data/intelligence.db"
+TAXONOMY_PATH = os.path.join(os.path.dirname(__file__), "config", "taxonomy.yaml")
 
+def load_taxonomy():
+    with open(TAXONOMY_PATH, 'r') as f:
+        return yaml.safe_load(f)
+
+TAXONOMY = load_taxonomy()
 
 @dataclass
 class JobSignal:
+# ... (rest of the dataclass and functions)
     """Strict schema for a market signal to prevent typos."""
     title: str
     company: str
@@ -46,26 +54,15 @@ class SemanticEngine:
     @staticmethod
     def is_tech_relevant(title, description):
         """Filters out non-tech signals to keep the report focused."""
-        tech_keywords = {
-            "developer", "engineer", "data", "analyst", "manager", "product", 
-            "designer", "software", "cloud", "devops", "security", "tester",
-            "qa", "architect", "consultant", "scrum", "agile", "it", "systems"
-        }
+        # Using a subset of modern/legacy for relevance check
+        tech_keywords = set(TAXONOMY['tech_stack']['modern'] + TAXONOMY['tech_stack']['legacy'])
         text = f"{title} {description}".lower()
         return any(k in text for k in tech_keywords)
 
     @staticmethod
     def analyze_toxicity(description):
         """Detects toxic red flags in JDs."""
-        flags = [
-            "asap",
-            "stress",
-            "pressure",
-            "flexible hours (meaning always)",
-            "rockstar",
-            "ninja",
-            "family (red flag)",
-        ]
+        flags = TAXONOMY.get('toxicity', {}).get('red_flags', [])
         d = description.lower()
         score = sum(30 for f in flags if f in d)
         return min(score, 100)
@@ -73,16 +70,8 @@ class SemanticEngine:
     @staticmethod
     def analyze_tech_lag(description):
         """Calculates technological obsolescence score."""
-        legacy = [
-            "jquery", "angularjs", "tensorflow", "svn", "php 5", "java 8", 
-            "struts", "wordpress", "prestashop", "silverlight", "delphi",
-            "vb6", "cobol", "waterfall"
-        ]
-        modern = [
-            "pytorch", "fastapi", "rust", "go", "next.js", "tailwindcss", 
-            "generative", "llm", "kubernetes", "docker", "typescript", 
-            "react", "aws", "azure", "serverless", "agile", "scrum"
-        ]
+        legacy = TAXONOMY['tech_stack']['legacy']
+        modern = TAXONOMY['tech_stack']['modern']
         d = description.lower()
         legacy_hit = sum(1 for x in legacy if x in d)
         modern_hit = sum(1 for x in modern if x in d)
@@ -242,14 +231,12 @@ class MarketIntelligence:
 
     def get_language_barrier(self):
         # NLP for general market: inclusive of short JDs but still filtering noise
-        en_stops = {"the", "and", "with", "team", "from", "for", "that", "this", "our", "will", "is", "are"}
+        en_stops = set(TAXONOMY.get('nlp', {}).get('english_stops', []))
 
         def check_en(text):
             if not text:
                 return False
             text_str = str(text).lower()
-            # If the text is very short, we need a higher density of English words
-            # If it's long, 3-5 words is enough
             words = set(re.findall(r'\b\w+\b', text_str))
             intersection = words.intersection(en_stops)
             
@@ -261,8 +248,8 @@ class MarketIntelligence:
         return {"English Friendly": en_count, "Czech Only": len(self.df) - en_count}
 
     def get_remote_truth(self):
-        # Added Czech keywords for Remote work detection
-        remote_pattern = r"remote|home office|práce z domova|práca z domu|vzdáleně|full-remote|hybrid"
+        # Using remote keywords from taxonomy
+        remote_pattern = "|".join(TAXONOMY.get('remote_keywords', []))
         is_remote = (
             self.df["description"]
             .str.contains(remote_pattern, case=False, na=False, regex=True)
@@ -271,11 +258,14 @@ class MarketIntelligence:
         return {"True Remote": is_remote}
 
     def get_contract_split(self):
-        # Multi-category contract detection for the whole market
+        # Multi-category contract detection using taxonomy
         desc = self.df["description"].str.lower()
         
-        ico = desc.str.contains(r"ico|faktur|živnost|osvč", na=False).sum()
-        brigada = desc.str.contains(r"dpp|dpč|brigád|vhodné pro studenty", na=False).sum()
+        ico_pat = "|".join(TAXONOMY['contract_keywords']['ico'])
+        brig_pat = "|".join(TAXONOMY['contract_keywords']['brigada'])
+        
+        ico = desc.str.contains(ico_pat, na=False).sum()
+        brigada = desc.str.contains(brig_pat, na=False).sum()
         
         # Everything else is assumed HPP (Standard)
         hpp = len(self.df) - ico - brigada

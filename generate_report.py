@@ -4,139 +4,14 @@ import plotly.graph_objects as go
 import analyzer
 import os
 import datetime
+from jinja2 import Environment, FileSystemLoader
 
 # Setup
 intel = analyzer.MarketIntelligence()
 df = intel.df
 print(f"Generating report with {len(df)} market signals.")
 
-# --- HTML TEMPLATE ---
-html_template = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Market Snapshot 2026</title>
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        
-        body {{ font-family: 'Inter', sans-serif; background: #f8f9fa; margin: 0; padding: 40px 20px; color: #111; }}
-        .container {{ max-width: 1200px; margin: 0 auto; background: #fff; padding: 60px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border-radius: 12px; }}
-        
-        h1 {{ font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; margin-bottom: 0.1em; color: #111; }}
-        h1 span {{ color: #0055FF; }}
-        
-        .subtitle {{ color: #666; font-size: 1.2rem; margin-bottom: 60px; border-bottom: 3px solid #111; padding-bottom: 20px; display: flex; justify-content: space-between; }}
-        
-        .kpi-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; margin-bottom: 60px; }}
-        .kpi-card {{ background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #eee; border-left: 4px solid #0055FF; transition: transform 0.2s; }}
-        .kpi-card:hover {{ transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }}
-        
-        .kpi-val {{ font-size: 2.8rem; font-weight: 700; line-height: 1; color: #111; }}
-        .kpi-label {{ font-size: 0.85rem; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-top: 10px; font-weight: 600; }}
-        
-        .chart-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin-bottom: 60px; }}
-        .section-title {{ font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; border-left: 4px solid #111; padding-left: 15px; display: flex; align-items: center; }}
-        .section-title span {{ color: #0055FF; margin-right: 10px; }}
-        
-        .footer {{ margin-top: 80px; font-size: 0.9rem; color: #888; text-align: center; border-top: 1px solid #eee; padding-top: 30px; }}
-        
-        @media(max-width: 768px) {{ .kpi-grid, .chart-grid {{ grid-template-columns: 1fr; }} .container {{ padding: 20px; }} }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Jobs.cz <span>Insight</span></h1>
-        <div class="subtitle">
-            <span>Weekly Market Intelligence Report</span>
-            <span>{date}</span>
-        </div>
-
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-val">{total_jobs}</div>
-                <div class="kpi-label">Active Signals</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-val">{med_salary}k</div>
-                <div class="kpi-label">Median Wage (CZK)</div>
-            </div>
-             <div class="kpi-card" style="border-left-color: #00FF88;">
-                <div class="kpi-val">+{tech_premium}%</div>
-                <div class="kpi-label">Modern Tech Premium</div>
-            </div>
-             <div class="kpi-card">
-                <div class="kpi-val">{en_share}%</div>
-                <div class="kpi-label">English Friendly</div>
-            </div>
-        </div>
-
-        <div class="chart-grid">
-            <div>
-                <div class="section-title"><span>01</span> Source Distribution</div>
-                <div id="chart_source"></div>
-            </div>
-            <div>
-                <div class="section-title"><span>02</span> Contract Types</div>
-                <div id="chart_contract"></div>
-            </div>
-        </div>
-
-        <div class="chart-grid">
-            <div>
-                <div class="section-title"><span>03</span> Tech Stack Gap</div>
-                <div id="chart_tech"></div>
-            </div>
-            <div>
-                <div class="section-title"><span>04</span> Salary by Platform</div>
-                <div id="chart_salary"></div>
-            </div>
-        </div>
-
-        <div style="margin-top: 60px;">
-            <div class="section-title"><span>05</span> Top Innovators (Hiring Volume in Modern Stack)</div>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem;">
-                    <thead>
-                        <tr style="text-align: left; border-bottom: 2px solid #111;">
-                            <th style="padding: 12px;">Company</th>
-                            <th style="padding: 12px;">Modern Signals</th>
-                            <th style="padding: 12px;">Avg. Salary (Est)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {innovator_rows}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="footer">
-            Generated by <a href="https://github.com/hiddenmany/jobinsight_czechia" style="color:#0055FF; font-weight:bold; text-decoration:none;">JobsCzInsight</a> Cloud Scraper.
-        </div>
-    </div>
-    
-    <script>
-        var source_data = {json_source};
-        Plotly.newPlot('chart_source', source_data.data, source_data.layout);
-
-        var contract_data = {json_contract};
-        Plotly.newPlot('chart_contract', contract_data.data, contract_data.layout);
-
-        var tech_data = {json_tech};
-        Plotly.newPlot('chart_tech', tech_data.data, tech_data.layout);
-
-        var salary_data = {json_salary};
-        Plotly.newPlot('chart_salary', salary_data.data, salary_data.layout);
-    </script>
-</body>
-</html>
-"""
-
 # --- KPI CALCULATION ---
-# Base salary metrics
 valid_salaries = df[df['avg_salary'] > 0]
 med_sal = valid_salaries['avg_salary'].median()
 med_sal_fmt = int(med_sal/1000) if pd.notna(med_sal) else "N/A"
@@ -147,15 +22,10 @@ legacy_sal = valid_salaries[valid_salaries['tech_status'] == 'Dinosaur']['avg_sa
 tech_premium = int(((modern_sal / legacy_sal) - 1) * 100) if pd.notna(modern_sal) and pd.notna(legacy_sal) and legacy_sal > 0 else 0
 
 # Robust KPI extraction
-remote_truth = intel.get_remote_truth()
-remote_share = int(remote_truth.get('True Remote', 0) / len(df) * 100) if len(df) > 0 else 0
-
 lang_barrier = intel.get_language_barrier()
-en_friendly = lang_barrier.get('English Friendly', 0)
-en_share = int(en_friendly / len(df) * 100) if len(df) > 0 else 0
+en_share = int(lang_barrier.get('English Friendly', 0) / len(df) * 100) if len(df) > 0 else 0
 
 # --- CHART GENERATION (JSON) ---
-# Common layout settings
 layout_defaults = dict(
     margin=dict(l=0,r=0,t=0,b=0),
     height=300,
@@ -183,7 +53,6 @@ fig_cont.update_layout(**layout_defaults)
 # 3. Tech Stack Gap
 stack = intel.get_tech_stack_lag().reset_index()
 stack.columns = ['Status', 'Count']
-# Ensure all categories exist for visual consistency
 all_cats = pd.DataFrame({'Status': ['Modern', 'Stable', 'Dinosaur']})
 stack = all_cats.merge(stack, on='Status', how='left').fillna(0)
 fig_tech = px.bar(stack, x="Count", y="Status", color="Status", 
@@ -196,41 +65,39 @@ plat_stats.columns = ['Source', 'Median Salary']
 fig_sal = px.bar(plat_stats, y='Source', x='Median Salary', orientation='h', color_discrete_sequence=['#111'])
 fig_sal.update_layout(**layout_defaults)
 
-# 5. Top Innovators (Market Density)
+# 5. Top Innovators
 modern_df = df[df['tech_status'] == 'Modern']
 top_innovators = modern_df.groupby('company').agg(
     count=('hash', 'count'),
     avg_sal=('avg_salary', lambda x: x[x>0].median())
 ).sort_values('count', ascending=False).head(10)
 
-innovator_rows = ""
+innovators = []
 for company, row in top_innovators.iterrows():
     sal_display = f"{int(row['avg_sal']/1000)}k" if pd.notna(row['avg_sal']) and row['avg_sal'] > 0 else "N/A"
-    innovator_rows += f"""
-        <tr style="border-bottom: 1px solid #eee;">
-            <td style="padding: 12px; font-weight: 600;">{company}</td>
-            <td style="padding: 12px;">{row['count']}</td>
-            <td style="padding: 12px; color: #0055FF; font-weight: bold;">{sal_display}</td>
-        </tr>
-    """
-if not innovator_rows:
-    innovator_rows = "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #888;'>Insufficient 'Modern' signals for density analysis.</td></tr>"
+    innovators.append({
+        "company": company,
+        "count": row['count'],
+        "avg_sal": sal_display
+    })
 
 # --- RENDER ---
-output_html = html_template.format(
+env = Environment(loader=FileSystemLoader('templates'))
+template = env.get_template('report.html')
+
+output_html = template.render(
     date=datetime.date.today().strftime("%d. %B %Y"),
     total_jobs=len(df),
     med_salary=med_sal_fmt,
     tech_premium=tech_premium,
     en_share=en_share,
-    innovator_rows=innovator_rows,
+    innovators=innovators,
     json_source=fig_vol.to_json(),
     json_contract=fig_cont.to_json(),
     json_tech=fig_tech.to_json(),
     json_salary=fig_sal.to_json()
 )
 
-# Ensure 'public' dir exists
 os.makedirs("public", exist_ok=True)
 with open("public/index.html", "w", encoding="utf-8") as f:
     f.write(output_html)

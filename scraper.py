@@ -2,8 +2,10 @@ import asyncio
 import random
 import re
 import logging
+import yaml
+import os
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from playwright.async_api import async_playwright
 from playwright_stealth import stealth
@@ -13,6 +15,10 @@ import analyzer
 from analyzer import JobSignal, IntelligenceCore
 
 # --- CONFIGURATION ---
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config", "selectors.yaml")
+with open(CONFIG_PATH, 'r') as f:
+    CONFIG = yaml.safe_load(f)
+
 CONCURRENCY = 5
 CORE = IntelligenceCore()
 
@@ -31,6 +37,7 @@ class ScrapeEngine:
     def __init__(self, browser):
         self.browser = browser
         self.semaphore = asyncio.Semaphore(CONCURRENCY)
+        self.common_config = CONFIG.get('common', {})
 
     async def get_context(self):
         context = await self.browser.new_context(
@@ -40,8 +47,11 @@ class ScrapeEngine:
         return context
 
     async def intercept_noise(self, route):
-        bad_patterns = ["google-analytics", "hotjar", "facebook", "pixel", "doubleclick"]
-        if route.request.resource_type in ["image", "media", "font"]:
+        noise_cfg = self.common_config.get('intercept_noise', {})
+        bad_patterns = noise_cfg.get('bad_patterns', [])
+        resource_types = noise_cfg.get('resource_types', [])
+        
+        if route.request.resource_type in resource_types:
             await route.abort()
         elif any(p in route.request.url for p in bad_patterns):
             await route.abort()
@@ -62,7 +72,8 @@ class ScrapeEngine:
                 await page.goto(signal.link, timeout=30000, wait_until="domcontentloaded")
 
                 # Expand "Read More"
-                for sel in ["button:has-text('Zobrazit více')", "button:has-text('Číst dál')", ".job-detail__description-button", "text=Read more"]:
+                buttons = self.common_config.get('read_more_buttons', [])
+                for sel in buttons:
                     try:
                         btn = page.locator(sel)
                         if await btn.is_visible():
@@ -89,16 +100,40 @@ class ScrapeEngine:
                 await page.close()
 
 
-class JobsCzScraper:
-    """Specialized parser for Jobs.cz / Prace.cz logic."""
-    
-    def __init__(self, engine: ScrapeEngine):
+class BaseScraper:
+    """Base class for all site-specific scrapers."""
+    def __init__(self, engine: ScrapeEngine, site_name: str):
         self.engine = engine
+        self.site_name = site_name
+        self.config = CONFIG.get('scrapers', {}).get(site_name, {})
 
-    async def run(self, name, base_url, card_sel, title_sel, limit=50):
+    async def run(self, limit: int):
+        raise NotImplementedError
+
+    async def extract_company(self, card):
+        selectors = self.config.get('company_selectors', [])
+        if not selectors and 'company' in self.config:
+            selectors = [self.config['company']]
+            
+        for sel in selectors:
+            el = await card.query_selector(sel)
+            if el:
+                txt = (await el.inner_text()).strip()
+                if txt and len(txt) > 1:
+                    return txt
+        return "Unknown Employer"
+
+
+class PagedScraper(BaseScraper):
+    """Handles scrapers with numbered pagination (Jobs.cz, Prace.cz, Cocuma)."""
+    async def run(self, limit=50):
         context = await self.engine.get_context()
         page = await context.new_page()
-        pbar = tqdm(total=limit, desc=f"[*] {name}", unit="pg")
+        pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="pg")
+
+        base_url = self.config.get('base_url')
+        card_sel = self.config.get('card')
+        title_sel = self.config.get('title')
 
         for page_num in range(1, limit + 1):
             try:
@@ -112,31 +147,29 @@ class JobsCzScraper:
                     title_el = await card.query_selector(title_sel)
                     if not title_el: continue
                     
-                    # Robust company name extraction
-                    company_name = "Unknown Employer"
-                    for sel in [".SearchResultCard__footerItem", "[data-test='employer-name']", ".search-result__advert__box__item--company", "span.Tag--neutral", ".employer-name"]:
-                        el = await card.query_selector(sel)
-                        if el:
-                            txt = (await el.inner_text()).strip()
-                            if txt and len(txt) > 1:
-                                company_name = txt
-                                break
+                    company_name = await self.extract_company(card)
                     
                     link = await title_el.get_attribute("href")
                     if not link.startswith("http"):
-                        link = ("https://www.jobs.cz" if "jobs" in base_url else "https://www.prace.cz") + link
+                        domain = "https://www.jobs.cz" if "jobs" in base_url else "https://www.prace.cz"
+                        if "cocuma" in base_url: domain = "https://www.cocuma.cz"
+                        link = domain + link
                     
                     if CORE.is_known(link): continue
 
-                    # Pre-extract salary
-                    sal_el = await card.query_selector("span.Tag--success, .search-result__advert__box__item--salary")
+                    # Salary
+                    salary = None
+                    sal_sel = self.config.get('salary')
+                    if sal_sel:
+                        sal_el = await card.query_selector(sal_sel)
+                        salary = await sal_el.inner_text() if sal_el else None
                     
                     sig = JobSignal(
                         title=await title_el.inner_text(),
-                        company="Market Signal",
+                        company=company_name,
                         link=link,
-                        source=name,
-                        salary=await sal_el.inner_text() if sal_el else None
+                        source=self.site_name,
+                        salary=salary
                     )
                     batch.append(sig)
 
@@ -147,46 +180,43 @@ class JobsCzScraper:
                 pbar.update(1)
                 if not batch and page_num > 5: break
             except Exception as e:
-                logger.debug(f"Error in {name} loop: {e}")
+                logger.debug(f"Error in {self.site_name} loop: {e}")
                 break
         
         await context.close()
 
 
-class StartupJobsScraper:
-    def __init__(self, engine: ScrapeEngine):
-        self.engine = engine
-
+class StartupJobsScraper(BaseScraper):
     async def run(self, limit=500):
-        name = "StartupJobs"
         context = await self.engine.get_context()
         page = await context.new_page()
-        await page.goto("https://www.startupjobs.cz/nabidky")
+        await page.goto(self.config['base_url'])
         try: await page.get_by_text("Přijmout").click(timeout=5000)
         except: pass
         
-        pbar = tqdm(total=limit, desc=f"[*] {name}", unit="ads")
+        pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
         last_count = 0
+        card_sel = self.config['card']
+        
         while last_count < limit:
             await page.keyboard.press("End")
             await asyncio.sleep(2)
-            cards = await page.query_selector_all("a[href*='/nabidka/']")
+            cards = await page.query_selector_all(card_sel)
             if len(cards) == last_count: break
             pbar.update(min(len(cards) - last_count, limit - last_count))
             last_count = len(cards)
         
-        cards = await page.query_selector_all("a[href*='/nabidka/']")
+        cards = await page.query_selector_all(card_sel)
         batch = []
         for card in cards[:limit]:
             link = "https://www.startupjobs.cz" + await card.get_attribute("href")
             if CORE.is_known(link): continue
             
-            # Extract company name from StartupJobs card
-            company_el = await card.query_selector("div.flex.items-center.text-sm.text-gray-500 span, .employer-name")
-            company_name = (await company_el.inner_text()).strip() if company_el else "Startup"
+            company_name = await self.extract_company(card)
 
             salary = None
-            items = await card.query_selector_all("li")
+            sal_item = self.config.get('salary_list_item', 'li')
+            items = await card.query_selector_all(sal_item)
             for item in items:
                 txt = await item.inner_text()
                 if "Kč" in txt or "EUR" in txt:
@@ -197,7 +227,7 @@ class StartupJobsScraper:
                 title=(await card.inner_text()).split("\n")[0],
                 company=company_name,
                 link=link,
-                source=name,
+                source=self.site_name,
                 salary=salary
             )
             batch.append(sig)
@@ -209,37 +239,32 @@ class StartupJobsScraper:
         await context.close()
 
 
-class WttjScraper:
-    def __init__(self, engine: ScrapeEngine):
-        self.engine = engine
-
+class WttjScraper(BaseScraper):
     async def run(self, limit=200):
-        name = "WTTJ"
         context = await self.engine.get_context()
         page = await context.new_page()
-        await page.goto("https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia")
-        pbar = tqdm(total=limit, desc=f"[*] {name}", unit="ads")
+        await page.goto(self.config['base_url'])
+        pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
         for _ in range(20): 
             await page.keyboard.press("PageDown")
             await asyncio.sleep(1)
         
-        cards = await page.query_selector_all("li.ais-Hits-item")
+        card_sel = self.config['card']
+        cards = await page.query_selector_all(card_sel)
         batch = []
         for card in cards[:limit]:
             try:
-                link_el = await card.query_selector("a")
+                link_el = await card.query_selector(self.config['link'])
                 link = "https://www.welcometothejungle.com" + await link_el.get_attribute("href")
                 if CORE.is_known(link): continue
                 
-                # Extract company from WTTJ card
-                company_el = await card.query_selector("span.sc-688y7f-0") # Common WTTJ company selector
-                company_name = (await company_el.inner_text()).strip() if company_el else "WTTJ Partner"
+                company_name = await self.extract_company(card)
                 
                 sig = JobSignal(
-                    title=await (await card.query_selector("h4")).inner_text(),
+                    title=await (await card.query_selector(self.config['title'])).inner_text(),
                     company=company_name,
                     link=link,
-                    source=name
+                    source=self.site_name
                 )
                 batch.append(sig)
                 pbar.update(1)
@@ -251,62 +276,30 @@ class WttjScraper:
         await context.close()
 
 
-class CocumaScraper:
-    def __init__(self, engine: ScrapeEngine):
-        self.engine = engine
-
-    async def run(self, limit=20):
-        name = "Cocuma"
-        context = await self.engine.get_context()
-        page = await context.new_page()
-        pbar = tqdm(total=limit, desc=f"[*] {name}", unit="pg")
-        for page_num in range(1, limit + 1):
-            try:
-                await page.goto(f"https://www.cocuma.cz/jobs/?page={page_num}/")
-                cards = await page.query_selector_all("a.job-thumbnail")
-                if not cards: break
-                batch = []
-                for card in cards:
-                    link = "https://www.cocuma.cz" + await card.get_attribute("href")
-                    if CORE.is_known(link): continue
-                    sig = JobSignal(
-                        title=await (await card.query_selector(".job-thumbnail-title")).inner_text(),
-                        company=await (await card.query_selector(".job-thumbnail-company")).inner_text(),
-                        link=link,
-                        source=name
-                    )
-                    batch.append(sig)
-                if batch:
-                    await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
-                    for s in batch: CORE.add_signal(s)
-                pbar.update(1)
-            except: break
-        await context.close()
-
-
-class LinkedinScraper:
-    def __init__(self, engine: ScrapeEngine):
-        self.engine = engine
-
+class LinkedinScraper(BaseScraper):
     async def run(self, limit=100):
-        name = "LinkedIn"
         context = await self.engine.get_context()
         page = await context.new_page()
-        await page.goto("https://www.linkedin.com/jobs/search?keywords=&location=Czechia")
-        pbar = tqdm(total=limit, desc=f"[*] {name}", unit="ads")
+        await page.goto(self.config['base_url'])
+        pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
         for _ in range(15):
             await page.keyboard.press("End")
             await asyncio.sleep(2)
-        cards = await page.query_selector_all("div.base-card")
+        
+        card_sel = self.config['card']
+        cards = await page.query_selector_all(card_sel)
         for card in cards[:limit]:
             try:
-                link = (await (await card.query_selector("a")).get_attribute("href")).split('?')[0]
+                link = (await (await card.query_selector(self.config['link'])).get_attribute("href")).split('?')[0]
                 if CORE.is_known(link): continue
+                
+                company_name = await self.extract_company(card)
+                
                 CORE.add_signal(JobSignal(
-                    title=await (await card.query_selector("h3")).inner_text(),
-                    company=await (await card.query_selector("h4")).inner_text(),
+                    title=await (await card.query_selector(self.config['title'])).inner_text(),
+                    company=company_name,
                     link=link,
-                    source=name,
+                    source=self.site_name,
                     description="LinkedIn Market Signal"
                 ))
                 pbar.update(1)
@@ -315,28 +308,28 @@ class LinkedinScraper:
 
 
 async def main():
-    logger.info("--- OMNISCRAPE v6.1: INCREMENTAL SYNC MODE ---")
+    logger.info("--- OMNISCRAPE v7.0: STRATEGY PATTERN & CONFIG-DRIVEN ---")
     
-    # Ensure schema is up to date (DuckDB doesn't do migrations easily, so we try to add the column)
     try:
         CORE.con.execute("ALTER TABLE signals ADD COLUMN last_seen_at TIMESTAMP")
     except:
-        pass # Column likely exists
+        pass
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         engine = ScrapeEngine(browser)
         
-        # Scrapers
-        jobs_cz = JobsCzScraper(engine)
-        startup = StartupJobsScraper(engine)
-        wttj = WttjScraper(engine)
-        cocuma = CocumaScraper(engine)
-        linkedin = LinkedinScraper(engine)
+        # Initialize scrapers via the new strategy pattern
+        jobs_cz = PagedScraper(engine, "Jobs.cz")
+        prace_cz = PagedScraper(engine, "Prace.cz")
+        cocuma = PagedScraper(engine, "Cocuma")
+        startup = StartupJobsScraper(engine, "StartupJobs")
+        wttj = WttjScraper(engine, "WTTJ")
+        linkedin = LinkedinScraper(engine, "LinkedIn")
         
         await asyncio.gather(
-            jobs_cz.run("Jobs.cz", "https://www.jobs.cz/prace/?page=", "article.SearchResultCard", "h2.SearchResultCard__title > a", limit=50),
-            jobs_cz.run("Prace.cz", "https://www.prace.cz/nabidky/?page=", "li.search-result__advert", "a.link", limit=50),
+            jobs_cz.run(limit=50),
+            prace_cz.run(limit=50),
             startup.run(limit=500),
             wttj.run(limit=200),
             cocuma.run(limit=10),
@@ -345,11 +338,9 @@ async def main():
         
         await browser.close()
     
-    # Post-scrape cleanup
     CORE.cleanup_expired(threshold_minutes=30)
     logger.info("--- INTEL CORE SYNCHRONIZED ---")
 
 if __name__ == "__main__":
-    # Migration: Update existing data if requested
     CORE.reanalyze_all()
     asyncio.run(main())

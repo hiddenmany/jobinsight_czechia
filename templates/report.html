@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Market Snapshot 2026</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background: #f8f9fa; margin: 0; padding: 40px 20px; color: #111; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 60px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border-radius: 12px; }
+        
+        h1 { font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; margin-bottom: 0.1em; color: #111; }
+        h1 span { color: #0055FF; }
+        
+        .subtitle { color: #666; font-size: 1.2rem; margin-bottom: 60px; border-bottom: 3px solid #111; padding-bottom: 20px; display: flex; justify-content: space-between; }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; margin-bottom: 60px; }
+        .kpi-card { background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #eee; border-left: 4px solid #0055FF; transition: transform 0.2s; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        
+        .kpi-val { font-size: 2.8rem; font-weight: 700; line-height: 1; color: #111; }
+        .kpi-label { font-size: 0.85rem; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-top: 10px; font-weight: 600; }
+        
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin-bottom: 60px; }
+        .section-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; border-left: 4px solid #111; padding-left: 15px; display: flex; align-items: center; }
+        .section-title span { color: #0055FF; margin-right: 10px; }
+        
+        .footer { margin-top: 80px; font-size: 0.9rem; color: #888; text-align: center; border-top: 1px solid #eee; padding-top: 30px; }
+        
+        @media(max-width: 768px) { .kpi-grid, .chart-grid { grid-template-columns: 1fr; } .container { padding: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Jobs.cz <span>Insight</span></h1>
+        <div class="subtitle">
+            <span>Weekly Market Intelligence Report</span>
+            <span>{{ date }}</span>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-val">{{ total_jobs }}</div>
+                <div class="kpi-label">Active Signals</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-val">{{ med_salary }}k</div>
+                <div class="kpi-label">Median Wage (CZK)</div>
+            </div>
+             <div class="kpi-card" style="border-left-color: #00FF88;">
+                <div class="kpi-val">+{{ tech_premium }}%</div>
+                <div class="kpi-label">Modern Tech Premium</div>
+            </div>
+             <div class="kpi-card">
+                <div class="kpi-val">{{ en_share }}%</div>
+                <div class="kpi-label">English Friendly</div>
+            </div>
+        </div>
+
+        <div class="chart-grid">
+            <div>
+                <div class="section-title"><span>01</span> Source Distribution</div>
+                <div id="chart_source"></div>
+            </div>
+            <div>
+                <div class="section-title"><span>02</span> Contract Types</div>
+                <div id="chart_contract"></div>
+            </div>
+        </div>
+
+        <div class="chart-grid">
+            <div>
+                <div class="section-title"><span>03</span> Tech Stack Gap</div>
+                <div id="chart_tech"></div>
+            </div>
+            <div>
+                <div class="section-title"><span>04</span> Salary by Platform</div>
+                <div id="chart_salary"></div>
+            </div>
+        </div>
+
+        <div style="margin-top: 60px;">
+            <div class="section-title"><span>05</span> Top Innovators (Hiring Volume in Modern Stack)</div>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="text-align: left; border-bottom: 2px solid #111;">
+                            <th style="padding: 12px;">Company</th>
+                            <th style="padding: 12px;">Modern Signals</th>
+                            <th style="padding: 12px;">Avg. Salary (Est)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for innovator in innovators %}
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 12px; font-weight: 600;">{{ innovator.company }}</td>
+                            <td style="padding: 12px;">{{ innovator.count }}</td>
+                            <td style="padding: 12px; color: #0055FF; font-weight: bold;">{{ innovator.avg_sal }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan='3' style='padding: 20px; text-align: center; color: #888;'>Insufficient 'Modern' signals for density analysis.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            Generated by <a href="https://github.com/hiddenmany/jobinsight_czechia" style="color:#0055FF; font-weight:bold; text-decoration:none;">JobsCzInsight</a> Cloud Scraper.
+        </div>
+    </div>
+    
+    <script>
+        var source_data = {{ json_source | safe }};
+        Plotly.newPlot('chart_source', source_data.data, source_data.layout);
+
+        var contract_data = {{ json_contract | safe }};
+        Plotly.newPlot('chart_contract', contract_data.data, contract_data.layout);
+
+        var tech_data = {{ json_tech | safe }};
+        Plotly.newPlot('chart_tech', tech_data.data, tech_data.layout);
+
+        var salary_data = {{ json_salary | safe }};
+        Plotly.newPlot('chart_salary', salary_data.data, salary_data.layout);
+    </script>
+</body>
+</html>

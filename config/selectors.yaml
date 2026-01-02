@@ -1,0 +1,66 @@
+common:
+  read_more_buttons:
+    - "button:has-text('Zobrazit více')"
+    - "button:has-text('Číst dál')"
+    - ".job-detail__description-button"
+    - "text=Read more"
+  intercept_noise:
+    bad_patterns:
+      - "google-analytics"
+      - "hotjar"
+      - "facebook"
+      - "pixel"
+      - "doubleclick"
+    resource_types:
+      - "image"
+      - "media"
+      - "font"
+
+scrapers:
+  Jobs.cz:
+    base_url: "https://www.jobs.cz/prace/?page="
+    card: "article.SearchResultCard"
+    title: "h2.SearchResultCard__title > a"
+    company_selectors:
+      - ".SearchResultCard__footerItem"
+      - "[data-test='employer-name']"
+      - "span.Tag--neutral"
+    salary: "span.Tag--success"
+    
+  Prace.cz:
+    base_url: "https://www.prace.cz/nabidky/?page="
+    card: "li.search-result__advert"
+    title: "a.link"
+    company_selectors:
+      - ".search-result__advert__box__item--company"
+    salary: ".search-result__advert__box__item--salary"
+
+  StartupJobs:
+    base_url: "https://www.startupjobs.cz/nabidky"
+    card: "a[href*='/nabidka/']"
+    title: "self" # title is within the card itself
+    company_selectors:
+      - "div.flex.items-center.text-sm.text-gray-500 span"
+      - ".employer-name"
+    salary_list_item: "li"
+
+  WTTJ:
+    base_url: "https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia"
+    card: "li.ais-Hits-item"
+    title: "h4"
+    link: "a"
+    company_selectors:
+      - "span.sc-688y7f-0"
+
+  Cocuma:
+    base_url: "https://www.cocuma.cz/jobs/?page="
+    card: "a.job-thumbnail"
+    title: ".job-thumbnail-title"
+    company: ".job-thumbnail-company"
+
+  LinkedIn:
+    base_url: "https://www.linkedin.com/jobs/search?keywords=&location=Czechia"
+    card: "div.base-card"
+    title: "h3"
+    company: "h4"
+    link: "a"
