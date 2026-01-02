@@ -1,4 +1,4 @@
-# JobsCzInsight: Czech Market Intelligence
+# Czech Market Intelligence
 
 [![Market Scraper](https://github.com/hiddenmany/jobinsight_czechia/actions/workflows/weekly_scrape.yml/badge.svg)](https://github.com/hiddenmany/jobinsight_czechia/actions/workflows/weekly_scrape.yml)
 [![Live Dashboard](https://img.shields.io/badge/Live-Market_Snapshot-0055FF?style=for-the-badge&logo=github)](https://hiddenmany.github.io/jobinsight_czechia/)
