@@ -27,7 +27,9 @@ en_share = int(lang_barrier.get('English Friendly', 0) / len(df) * 100) if len(d
 
 # --- CHART GENERATION (JSON) ---
 layout_defaults = dict(
-    margin=dict(l=0,r=0,t=0,b=0),
+    margin=dict(l=20,r=20,t=30,b=20),
+    xaxis=dict(automargin=True),
+    yaxis=dict(automargin=True),
     height=300,
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',

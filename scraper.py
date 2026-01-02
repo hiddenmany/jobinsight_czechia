@@ -199,6 +199,12 @@ class StartupJobsScraper(BaseScraper):
             last_count = 0
             card_sel = self.config['card']
             
+            # Wait for content to load
+            try:
+                await page.wait_for_selector(card_sel, timeout=15000)
+            except:
+                logger.warning(f"{self.site_name}: Timed out waiting for {card_sel}")
+
             # Robust Infinite Scroll with Button Click
             for _ in range(20): 
                 await page.keyboard.press("End")
@@ -213,6 +219,7 @@ class StartupJobsScraper(BaseScraper):
                 except: pass
                 
                 cards = await page.query_selector_all(card_sel)
+                
                 if len(cards) >= limit: break
                 
                 if len(cards) == last_count:
@@ -232,7 +239,13 @@ class StartupJobsScraper(BaseScraper):
                     href = await card.get_attribute("href")
                     if not href: continue
                     
-                    link = "https://www.startupjobs.cz" + href
+                    if href.startswith("http"):
+                        link = href
+                    elif "cocuma" in self.config['base_url']:
+                        link = "https://www.cocuma.cz" + href
+                    else:
+                        link = "https://www.startupjobs.cz" + href
+
                     if CORE.is_known(link): continue
                     
                     company_name = await self.extract_company(card)

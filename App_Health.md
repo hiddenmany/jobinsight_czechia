@@ -1,21 +1,18 @@
-# JobsCzInsight App Health
+# App Health Check - JobsCzInsight
 
-## Status: MAINTENANCE (CI/CD Fixes) 🔧
-**Last Verified:** 2026-01-01
-**Version:** 16.1 (Modular Scraper Architecture + CI Fixes)
+**Date:** 2026-01-02
+**Status:** Healthy
 
-## Core Metrics
-- **Visuals:** [PASS] - Electric Blue accents + Soft Black palette. High contrast.
-- **Scraper:** [PASS] - Class-based modular architecture (`ScrapeEngine`, `JobsCzScraper`, etc.).
-- **Database:** [PASS] - DuckDB migration complete.
-- **Type Safety:** [PASS] - `JobSignal` dataclasses enforced across ingestion pipeline.
+## Recent Updates
+- **Cocuma Scraper Fix:** Resolved an issue where Cocuma listings were failing to be scraped due to a hardcoded domain in `StartupJobsScraper`. The scraper now dynamically handles Cocuma URLs. Added robust `wait_for_selector` logic to prevent race conditions during page load.
+- **Visual Fix (Charts):** Corrected `generate_report.py` to use `automargin=True` for Plotly charts.
+- **Visual Fix (Layout):** Updated `templates/report.html` to handle text overflows.
+- **Process Management:** Handled a locked DuckDB database file.
 
-## Recent Upgrades
-- **DevOps:** Fixed `ModuleNotFoundError: tqdm` in GitHub Actions by explicitly ensuring it's in `requirements.txt`.
-- **Refactoring:** Complete rewrite of `scraper.py` into testable, isolated classes.
-- **Resilience:** Improved error handling in main loop; failed scrapers won't crash the entire job.
-- **Hygiene:** Pruned dependencies and standardized on Black-style formatting.
+## Current State
+- **Data Pipeline:** Functional. `analyzer.py` correctly reads from `data/intelligence.db`.
+- **Report Generation:** `generate_report.py` runs successfully.
+- **Frontend:** `templates/report.html` is robust against long text and responsive.
 
-## Known Risks
-- **Cloud Scraping:** First run may take ~20 mins due to deep detail extraction.
-- **LinkedIn:** Highly sensitive to bot detection; currently monitored.
+## Next Steps
+- Verify the weekly automated scrape on GitHub Actions.
