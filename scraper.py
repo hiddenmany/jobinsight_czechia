@@ -19,7 +19,7 @@ CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config", "selectors.yaml"
 with open(CONFIG_PATH, 'r') as f:
     CONFIG = yaml.safe_load(f)
 
-CONCURRENCY = 5
+CONCURRENCY = 10
 CORE = IntelligenceCore()
 
 # Setup logging
@@ -206,7 +206,7 @@ class StartupJobsScraper(BaseScraper):
                 logger.warning(f"{self.site_name}: Timed out waiting for {card_sel}")
 
             # Robust Infinite Scroll with Button Click
-            for _ in range(20): 
+            for _ in range(50): 
                 await page.keyboard.press("End")
                 await asyncio.sleep(2)
                 
@@ -293,7 +293,7 @@ class WttjScraper(BaseScraper):
         pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
         
         # Scroll loop
-        for _ in range(25): 
+        for _ in range(40): 
             await page.keyboard.press("End")
             await asyncio.sleep(1.5)
         
@@ -336,7 +336,7 @@ class LinkedinScraper(BaseScraper):
         page = await context.new_page()
         await page.goto(self.config['base_url'])
         pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
-        for _ in range(30):
+        for _ in range(50):
             await page.keyboard.press("End")
             await asyncio.sleep(1.5)
         
@@ -384,12 +384,12 @@ async def main():
         linkedin = LinkedinScraper(engine, "LinkedIn")
         
         await asyncio.gather(
-            jobs_cz.run(limit=50),
-            prace_cz.run(limit=50),
+            jobs_cz.run(limit=100),    # 100 pages * 20 ads = 2000
+            prace_cz.run(limit=100),   # 100 pages * 20 ads = 2000
             startup.run(limit=500),
-            wttj.run(limit=200),
-            cocuma.run(limit=50), # Cocuma: Increase limit to catch all listings
-            linkedin.run(limit=100)
+            wttj.run(limit=500),
+            cocuma.run(limit=500),    # Will naturally stop at max available (~50)
+            linkedin.run(limit=500)
         )
         
         await browser.close()

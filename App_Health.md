@@ -1,20 +1,20 @@
 # JobsCzInsight App Health
 
-## Status: REPORTING FIXES 🛠️
+## Status: HIGH-VOLUME MODE 🚀
 **Last Verified:** 2026-01-02
-**Version:** 16.3 (Data Integrity Patch)
+**Version:** 16.4 (Volume & Depth Expansion)
 
 ## Core Metrics
 - **Visuals:** [PASS] - Electric Blue accents + Soft Black palette.
-- **Scraper:** [PASS] - Cocuma base_url fixed, Limits increased, Cleanup threshold optimized (180m).
-- **Database:** [SYNCING] - Local scrape completing, Cloud report being patched.
+- **Scraper:** [PASS] - Deep Scrape enabled (Jobs/Prace: 2000, Others: 500). Concurrency increased (10).
+- **Database:** [SYNCING] - Large batch ingestion in progress.
 - **Reporting:** [FIXED] - Solved "Unknown Employer" & "Negative HPP" bugs.
 
 ## Recent Upgrades
-- **Cocuma:** Fixed `base_url` (removed `?page=`) and increased limit to 50 to capture full market.
-- **Cleanup:** Increased expiry threshold to 180 minutes to prevent data loss during long runs.
-- **WTTJ/LinkedIn:** Improved infinite scroll logic (increased scroll count/wait times).
-- **Selectors:** Hardened `Jobs.cz` company extraction to ignore "Praha/Location" tags.
+- **Volume Expansion:** Increased scrape depth to 2000 for Jobs.cz/Prace.cz and 500 for secondary sources.
+- **Throughput:** Increased detail-scrape concurrency to 10 to maintain speed with higher volume.
+- **Cocuma:** Fixed `base_url` (removed `?page=`) and increased limit to 500 (max available).
+- **Cleanup:** 180-minute threshold to support the longer, deeper scrape sessions.
 - **Analyzer:** Rewrote Contract Split logic to be mutually exclusive (Priority: ICO > Brigada > HPP).
 - **Visualization:** Added sample size (n=X) to Salary Chart for context.
 - **Reliability:** Auto-trigger `reanalyze_all()` if tech signals are missing in report generation.
