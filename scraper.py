@@ -181,6 +181,10 @@ class StartupJobsScraper:
             link = "https://www.startupjobs.cz" + await card.get_attribute("href")
             if CORE.is_known(link): continue
             
+            # Extract company name from StartupJobs card
+            company_el = await card.query_selector("div.flex.items-center.text-sm.text-gray-500 span, .employer-name")
+            company_name = (await company_el.inner_text()).strip() if company_el else "Startup"
+
             salary = None
             items = await card.query_selector_all("li")
             for item in items:
@@ -191,7 +195,7 @@ class StartupJobsScraper:
 
             sig = JobSignal(
                 title=(await card.inner_text()).split("\n")[0],
-                company="Startup",
+                company=company_name,
                 link=link,
                 source=name,
                 salary=salary
@@ -226,9 +230,14 @@ class WttjScraper:
                 link_el = await card.query_selector("a")
                 link = "https://www.welcometothejungle.com" + await link_el.get_attribute("href")
                 if CORE.is_known(link): continue
+                
+                # Extract company from WTTJ card
+                company_el = await card.query_selector("span.sc-688y7f-0") # Common WTTJ company selector
+                company_name = (await company_el.inner_text()).strip() if company_el else "WTTJ Partner"
+                
                 sig = JobSignal(
                     title=await (await card.query_selector("h4")).inner_text(),
-                    company="WTTJ Partner",
+                    company=company_name,
                     link=link,
                     source=name
                 )

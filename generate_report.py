@@ -165,10 +165,10 @@ layout_defaults = dict(
 )
 
 # 1. Source Distribution
-vol_stats = df['source'].value_counts()
-fig_vol = px.bar(vol_stats, orientation='h', color_discrete_sequence=['#111'])
+vol_stats = df['source'].value_counts().reset_index()
+vol_stats.columns = ['Source', 'Count']
+fig_vol = px.bar(vol_stats, y='Source', x='Count', orientation='h', color_discrete_sequence=['#0055FF'])
 fig_vol.update_layout(**layout_defaults)
-fig_vol.update_traces(marker_color='#0055FF') # Blue bars
 
 # 2. Contract Types
 contracts = intel.get_contract_split()
@@ -176,24 +176,25 @@ fig_cont = px.pie(
     values=list(contracts.values()), 
     names=list(contracts.keys()), 
     hole=0.6, 
-    color_discrete_sequence=['#0055FF', '#333333', '#999999'] 
+    color_discrete_sequence=['#0055FF', '#333333', '#999999', '#CCCCCC'] 
 )
 fig_cont.update_layout(**layout_defaults)
 
-# 3. Tech Stack
-stack = intel.get_tech_stack_lag()
-df_stack = pd.DataFrame([
-    {"Type": "Modern", "Count": stack.get('Modern', 0)}, 
-    {"Type": "Legacy", "Count": stack.get('Dinosaur', 0)}
-])
-fig_tech = px.bar(df_stack, x="Count", y="Type", color="Type", color_discrete_map={"Modern": "#0055FF", "Legacy": "#333333"})
+# 3. Tech Stack Gap
+stack = intel.get_tech_stack_lag().reset_index()
+stack.columns = ['Status', 'Count']
+# Ensure all categories exist for visual consistency
+all_cats = pd.DataFrame({'Status': ['Modern', 'Stable', 'Dinosaur']})
+stack = all_cats.merge(stack, on='Status', how='left').fillna(0)
+fig_tech = px.bar(stack, x="Count", y="Status", color="Status", 
+                 color_discrete_map={"Modern": "#0055FF", "Stable": "#999999", "Dinosaur": "#333333"})
 fig_tech.update_layout(**layout_defaults)
 
 # 4. Salary by Platform
-plat_stats = df[df['avg_salary'] > 0].groupby('source')['avg_salary'].median().sort_values(ascending=True)
-fig_sal = px.bar(plat_stats, orientation='h', color_discrete_sequence=['#333'])
+plat_stats = df[df['avg_salary'] > 0].groupby('source')['avg_salary'].median().sort_values(ascending=True).reset_index()
+plat_stats.columns = ['Source', 'Median Salary']
+fig_sal = px.bar(plat_stats, y='Source', x='Median Salary', orientation='h', color_discrete_sequence=['#111'])
 fig_sal.update_layout(**layout_defaults)
-fig_sal.update_traces(marker_color='#111')
 
 # 5. Top Innovators (Market Density)
 modern_df = df[df['tech_status'] == 'Modern']
