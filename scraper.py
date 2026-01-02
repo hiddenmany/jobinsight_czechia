@@ -111,6 +111,11 @@ class JobsCzScraper:
                 for card in cards:
                     title_el = await card.query_selector(title_sel)
                     if not title_el: continue
+                    
+                    # Better company extraction
+                    company_el = await card.query_selector(".SearchResultCard__footerItem, [data-test='employer-name'], .search-result__advert__box__item--company")
+                    company_name = await company_el.inner_text() if company_el else "Unknown Entity"
+                    
                     link = await title_el.get_attribute("href")
                     if not link.startswith("http"):
                         link = ("https://www.jobs.cz" if "jobs" in base_url else "https://www.prace.cz") + link

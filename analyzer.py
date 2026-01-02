@@ -44,6 +44,17 @@ class SemanticEngine:
     """Simulates AI logic using high-fidelity keyword weighting (NER Lite)."""
 
     @staticmethod
+    def is_tech_relevant(title, description):
+        """Filters out non-tech signals to keep the report focused."""
+        tech_keywords = {
+            "developer", "engineer", "data", "analyst", "manager", "product", 
+            "designer", "software", "cloud", "devops", "security", "tester",
+            "qa", "architect", "consultant", "scrum", "agile", "it", "systems"
+        }
+        text = f"{title} {description}".lower()
+        return any(k in text for k in tech_keywords)
+
+    @staticmethod
     def analyze_toxicity(description):
         """Detects toxic red flags in JDs."""
         flags = [
@@ -133,6 +144,10 @@ class IntelligenceCore:
 
     def add_signal(self, signal: JobSignal):
         """Adds a new signal with semantic enrichment."""
+        # Filter out non-tech signals
+        if not SemanticEngine.is_tech_relevant(signal.title, signal.description):
+            return
+
         # Calculate semantic metrics
         tox = SemanticEngine.analyze_toxicity(signal.description)
         tech = SemanticEngine.analyze_tech_lag(signal.description)
@@ -234,12 +249,11 @@ class MarketIntelligence:
         en_stops = {"the", "and", "with", "team", "from", "for", "that", "this", "our", "will"}
 
         def check_en(text):
-            if not text:
+            if not text or len(str(text)) < 200: # Short texts are rarely full JDs
                 return False
-            # Normalize: lowercase and remove non-alphanumeric for better matching
             words = set(re.findall(r'\b\w+\b', str(text).lower()))
-            # Intersection of 3+ words is a strong signal for English JD
-            return len(words.intersection(en_stops)) >= 3
+            # Requirement: 5+ unique common English words and at least 50 words total
+            return len(words.intersection(en_stops)) >= 5 and len(words) > 50
 
         en_count = self.df["description"].apply(check_en).sum()
         return {"English Friendly": en_count, "Czech Only": len(self.df) - en_count}
