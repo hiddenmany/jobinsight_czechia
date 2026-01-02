@@ -1,14 +1,6 @@
 name: Weekly Job Scraper
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - '.gitignore'
-      - '.gemini/**'
-      - 'docs/**'
   schedule:
     - cron: '0 8 * * 1' # Runs at 08:00 UTC every Monday
   workflow_dispatch:      # Allows you to click "Run Now" button manually
