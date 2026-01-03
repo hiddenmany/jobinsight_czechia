@@ -240,11 +240,11 @@
                 <div style="display: flex; gap: 30px; flex-wrap: wrap;">
                     <div>
                         <span style="color: #666;">Remote pozice:</span>
-                        <span style="font-weight: 700; color: #0055FF; margin-left: 8px;">{{ remote_premium.remote_median | int | format(",") }} Kč</span>
+                        <span style="font-weight: 700; color: #0055FF; margin-left: 8px;">{{ "{:,}".format(remote_premium.remote_median | int) }} Kč</span>
                     </div>
                     <div>
                         <span style="color: #666;">Kancelářské pozice:</span>
-                        <span style="font-weight: 700; margin-left: 8px;">{{ remote_premium.office_median | int | format(",") }} Kč</span>
+                        <span style="font-weight: 700; margin-left: 8px;">{{ "{:,}".format(remote_premium.office_median | int) }} Kč</span>
                     </div>
                     <div>
                         <span style="color: #666;">Prémie:</span>

@@ -17,11 +17,16 @@ Database:                 7,131 signals (updates pending next full run)
 ## v1.1 - Stable Scraper Edition
 
 ### FIXES APPLIED (2026-01-03) ✅
-- **Navigation Fix:** Resolved `net::ERR_FAILED` by preventing `intercept_noise` from aborting main navigation requests (caused by 'facebook' or 'pixel' in job slugs).
-- **Cocuma Recovery:** Fixed link extraction logic in `PagedScraper` to handle cards where the `<a>` tag is the card itself.
-- **WTTJ Refinement:** Updated card selector to `li[data-testid]` and title to `h2` to match current platform layout.
-- **StartupJobs Cleanup:** Refined title extraction using `.font-semibold` and restored missing salary regex logic.
-- **Metrics Consolidation:** Standardized `extraction_stats` across all scraper types for better monitoring.
+- **Navigation Fix:** Resolved `net::ERR_FAILED` by preventing `intercept_noise` from aborting main navigation requests.
+- **Cocuma Recovery:** Fixed link extraction logic in `PagedScraper`.
+- **WTTJ Refinement:** 
+  - Updated selectors to `h2`.
+  - **Fixed Infinite Scroll:** Replaced unreliable keyboard "End" press with JavaScript `window.scrollTo` to ensure content loading.
+- **LinkedIn Recovery:**
+  - Updated selectors for public job cards (`div.job-search-card`).
+  - Added "See more jobs" button clicker.
+  - Implemented JS scrolling for guest view.
+- **StartupJobs Cleanup:** Refined title extraction and restored salary regex.
 
 ## v1.0 - HR Intelligence Edition (Core Features)
 - **Role Classification:** 12 categories

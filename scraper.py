@@ -529,7 +529,9 @@ class WttjScraper(BaseScraper):
                 if shutdown_handler.is_shutdown_requested():
                     logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
                     break 
-                await page.keyboard.press("End")
+                
+                # Use JS scroll as End key might be flaky on some sites
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                 await asyncio.sleep(self.scroll_delay)
                 
                 cards = await page.query_selector_all(card_sel)
@@ -628,7 +630,16 @@ class LinkedinScraper(BaseScraper):
                     logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
                     break
                 
-                await page.keyboard.press("End")
+                # Try clicking "See more jobs" if present
+                try:
+                    btn = page.locator("button.infinite-scroller__show-more-button")
+                    if await btn.is_visible():
+                        await btn.click()
+                        await asyncio.sleep(2)
+                except Exception:
+                    pass
+
+                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                 await asyncio.sleep(self.scroll_delay)
                 
                 cards = await page.query_selector_all(card_sel)
