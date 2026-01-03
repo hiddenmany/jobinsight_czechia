@@ -37,3 +37,7 @@ GIT_STATUS_REPORT.md
 # Temporary deployment docs
 DEPLOYMENT_STATUS.md
 .cleanup_plan.txt
+
+# One-time analysis reports (keep locally)
+HR_EMPLOYER_VALUE_ANALYSIS.md
+VISUAL_REPORT_ANALYSIS.md
