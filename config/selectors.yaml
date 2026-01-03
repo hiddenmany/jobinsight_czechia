@@ -4,6 +4,9 @@ common:
     - "button:has-text('Číst dál')"
     - ".job-detail__description-button"
     - "text=Read more"
+    - "text=Show more"
+    - "text=See more"
+    - "button:has-text("View more")"
   intercept_noise:
     bad_patterns:
       - "google-analytics"
@@ -82,7 +85,7 @@ scrapers:
   WTTJ:
     base_url: "https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia"
     domain: "https://www.welcometothejungle.com"
-    card: "li" # Very generic to catch all list items
+    card: "li[data-testid="search-result-item"], li.ais-InfiniteHits-item" # More specific job card selector
     title: "h4"
     link: "a[href*='/jobs/']" # More specific link to avoid company links
     company_selectors:
@@ -106,10 +109,25 @@ scrapers:
   LinkedIn:
     base_url: "https://www.linkedin.com/jobs/search?keywords=&location=Czechia&f_TPR=r86400"
     domain: "https://www.linkedin.com"
-    card: "li"
+    card: "li.jobs-search__results-list > li, li.job-card-container"
     title: "h3"
     company: "h4"
-    link: "a"
+    link: "a.base-card__full-link, a[href*="/jobs/view/"]"
     city_selectors:
       - ".job-card-container__metadata-item"
       - "span.job-search-card__location"
+
+# Scraper Performance Configuration
+performance:
+  scroll_delay_sec: 1.5  # Default delay between scroll actions
+  rate_limit_min: 1.0    # Minimum rate limit delay
+  rate_limit_max: 2.0    # Maximum rate limit delay
+  
+  # Per-scraper overrides
+  scraper_delays:
+    StartupJobs:
+      scroll_delay: 1.8  # Slower for heavy infinite scroll
+    WTTJ:
+      scroll_delay: 1.5
+    LinkedIn:
+      scroll_delay: 1.5

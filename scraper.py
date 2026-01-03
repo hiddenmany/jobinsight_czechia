@@ -13,6 +13,7 @@ import analyzer
 from analyzer import JobSignal, IntelligenceCore
 import scraper_utils
 from scraper_utils import (
+    validate_job_data,
     get_random_user_agent,
     sanitize_text,
     rate_limit,
@@ -49,7 +50,14 @@ VIEWPORT_WIDTH = 1920
 VIEWPORT_HEIGHT = 1080
 
 # Compiled regex for performance
-SALARY_PATTERN = re.compile(r'(\d+(?:\s\d+)*)\s*[–-]\s*(\d+(?:\s\d+)*)\s*(?:Kč|EUR)')
+# Compiled regex for performance - enhanced to catch more salary formats
+SALARY_PATTERN = re.compile(
+    r'(\d+(?:[\s,.]\d+)*)[\s]*[Kk]?[\s]*[–\-][\s]*(\d+(?:[\s,.]\d+)*)[\s]*[Kk]?[\s]*(?:Kč|CZK|EUR|€|USD|\$)|'  # Range
+    r'(?:from|od)[\s]+(\d+(?:[\s,.]\d+)*)[\s]*[Kk]?[\s]*(?:Kč|CZK|EUR|€)|'  # "from X"
+    r'(?:up to|až|do)[\s]+(\d+(?:[\s,.]\d+)*)[\s]*[Kk]?[\s]*(?:Kč|CZK|EUR|€)|'  # "up to X"
+    r'(\d{2,3})[\s]*[Kk](?:[\s]*Kč|[\s]*CZK|[\s]*EUR)?',  # "50K", "80K Kč"
+    re.IGNORECASE
+)
 
 CORE = IntelligenceCore()
 CIRCUIT_BREAKER = CircuitBreaker(failure_threshold=5, timeout_seconds=300)
@@ -96,7 +104,7 @@ class ScrapeEngine:
     @retry(max_attempts=3, exceptions=(PlaywrightTimeout, PlaywrightError))
     async def scrape_detail(self, context, signal: JobSignal):
         """Fetches the full JD and benefits for a signal."""
-        if not signal.link or "linkedin.com" in signal.link:
+        if not signal.link:
             return
 
         page = None
@@ -160,6 +168,10 @@ class BaseScraper:
         self.engine = engine
         self.site_name = site_name
         self.config = CONFIG.get('scrapers', {}).get(site_name, {})
+        # Get performance config with per-scraper overrides
+        perf_config = CONFIG.get('performance', {})
+        self.scroll_delay = perf_config.get('scraper_delays', {}).get(site_name, {}).get('scroll_delay', 
+                                                                                          perf_config.get('scroll_delay_sec', 1.5))
 
     async def run(self, limit: int):
         raise NotImplementedError
@@ -196,12 +208,14 @@ class BaseScraper:
             except Exception:
                 continue
         
-        # Fallback to text-based city detection using config
+        # Fallback to text-based city detection using config with word boundaries
         try:
             card_text = (await card.inner_text()).lower()
             fallback_cities = CONFIG.get('common', {}).get('fallback_cities', [])
             for city in fallback_cities:
-                if city in card_text:
+                # Use word boundaries to avoid false positives (e.g., "Praha" in "Praha Solutions")
+                pattern = r'' + re.escape(city) + r''
+                if re.search(pattern, card_text):
                     return city.title()
         except Exception:
             pass
@@ -211,6 +225,11 @@ class BaseScraper:
 
 class PagedScraper(BaseScraper):
     """Handles scrapers with numbered pagination (Jobs.cz, Prace.cz, Cocuma)."""
+    
+    def __init__(self, engine, site_name):
+        super().__init__(engine, site_name)
+        self.extraction_stats = {'total': 0, 'success': 0, 'failed_validation': 0, 'duplicates': 0}
+    
     async def run(self, limit=50):
         # Check circuit breaker
         if CIRCUIT_BREAKER.is_open(self.site_name):
@@ -264,7 +283,9 @@ class PagedScraper(BaseScraper):
                         domain = self.config.get('domain', base_url.split('/prace')[0].split('/nabidky')[0].split('/jobs')[0])
                         link = domain + link
                     
-                    if CORE.is_known(link): continue
+                    if CORE.is_known(link):
+                        self.extraction_stats['duplicates'] += 1
+                        continue
 
                     # Salary
                     salary = None
@@ -272,6 +293,14 @@ class PagedScraper(BaseScraper):
                     if sal_sel:
                         sal_el = await card.query_selector(sal_sel)
                         salary = await sal_el.inner_text() if sal_el else None
+                    
+                    # Validate extracted data
+                    self.extraction_stats['total'] += 1
+                    title_text = await title_el.inner_text()
+                    if not validate_job_data(title_text, company_name, link):
+                        self.extraction_stats['failed_validation'] += 1
+                        logger.debug(f"Skipping invalid job data: {link}")
+                        continue
                     
                     sig = JobSignal(
                         title=sanitize_text(await title_el.inner_text()),
@@ -282,6 +311,7 @@ class PagedScraper(BaseScraper):
                         location=city
                     )
                     batch.append(sig)
+                    self.extraction_stats['success'] += 1
 
                 if batch:
                     await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
@@ -304,6 +334,13 @@ class PagedScraper(BaseScraper):
                     CIRCUIT_BREAKER.record_failure(self.site_name)
                     break
                 continue  # Try next page
+        
+        # Log extraction metrics
+        logger.info(f"{self.site_name} Extraction Metrics: "
+                   f"Total={self.extraction_stats['total']}, "
+                   f"Success={self.extraction_stats['success']}, "
+                   f"Failed Validation={self.extraction_stats['failed_validation']}, "
+                   f"Duplicates={self.extraction_stats['duplicates']}")
         
         await context.close()
 
@@ -350,14 +387,14 @@ class StartupJobsScraper(BaseScraper):
                     logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
                     break 
                 await page.keyboard.press("End")
-                await asyncio.sleep(SCROLL_DELAY_SEC * 1.3)
+                await asyncio.sleep(self.scroll_delay * 1.3)
                 
                 # Try to click "Load more" button if it exists
                 try:
                     load_more = page.locator("button:has-text('Načíst další'), button:has-text('Zobrazit více'), a.more-jobs")
                     if await load_more.count() > 0 and await load_more.first.is_visible():
                         await load_more.first.click(force=True)
-                        await asyncio.sleep(SCROLL_DELAY_SEC * 1.3)
+                        await asyncio.sleep(self.scroll_delay * 1.3)
                 except Exception as e:
                     logger.debug(f"Load more button click failed: {e}")
                 
@@ -420,6 +457,7 @@ class StartupJobsScraper(BaseScraper):
                         location=city
                     )
                     batch.append(sig)
+                    self.extraction_stats['success'] += 1
                 except Exception as e:
                     logger.debug(f"Failed to process StartupJobs card: {e}")
                     continue
@@ -476,7 +514,7 @@ class WttjScraper(BaseScraper):
                     logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
                     break 
                 await page.keyboard.press("End")
-                await asyncio.sleep(SCROLL_DELAY_SEC)
+                await asyncio.sleep(self.scroll_delay)
                 
                 cards = await page.query_selector_all(card_sel)
                 if len(cards) >= limit:
@@ -520,6 +558,7 @@ class WttjScraper(BaseScraper):
                         location=city
                     )
                     batch.append(sig)
+                    self.extraction_stats['success'] += 1
                     pbar.update(1)
                 except Exception as e:
                     logger.debug(f"Failed to process WTTJ card: {e}")
@@ -572,7 +611,7 @@ class LinkedinScraper(BaseScraper):
                     break
                 
                 await page.keyboard.press("End")
-                await asyncio.sleep(SCROLL_DELAY_SEC)
+                await asyncio.sleep(self.scroll_delay)
                 
                 cards = await page.query_selector_all(card_sel)
                 if len(cards) >= limit:
@@ -613,6 +652,7 @@ class LinkedinScraper(BaseScraper):
                         location=city
                     )
                     batch.append(sig)
+                    self.extraction_stats['success'] += 1
                     pbar.update(1)
                 except Exception as e:
                     logger.debug(f"Failed to process LinkedIn card: {e}")

@@ -4,16 +4,19 @@ import plotly.graph_objects as go
 import analyzer
 import os
 import datetime
+import numpy as np
+import json
 from jinja2 import Environment, FileSystemLoader
 
 # Setup
+pd.set_option('display.max_columns', None)
 intel = analyzer.MarketIntelligence()
 df = intel.df
-print(f"Generating report with {len(df)} market signals.")
+print(f"Generating v1.0 HR Intelligence report with {len(df)} market signals.")
 
-# Auto-Recovery: If Tech Status is missing (null or empty), force re-analysis
-if df['tech_status'].isnull().mean() > 0.5 or df.empty:
-    print("⚠️ Detected missing Tech/NLP data. Running emergency re-analysis...")
+# Auto-Recovery: If Tech Status or Role Type is missing, force re-analysis
+if df['tech_status'].isnull().mean() > 0.5 or df['role_type'].isnull().mean() > 0.5 or df.empty:
+    print("⚠️ Detected missing NLP/HR data. Running v1.0 re-analysis...")
     intel.core.reanalyze_all()
     df = intel.core.load_as_df()
 
@@ -26,12 +29,20 @@ med_sal_fmt = int(med_sal/1000) if pd.notna(med_sal) else "N/A"
 modern_sal = valid_salaries[valid_salaries['tech_status'] == 'Modern']['avg_salary'].median()
 legacy_sal = valid_salaries[valid_salaries['tech_status'] == 'Dinosaur']['avg_salary'].median()
 
-# Calculate premium value and format with proper sign
 if pd.notna(modern_sal) and pd.notna(legacy_sal) and legacy_sal > 0:
     tech_premium_val = int(((modern_sal / legacy_sal) - 1) * 100)
     tech_premium = f"+{tech_premium_val}%" if tech_premium_val >= 0 else f"{tech_premium_val}%"
 else:
     tech_premium = "N/A"
+
+# v1.0: Seniority Premium (Senior vs Junior)
+senior_sal = valid_salaries[valid_salaries['seniority_level'] == 'Senior']['avg_salary'].median()
+junior_sal = valid_salaries[valid_salaries['seniority_level'] == 'Junior']['avg_salary'].median()
+if pd.notna(senior_sal) and pd.notna(junior_sal) and junior_sal > 0:
+    seniority_premium_val = int(((senior_sal / junior_sal) - 1) * 100)
+    seniority_premium = f"+{seniority_premium_val}%" if seniority_premium_val >= 0 else f"{seniority_premium_val}%"
+else:
+    seniority_premium = "N/A"
 
 # Robust KPI extraction
 lang_barrier = intel.get_language_barrier()
@@ -48,46 +59,55 @@ layout_defaults = dict(
     font=dict(family='Inter, sans-serif', color='#111')
 )
 
-# 1. Source Distribution
+# Source Distribution - REMOVED (user request)
+# Print stats for debugging
 vol_stats = df['source'].value_counts().reset_index()
 vol_stats.columns = ['Source', 'Count']
-fig_vol = px.bar(vol_stats, y='Source', x='Count', orientation='h', color_discrete_sequence=['#0055FF'])
-fig_vol.update_layout(**layout_defaults)
+print(f"Source Stats:\n{vol_stats}")
 
-# 2. Contract Types
-contracts = intel.get_contract_split()
-fig_cont = px.pie(
-    values=list(contracts.values()), 
-    names=list(contracts.keys()), 
-    hole=0.6, 
-    color_discrete_sequence=['#0055FF', '#333333', '#999999', '#CCCCCC'] 
-)
-fig_cont.update_layout(**layout_defaults)
+# --- 2. Contract Types ---
+contract_split = intel.get_contract_split()
+# Sanitize data for Plotly (convert to python primitives)
+cont_values = [int(v) for v in contract_split.values()]
+cont_names = list(contract_split.keys())
 
-# 3. Tech Stack Gap
-stack = intel.get_tech_stack_lag().reset_index()
-stack.columns = ['Status', 'Count']
-all_cats = pd.DataFrame({'Status': ['Modern', 'Stable', 'Dinosaur']})
-stack = all_cats.merge(stack, on='Status', how='left').fillna(0)
-fig_tech = px.bar(stack, x="Count", y="Status", color="Status", 
-                 color_discrete_map={"Modern": "#0055FF", "Stable": "#999999", "Dinosaur": "#333333"})
+print(f"Contract Types - Names: {cont_names}")
+print(f"Contract Types - Values: {cont_values}")
+
+# Use go.Pie for better control and reliability
+fig_cont = go.Figure(data=[go.Pie(
+    labels=cont_names,
+    values=cont_values,
+    hole=0.6,
+    textposition='inside',
+    textinfo='percent+label'
+)])
+fig_cont.update_layout(**layout_defaults, showlegend=True)
+
+# --- 3. Tech Stack Gap ---
+tech_lag = intel.get_tech_stack_lag().reset_index()
+tech_lag.columns = ['Status', 'Count']
+# Explicit list conversion
+t_status = tech_lag['Status'].tolist()
+t_counts = [int(x) for x in tech_lag['Count'].tolist()]
+
+# Use go.Bar for better control and reliability
+color_map = {'Modern': '#0055FF', 'Stable': '#999999', 'Dinosaur': '#333333'}
+bar_colors = [color_map.get(s, '#999999') for s in t_status]
+
+fig_tech = go.Figure(data=[go.Bar(
+    x=t_counts,
+    y=t_status,
+    orientation='h',
+    marker=dict(color=bar_colors)
+)])
 fig_tech.update_layout(**layout_defaults)
+fig_tech.update_yaxes(categoryorder='array', categoryarray=['Dinosaur', 'Stable', 'Modern'], title="Status")
+fig_tech.update_xaxes(title="Count")
 
-# 4. Salary by Platform
-valid_sal = df[df['avg_salary'] > 0]
-plat_stats = valid_sal.groupby('source').agg(
-    median_salary=('avg_salary', 'median'),
-    count=('avg_salary', 'count')
-).sort_values('median_salary', ascending=True).reset_index()
+# Salary by Platform - REMOVED (user request - redundant data)
 
-# Add count to label for context
-plat_stats['Label'] = plat_stats.apply(lambda x: f"{x['source']} (n={x['count']})", axis=1)
-
-fig_sal = px.bar(plat_stats, y='Label', x='median_salary', orientation='h', color_discrete_sequence=['#111'])
-fig_sal.update_layout(**layout_defaults)
-fig_sal.update_yaxes(title="") # Remove "Label" axis title
-
-# 5. Top Innovators (exclude Unknown Employer and clean bullet characters)
+# 5. Top Innovators (keep existing)
 modern_df = df[(df['tech_status'] == 'Modern') & (df['company'] != 'Unknown Employer')]
 top_innovators = modern_df.groupby('company').agg(
     count=('hash', 'count'),
@@ -96,10 +116,8 @@ top_innovators = modern_df.groupby('company').agg(
 
 innovators = []
 for company, row in top_innovators.iterrows():
-    # Clean company name (remove bullet characters and extra whitespace)
     clean_company = company.lstrip('•\u2022\u2023\u25E6\u25AA\u25AB').strip()
-    clean_company = ' '.join(clean_company.split())  # Normalize whitespace
-    
+    clean_company = ' '.join(clean_company.split())
     sal_display = f"{int(row['avg_sal']/1000)}k" if pd.notna(row['avg_sal']) and row['avg_sal'] > 0 else "N/A"
     innovators.append({
         "company": clean_company,
@@ -107,25 +125,303 @@ for company, row in top_innovators.iterrows():
         "avg_sal": sal_display
     })
 
+# --- v1.0 HR INTELLIGENCE CHARTS ---
+
+# 6. Salary by Role (NEW)
+role_sal = intel.get_salary_by_role()
+if not role_sal.empty:
+    # List conversion
+    r_types = role_sal['role_type'].tolist()
+    r_salaries = [float(x) for x in role_sal['median_salary'].tolist()]
+
+    fig_role = go.Figure(data=[go.Bar(
+        x=r_salaries,
+        y=r_types,
+        orientation='h',
+        marker=dict(color='#0055FF')
+    )])
+    role_layout = {**layout_defaults, 'height': 280}
+    fig_role.update_layout(**role_layout)
+    fig_role.update_yaxes(title="")
+    fig_role.update_xaxes(title="Median Salary (CZK)")
+else:
+    fig_role = go.Figure()
+    fig_role.update_layout(**layout_defaults)
+
+# 7. Salary by Seniority (NEW)
+seniority_sal = intel.get_salary_by_seniority()
+if not seniority_sal.empty:
+    # List conversion
+    s_levels = seniority_sal['seniority_level'].tolist()
+    s_salaries = [float(x) for x in seniority_sal['median_salary'].tolist()]
+
+    colors = {'Junior': '#66B2FF', 'Mid': '#0055FF', 'Senior': '#003399', 'Lead': '#001a4d', 'Executive': '#000033'}
+    # Map colors manually since we are passing lists
+    s_colors = [colors.get(l, '#0055FF') for l in s_levels]
+
+    fig_seniority = go.Figure(data=[go.Bar(
+        x=s_levels,
+        y=s_salaries,
+        marker=dict(color=s_colors)
+    )])
+    seniority_layout = {**layout_defaults, 'height': 280, 'showlegend': False}
+    fig_seniority.update_layout(**seniority_layout)
+    fig_seniority.update_yaxes(title="Median Salary (CZK)")
+    fig_seniority.update_xaxes(title="")
+else:
+    fig_seniority = go.Figure()
+    fig_seniority.update_layout(**layout_defaults)
+
+# 8. Role Distribution (NEW - for insights)
+role_dist = intel.get_role_distribution()
+role_dist.columns = ['Role', 'Count']
+top_roles = role_dist.head(5).to_dict('records')
+
+# 9. Skill Premiums (NEW)
+skill_premiums = intel.get_skill_premiums()
+skill_data = skill_premiums.head(10).to_dict('records') if not skill_premiums.empty else []
+
+# 10. Seniority + Role Cross-Analysis (v1.1 - Data Quality Insight)
+seniority_role_matrix = intel.get_seniority_role_matrix()
+seniority_role_data = seniority_role_matrix.to_dict('records') if not seniority_role_matrix.empty else []
+
+# --- v1.1 BENEFITS INTELLIGENCE ---
+print("\n=== Analyzing Benefits ===")
+benefits_analysis = intel.get_benefits_analysis()
+benefits_data = benefits_analysis.to_dict('records') if not benefits_analysis.empty else []
+print(f"Found {len(benefits_data)} benefit types")
+
+benefits_by_role = intel.get_benefits_by_role()
+benefits_role_data = benefits_by_role.to_dict('records') if not benefits_by_role.empty else []
+
+# --- v1.1 LOCATION INTELLIGENCE ---
+print("\n=== Analyzing Locations ===")
+salary_by_city = intel.get_salary_by_city()
+city_salary_data = salary_by_city.to_dict('records') if not salary_by_city.empty else []
+print(f"Found salary data for {len(city_salary_data)} cities")
+
+location_dist = intel.get_location_distribution()
+location_data = location_dist.to_dict('records') if not location_dist.empty else []
+
+# --- v1.1 WORK MODEL INTELLIGENCE ---
+print("\n=== Analyzing Work Models ===")
+work_model_dist = intel.get_work_model_distribution()
+print(f"Work model distribution: {work_model_dist}")
+
+remote_premium = intel.get_remote_salary_premium()
+print(f"Remote salary premium: {remote_premium.get('premium', 'N/A')}")
+
+work_model_by_role = intel.get_work_model_by_role()
+work_model_role_data = work_model_by_role.to_dict('records') if not work_model_by_role.empty else []
+
+# --- v1.2 TEMPORAL & EMERGING TRENDS ---
+print("\n=== Analyzing Trends & Signals ===")
+data_freshness = intel.get_data_freshness_report()
+print(f"Data coverage: {data_freshness['unique_dates']} day(s)")
+print(f"Trend analysis ready: {data_freshness['trend_analysis_ready']}")
+
+# Salary trends (only if 7+ days)
+salary_trend = intel.get_salary_trend_weekly()
+trend_data = salary_trend.to_dict('records') if not salary_trend.empty else []
+
+# Emerging signals (works with any amount of data)
+emerging_tech = intel.get_emerging_tech_signals()
+emerging_tech_data = emerging_tech.to_dict('records') if not emerging_tech.empty else []
+print(f"Found {len(emerging_tech_data)} hot technologies")
+
+new_entrants = intel.get_new_market_entrants()
+new_entrants_data = new_entrants.to_dict('records') if not new_entrants.empty else []
+print(f"Found {len(new_entrants_data)} emerging companies")
+
+trending_benefits = intel.get_trending_benefits()
+trending_benefits_data = trending_benefits.to_dict('records') if not trending_benefits.empty else []
+
+# --- v1.3 ECONOMIC REALITY & TALENT DYNAMICS ---
+print("\n=== Analyzing Economic Reality ===")
+
+# 1. IČO vs HPP Arbitrage
+ico_arbitrage = intel.get_ico_hpp_arbitrage()
+print(f"IČO vs HPP premium: {ico_arbitrage.get('premium', 'N/A')} (IČO: {ico_arbitrage['ico_count']}, HPP: {ico_arbitrage['hpp_count']})")
+
+# 2. Language Barrier Cost
+lang_barrier = intel.get_language_barrier_cost()
+print(f"English language premium: {lang_barrier.get('premium', 'N/A')}")
+
+# 3. Talent Pipeline Health
+pipeline_health = intel.get_talent_pipeline_health()
+print(f"Junior:Senior ratio: {pipeline_health.get('ratio', 'N/A')} - {pipeline_health.get('health', 'Unknown')}")
+
+# 4. Remote Flexibility
+remote_flex = intel.get_remote_flexibility_analysis()
+remote_flex_data = remote_flex.to_dict('records') if not remote_flex.empty else []
+
+# 5. Legacy Rot
+legacy_rot = intel.get_legacy_rot_by_role()
+legacy_rot_data = legacy_rot.to_dict('records') if not legacy_rot.empty else []
+
+# 6. AI Washing
+ai_washing = intel.get_ai_washing_nontech()
+print(f"AI washing in non-tech: {ai_washing.get('percentage', 'N/A')}")
+
+# 7. Ghost Jobs
+ghost_jobs = intel.get_ghost_jobs()
+ghost_jobs_data = ghost_jobs.to_dict('records') if not ghost_jobs.empty else []
+print(f"Potential ghost jobs detected: {len(ghost_jobs_data)}")
+
 # --- RENDER ---
 env = Environment(loader=FileSystemLoader('templates'))
+
+# v1.3 Localization dictionary
+t_cz = {
+    'roles': {
+        'Developer': 'Vývojář', 'Analyst': 'Analytik', 'Designer': 'Designér',
+        'QA': 'QA/Tester', 'PM': 'Projektový Manažer', 'Sales': 'Obchod/Sales',
+        'HR': 'HR/Nábor', 'Marketing': 'Marketing', 'Support': 'Podpora',
+        'Operations': 'Provoz/Ops', 'Finance': 'Finance/Účetní', 'Management': 'Management',
+        'Other': 'Ostatní', 'Unknown': 'Neznámé'
+    },
+    'seniority': {
+        'Junior': 'Junior', 'Mid': 'Medior/Mid', 'Senior': 'Senior',
+        'Lead': 'Lead/Expert', 'Executive': 'Executive/Vedení', 'Unknown': 'Neznámé'
+    },
+    'benefits': {
+        'Meal Vouchers': 'Stravenky', 'Fitness/MultiSport': 'MultiSport/Fitness',
+        'Education Budget': 'Vzdělávací rozpočet', 'Home Office Equipment': 'Příspěvek na Home Office',
+        'Stock Options/Equity': 'Akcie/ESOP', 'Performance Bonuses': 'Výkonnostní bonusy',
+        '13th/14th Salary': '13./14. plat', 'Paid Sick Days': 'Sick Days',
+        'Extra Vacation Days': 'Dovolená navíc', 'Wellness Programs': 'Wellness/Relaxace',
+        'Parental Benefits': 'Rodičovské benefity', 'Pension Contribution': 'Penzijní připojištění',
+        'Flexible Benefits (Cafeteria)': 'Kafetérie'
+    },
+    'work_models': {
+        'Full Remote': 'Plný Remote', 'Hybrid': 'Hybridní', 'Office Only': 'Kancelář',
+        'Rigid (Fixed Days)': 'Fixní dny (Rigidní)', 'Flexible': 'Flexibilní', 'Unclear': 'Nejasné'
+    },
+    'flexibility': {
+        'Rigid (Fixed Days)': 'Fixní dny', 'Flexible': 'Flexibilní', 'Unclear': 'Nejasné'
+    },
+    'tech_status': {
+        'Modern': 'Moderní', 'Stable': 'Stabilní', 'Dinosaur': 'Zastaralé'
+    }
+}
+
+# Custom filter for translations
+def translate_cz(value, category):
+    if not value: return value
+    return t_cz.get(category, {}).get(value, value)
+
+env.filters['translate_cz'] = translate_cz
+
 template = env.get_template('report.html')
+
+# Helper to ensure clean JSON serialization without binary artifacts
+def clean_json(fig):
+    def default_parser(o):
+        if isinstance(o, (np.int64, np.integer)):
+            return int(o)
+        elif isinstance(o, (np.float64, np.floating)):
+            return float(o)
+        elif isinstance(o, np.ndarray):
+            return o.tolist()
+        return str(o)
+    return json.dumps(fig.to_dict(), default=default_parser)
 
 output_html = template.render(
     date=datetime.date.today().strftime("%d. %B %Y"),
     total_jobs=len(df),
     med_salary=med_sal_fmt,
     tech_premium=tech_premium,
+    seniority_premium=seniority_premium,  # NEW v1.0
     en_share=en_share,
     innovators=innovators,
-    json_source=fig_vol.to_json(),
-    json_contract=fig_cont.to_json(),
-    json_tech=fig_tech.to_json(),
-    json_salary=fig_sal.to_json()
+    top_roles=top_roles,  # NEW v1.0
+    skill_premiums=skill_data,  # NEW v1.0
+    seniority_role_matrix=seniority_role_data,  # NEW v1.1 - Data Quality Insight
+    # v1.1 Benefits Intelligence
+    benefits_data=benefits_data,
+    benefits_by_role=benefits_role_data,
+    # v1.1 Location Intelligence
+    city_salary_data=city_salary_data,
+    location_data=location_data,
+    # v1.1 Work Model Intelligence
+    work_model_dist=work_model_dist,
+    remote_premium=remote_premium,
+    work_model_by_role=work_model_role_data,
+    # v1.2 Temporal & Emerging Trends
+    data_freshness=data_freshness,
+    salary_trend=trend_data,
+    emerging_tech=emerging_tech_data,
+    new_entrants=new_entrants_data,
+    trending_benefits=trending_benefits_data,
+    # v1.3 Economic Reality & Talent Dynamics
+    ico_arbitrage=ico_arbitrage,
+    lang_barrier=lang_barrier,
+    pipeline_health=pipeline_health,
+    remote_flex=remote_flex_data,
+    legacy_rot=legacy_rot_data,
+    ai_washing=ai_washing,
+    ghost_jobs=ghost_jobs_data,
+    # Charts
+    json_contract=clean_json(fig_cont),
+    json_tech=clean_json(fig_tech),
+    json_role=clean_json(fig_role),  # NEW v1.0
+    json_seniority=clean_json(fig_seniority)  # NEW v1.0
 )
 
 os.makedirs("public", exist_ok=True)
 with open("public/index.html", "w", encoding="utf-8") as f:
     f.write(output_html)
 
-print("Static report generated: public/index.html")
+print("v1.0 HR Intelligence report generated: public/index.html")
+
+# --- CZECH VERSION ---
+# Czech date format with Czech month names
+czech_months = {
+    1: 'ledna', 2: 'února', 3: 'března', 4: 'dubna',
+    5: 'května', 6: 'června', 7: 'července', 8: 'srpna',
+    9: 'září', 10: 'října', 11: 'listopadu', 12: 'prosince'
+}
+today = datetime.date.today()
+czech_date = f"{today.day}. {czech_months[today.month]} {today.year}"
+
+template_cz = env.get_template('report_cz.html')
+output_html_cz = template_cz.render(
+    date=czech_date,
+    total_jobs=len(df),
+    med_salary=med_sal_fmt,
+    tech_premium=tech_premium,
+    seniority_premium=seniority_premium,
+    en_share=en_share,
+    innovators=innovators,
+    top_roles=top_roles,
+    skill_premiums=skill_data,
+    seniority_role_matrix=seniority_role_data,
+    benefits_data=benefits_data,
+    benefits_by_role=benefits_role_data,
+    city_salary_data=city_salary_data,
+    location_data=location_data,
+    work_model_dist=work_model_dist,
+    remote_premium=remote_premium,
+    work_model_by_role=work_model_role_data,
+    data_freshness=data_freshness,
+    salary_trend=trend_data,
+    emerging_tech=emerging_tech_data,
+    new_entrants=new_entrants_data,
+    trending_benefits=trending_benefits_data,
+    ico_arbitrage=ico_arbitrage,
+    lang_barrier=lang_barrier,
+    pipeline_health=pipeline_health,
+    remote_flex=remote_flex_data,
+    legacy_rot=legacy_rot_data,
+    ai_washing=ai_washing,
+    ghost_jobs=ghost_jobs_data,
+    json_contract=clean_json(fig_cont),
+    json_tech=clean_json(fig_tech),
+    json_role=clean_json(fig_role),
+    json_seniority=clean_json(fig_seniority)
+)
+
+with open("public/index_cz.html", "w", encoding="utf-8") as f:
+    f.write(output_html_cz)
+
+print("v1.0 Czech version generated: public/index_cz.html")

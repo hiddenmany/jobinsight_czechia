@@ -299,3 +299,42 @@ class GracefulShutdown:
 
 # Global instance for shutdown handling
 shutdown_handler = GracefulShutdown()
+
+
+# Fix 3: Data Validation
+def validate_job_data(title: str, company: str, link: str) -> bool:
+    """
+    Validates that extracted job data meets minimum quality standards.
+    
+    Args:
+        title: Job title
+        company: Company name
+        link: Job link URL
+    
+    Returns:
+        True if data is valid, False otherwise
+    """
+    # Title validation
+    if not title or len(title.strip()) < 3:
+        return False
+    if len(title) > 200:  # Suspiciously long title
+        return False
+    
+    # Company validation
+    if not company or len(company.strip()) < 2:
+        return False
+    if company == "Unknown Employer" and len(title) < 10:
+        # If company is unknown, at least require reasonable title
+        return False
+    
+    # Link validation
+    if not link or not link.startswith(('http://', 'https://')):
+        return False
+    
+    # Check for suspicious patterns (extraction errors)
+    suspicious_patterns = ['undefined', 'null', 'NaN', '...', '&nbsp;']
+    text_combined = f"{title} {company}".lower()
+    if any(pattern in text_combined for pattern in suspicious_patterns):
+        return False
+    
+    return True
