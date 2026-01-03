@@ -11,12 +11,14 @@ Test Suite (Security):     7/7 PASS ✓
 Scraper (StartupJobs):    FIXED (net::ERR_FAILED resolved) ✓
 Scraper (Cocuma):         FIXED (Link extraction resolved) ✓
 Scraper (WTTJ):           FIXED (Title selector h2 resolved) ✓
+Report Generation:        FIXED (Template error resolved) ✓
 Database:                 7,131 signals (updates pending next full run)
 ```
 
 ## v1.1 - Stable Scraper Edition
 
 ### FIXES APPLIED (2026-01-03) ✅
+- **Report Generation:** Fixed Jinja2 template error (`TypeError: not all arguments converted`) by using Python string formatting (`"{:,}".format()`) instead of invalid filter usage. Also fixed path resolution for templates and output.
 - **Navigation Fix:** Resolved `net::ERR_FAILED` by preventing `intercept_noise` from aborting main navigation requests.
 - **Cocuma Recovery:** Fixed link extraction logic in `PagedScraper`.
 - **WTTJ Refinement:** 

@@ -136,17 +136,30 @@ class ScrapeEngine:
                     except Exception as e:
                         logger.debug(f"Read more button click failed for {sel}: {e}")
 
-                # Extraction logic
-                raw_description = await page.evaluate("""() => {
-                    const s = ['div.JobDescription', 'article', 'main', '.jd-content', '.job-detail__description'];
-                    for (let x of s) { let el = document.querySelector(x); if (el) return el.innerText; }
-                    return document.body.innerText;
-                }""")
+                # Robust extraction with retries for "Execution context destroyed"
+                raw_description = ""
+                raw_benefits = ""
                 
-                raw_benefits = await page.evaluate("""() => {
-                    const tags = Array.from(document.querySelectorAll('.benefit-item, .Tag--success, .Badge--success, [data-test*="benefit"]'));
-                    return tags.map(t => t.innerText.trim()).filter(t => t.length > 1).join(', ');
-                }""")
+                for attempt in range(3):
+                    try:
+                        # Extraction logic
+                        raw_description = await page.evaluate("""() => {
+                            const s = ['div.JobDescription', 'article', 'main', '.jd-content', '.job-detail__description'];
+                            for (let x of s) { let el = document.querySelector(x); if (el) return el.innerText; }
+                            return document.body.innerText;
+                        }""")
+                        
+                        raw_benefits = await page.evaluate("""() => {
+                            const tags = Array.from(document.querySelectorAll('.benefit-item, .Tag--success, .Badge--success, [data-test*="benefit"]'));
+                            return tags.map(t => t.innerText.trim()).filter(t => t.length > 1).join(', ');
+                        }""")
+                        break # Success
+                    except PlaywrightError as e:
+                        if "Execution context was destroyed" in str(e) and attempt < 2:
+                            logger.debug(f"Context destroyed, retrying extraction (attempt {attempt+1})...")
+                            await asyncio.sleep(1.0)
+                            continue
+                        raise e
 
                 # Sanitize extracted text (security fix)
                 signal.description = sanitize_text(raw_description, max_length=DESCRIPTION_MAX_LENGTH)

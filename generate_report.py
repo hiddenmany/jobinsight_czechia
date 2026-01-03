@@ -269,7 +269,8 @@ ghost_jobs_data = ghost_jobs.to_dict('records') if not ghost_jobs.empty else []
 print(f"Potential ghost jobs detected: {len(ghost_jobs_data)}")
 
 # --- RENDER ---
-env = Environment(loader=FileSystemLoader('templates'))
+template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+env = Environment(loader=FileSystemLoader(template_dir))
 
 # v1.3 Localization dictionary
 t_cz = {
@@ -368,11 +369,14 @@ output_html = template.render(
     json_seniority=clean_json(fig_seniority)  # NEW v1.0
 )
 
-os.makedirs("public", exist_ok=True)
-with open("public/index.html", "w", encoding="utf-8") as f:
+base_dir = os.path.dirname(os.path.abspath(__file__))
+public_dir = os.path.join(base_dir, "public")
+os.makedirs(public_dir, exist_ok=True)
+
+with open(os.path.join(public_dir, "index.html"), "w", encoding="utf-8") as f:
     f.write(output_html)
 
-print("v1.0 HR Intelligence report generated: public/index.html")
+print(f"v1.0 HR Intelligence report generated: {os.path.join(public_dir, 'index.html')}")
 
 # --- CZECH VERSION ---
 # Czech date format with Czech month names
@@ -421,7 +425,10 @@ output_html_cz = template_cz.render(
     json_seniority=clean_json(fig_seniority)
 )
 
-with open("public/index_cz.html", "w", encoding="utf-8") as f:
+with open(os.path.join(public_dir, "index_cz.html"), "w", encoding="utf-8") as f:
+
     f.write(output_html_cz)
 
-print("v1.0 Czech version generated: public/index_cz.html")
+
+
+print(f"v1.0 Czech version generated: {os.path.join(public_dir, 'index_cz.html')}")

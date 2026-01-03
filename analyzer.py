@@ -833,6 +833,15 @@ class MarketIntelligence:
         Report on data temporal coverage for trend analysis readiness.
         """
         import pandas as pd
+        
+        if self.df.empty:
+            return {
+                'unique_dates': 0,
+                'date_range_days': 0,
+                'earliest_date': 'N/A',
+                'latest_date': 'N/A',
+                'trend_analysis_ready': False
+            }
 
         df_copy = self.df.copy()
         df_copy['scraped_date'] = pd.to_datetime(df_copy['scraped_at']).dt.date
@@ -842,7 +851,7 @@ class MarketIntelligence:
 
         return {
             'unique_dates': int(unique_dates),
-            'date_range_days': int(date_range),
+            'date_range_days': int(date_range) if pd.notna(date_range) else 0,
             'earliest_date': str(df_copy['scraped_at'].min()),
             'latest_date': str(df_copy['scraped_at'].max()),
             'trend_analysis_ready': unique_dates >= 7
