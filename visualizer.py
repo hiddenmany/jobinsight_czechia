@@ -54,17 +54,32 @@ def get_market_intelligence(conn):
     top_companies = conn.execute(company_query).fetchall()
     
     # 3. "Hidden Tech" - Non-Tech companies hiring for Tech Roles
-    # We look for descriptions containing TECH_STACK keywords but exclude obvious agencies/tech firms if possible.
-    # For now, we just look for high tech-keyword density companies.
+    # Refined Logic: Exclude retail/manual roles and require HARD tech skills.
     
-    # Create a giant OR clause for tech keywords
-    tech_filter = " OR ".join([f"lower(description) LIKE '%{k.lower()}%'" for k in TECH_STACK])
+    # Exclude common non-tech roles that might mention "PC skills" or "IT"
+    exclude_roles = "('Sales', 'Retail', 'Driver', 'Warehouse', 'HR', 'Admin', 'Customer Service')"
+    
+    # strict keywords - remove generic ones if they were there
+    hard_skills = [
+        "Python", "Java", "JavaScript", "TypeScript", "React", "Angular", "Vue", 
+        "Node.js", "C#", ".NET", "Golang", "Rust", "Swift", "Kotlin",
+        "SQL", "PostgreSQL", "MongoDB", "Redis", "Elasticsearch",
+        "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Terraform",
+        "Machine Learning", "Data Science", "DevOps", "Cybersecurity"
+    ]
+    
+    tech_filter = " OR ".join([f"lower(description) LIKE '%{k.lower()}%'" for k in hard_skills])
     
     tech_hiring_query = f"""
         SELECT company, COUNT(*) as tech_jobs
         FROM signals
         WHERE ({tech_filter})
         AND company IS NOT NULL
+        AND role_type NOT IN {exclude_roles}
+        AND lower(title) NOT LIKE '%prodavač%' 
+        AND lower(title) NOT LIKE '%skladník%'
+        AND lower(title) NOT LIKE '%řidič%'
+        AND lower(title) NOT LIKE '%asistent%'
         GROUP BY company
         ORDER BY tech_jobs DESC
         LIMIT 15
