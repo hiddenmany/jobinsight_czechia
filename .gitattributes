@@ -1,0 +1,2 @@
+# Track large database file with Git LFS
+data/intelligence.db filter=lfs diff=lfs merge=lfs -text

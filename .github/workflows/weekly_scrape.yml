@@ -15,25 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout Code
+      - name: Checkout Code with LFS
         uses: actions/checkout@v4
+        with:
+          lfs: true  # Enable Git LFS for database file
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           cache: 'pip' # caching pip dependencies
-
-      # PERSISTENCE: Restore the intelligence database from cache
-      - name: Restore Database Cache
-        uses: actions/cache@v3
-        with:
-          path: data/intelligence.db
-          # Key includes run_id to ensure we always save a NEW cache at the end
-          key: intelligence-db-${{ github.run_id }}
-          # Restore the most recent cache matching the prefix
-          restore-keys: |
-            intelligence-db-
 
       - name: Install Dependencies
         run: |
@@ -61,8 +52,10 @@ jobs:
         run: |
           git config --global user.name 'Scraper Bot'
           git config --global user.email 'bot@noreply.github.com'
-          # Note: DB is now excluded from Git (too large), only commit CSVs and report
-          git add data/*.csv public/ || echo "No CSV files to add"
+
+          # Add database (tracked via Git LFS), CSVs, and report
+          git add data/intelligence.db data/*.csv public/ || echo "No files to add"
+
           # Only commit if there are changes
           if git diff --staged --quiet; then
             echo "No changes to commit"

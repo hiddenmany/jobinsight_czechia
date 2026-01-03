@@ -759,8 +759,22 @@ async def main():
         finally:
             await browser.close()
             await shutdown_handler.cleanup()
-    
-    CORE.cleanup_expired(threshold_minutes=180)
+
+    # Enhanced cleanup strategy for GitHub weekly runs
+    # Remove jobs not seen in last 14 days (2 scrape cycles for safety)
+    CORE.cleanup_expired(threshold_minutes=14 * 24 * 60)  # 14 days
+
+    # Compact database to reclaim space from deleted records
+    CORE.vacuum_database()
+
+    # Log final database statistics
+    stats = CORE.get_database_stats()
+    logger.info(f"=== DATABASE STATISTICS ===")
+    logger.info(f"Total active jobs: {stats['total_jobs']}")
+    logger.info(f"Database size: {stats['db_size_mb']:.2f} MB")
+    logger.info(f"Jobs by source: {stats['by_source']}")
+    logger.info(f"Oldest job: {stats['oldest_job']}")
+    logger.info(f"Newest job: {stats['newest_job']}")
     logger.info("=== SCRAPING COMPLETE ===")
 
 if __name__ == "__main__":

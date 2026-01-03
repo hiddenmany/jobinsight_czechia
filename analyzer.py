@@ -375,6 +375,52 @@ class IntelligenceCore:
         self.load_as_df()
         print(f"v1.0 Migration complete: {len(rows)} signals updated with role/seniority.")
 
+    def vacuum_database(self):
+        """Compact database to reclaim space from deleted records."""
+        try:
+            print("Compacting database (VACUUM)...")
+            self.con.execute("VACUUM")
+            print("Database compaction complete.")
+        except Exception as e:
+            print(f"Warning: VACUUM failed: {e}")
+
+    def get_database_stats(self) -> dict:
+        """Get comprehensive database statistics for monitoring."""
+        try:
+            total = self.con.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
+
+            # Get database file size
+            db_size_bytes = os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
+            db_size_mb = db_size_bytes / (1024 * 1024)
+
+            # Jobs by source
+            by_source = {}
+            source_data = self.con.execute(
+                "SELECT source, COUNT(*) as cnt FROM signals GROUP BY source ORDER BY cnt DESC"
+            ).fetchall()
+            for source, count in source_data:
+                by_source[source] = count
+
+            # Timestamp info
+            oldest = self.con.execute("SELECT MIN(scraped_at) FROM signals").fetchone()[0]
+            newest = self.con.execute("SELECT MAX(scraped_at) FROM signals").fetchone()[0]
+
+            return {
+                'total_jobs': total,
+                'db_size_mb': db_size_mb,
+                'by_source': by_source,
+                'oldest_job': str(oldest) if oldest else 'N/A',
+                'newest_job': str(newest) if newest else 'N/A'
+            }
+        except Exception as e:
+            return {
+                'total_jobs': 0,
+                'db_size_mb': 0,
+                'by_source': {},
+                'oldest_job': 'Error',
+                'newest_job': f'Error: {e}'
+            }
+
 
 # Legacy class for App compatibility
 class MarketIntelligence:
