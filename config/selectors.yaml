@@ -1,132 +1,121 @@
 common:
   read_more_buttons:
-    - "button:has-text('Zobrazit více')"
-    - "button:has-text('Číst dál')"
-    - ".job-detail__description-button"
-    - "text=Read more"
-    - "text=Show more"
-    - "text=See more"
-    - "button:has-text('View more')"
+  - button:has-text('Zobrazit více')
+  - button:has-text('Číst dál')
+  - .job-detail__description-button
+  - text=Read more
+  - text=Show more
+  - text=See more
+  - button:has-text('View more')
   intercept_noise:
     bad_patterns:
-      - "google-analytics"
-      - "hotjar"
-      - "facebook"
-      - "pixel"
-      - "doubleclick"
-      - "sentry"
-      - "segment"
+    - google-analytics
+    - hotjar
+    - facebook
+    - pixel
+    - doubleclick
+    - sentry
+    - segment
     resource_types:
-      - "image"
-      - "media"
-      - "font"
-      - "stylesheet" # Aggressively block styles for speed on WTTJ
-  # Fix 3.7: Fallback cities moved from hardcoded to config
+    - image
+    - media
+    - font
+    - stylesheet
   fallback_cities:
-    - "praha"
-    - "brno"
-    - "ostrava"
-    - "plzeň"
-    - "liberec"
-    - "olomouc"
-    - "hradec králové"
-    - "české budějovice"
-    - "pardubice"
-    - "zlín"
-    - "havířov"
-    - "kladno"
-    - "most"
-    - "opava"
-    - "karviná"
-
+  - praha
+  - brno
+  - ostrava
+  - plzeň
+  - liberec
+  - olomouc
+  - hradec králové
+  - české budějovice
+  - pardubice
+  - zlín
+  - havířov
+  - kladno
+  - most
+  - opava
+  - karviná
 scrapers:
   Jobs.cz:
-    base_url: "https://www.jobs.cz/prace/?page="
-    domain: "https://www.jobs.cz"
-    card: "article.SearchResultCard"
-    title: "h2.SearchResultCard__title > a"
+    base_url: https://www.jobs.cz/prace/?page=
+    domain: https://www.jobs.cz
+    card: article.SearchResultCard
+    title: h2.SearchResultCard__title > a
     company_selectors:
-      - "[data-test='employer-name']"
-      - ".SearchResultCard__footerItem:not(:has-text('Kč')):not(:has-text('Praha')):not(:has-text('Brno')):not(:has-text('Ostrava'))"
-    salary: "span.Tag--success"
+    - '[data-test=''employer-name'']'
+    - .SearchResultCard__footerItem:not(:has-text('Kč')):not(:has-text('Praha')):not(:has-text('Brno')):not(:has-text('Ostrava'))
+    salary: span.Tag--success
     city_selectors:
-      - ".SearchResultCard__footerItem:has-text('Praha')"
-      - ".SearchResultCard__footerItem:has-text('Brno')"
-      - ".SearchResultCard__footerItem:has-text('Ostrava')"
-      - "[data-test='location']"
-    
+    - .SearchResultCard__footerItem:has-text('Praha')
+    - .SearchResultCard__footerItem:has-text('Brno')
+    - .SearchResultCard__footerItem:has-text('Ostrava')
+    - '[data-test=''location'']'
   Prace.cz:
-    base_url: "https://www.prace.cz/nabidky/?page="
-    domain: "https://www.prace.cz"
-    card: "li.search-result__advert"
-    title: "a.link"
+    base_url: https://www.prace.cz/nabidky/?page=
+    domain: https://www.prace.cz
+    card: li.search-result__advert
+    title: a.link
     company_selectors:
-      - ".search-result__advert__box__item--company"
-    salary: ".search-result__advert__box__item--salary"
+    - .search-result__advert__box__item--company
+    salary: .search-result__advert__box__item--salary
     city_selectors:
-      - ".search-result__advert__box__item--location"
-      - ".ico-map-marker + span"
-
+    - .search-result__advert__box__item--location
+    - .ico-map-marker + span
   StartupJobs:
-    base_url: "https://www.startupjobs.cz/nabidky"
-    domain: "https://www.startupjobs.cz"
-    card: "a[href*='/nabidka/']" # Reverted to generic link selector (proven to work)
-    title: "h2"
+    base_url: https://www.startupjobs.cz/nabidky
+    domain: https://www.startupjobs.cz
+    card: a[href*='/nabidka/']
+    title: h2
     company_selectors:
-      - ".employer-name"
-      - "span.text-gray-500" 
-      - "div.flex.items-center span"
-    salary_list_item: "li" # Reverted to generic list item
+    - .employer-name
+    - span.text-gray-500
+    - div.flex.items-center span
+    salary_list_item: li
     city_selectors:
-      - ".location"
-      - "span:has-text('Praha')"
-      - "span:has-text('Brno')"
-
+    - .location
+    - span:has-text('Praha')
+    - span:has-text('Brno')
   WTTJ:
-    base_url: "https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia"
-    domain: "https://www.welcometothejungle.com"
-    card: 'li[data-testid="search-result-item"], li.ais-InfiniteHits-item' # More specific job card selector
-    title: "h4"
-    link: "a[href*='/jobs/']" # More specific link to avoid company links
+    base_url: https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia
+    domain: https://www.welcometothejungle.com
+    card: li
+    title: h4
+    link: a[href*='/jobs/']
     company_selectors:
-      - "span.sc-688y7f-0"
-      - "header span" # Fallback
+    - span.sc-688y7f-0
+    - header span
     city_selectors:
-      - "[data-testid='job-location']"
-      - "span:has-text('Prague')"
-
+    - '[data-testid=''job-location'']'
+    - span:has-text('Prague')
   Cocuma:
-    base_url: "https://www.cocuma.cz/jobs/page/"
-    domain: "https://www.cocuma.cz"
-    first_page_url: "https://www.cocuma.cz/jobs/"  # Fix 3.3: Non-standard first page
-    card: "a.job-thumbnail" # Reverted to 'a' tag
-    title: ".job-thumbnail-title"
-    company: ".job-thumbnail-company"
+    base_url: https://www.cocuma.cz/jobs/page/
+    domain: https://www.cocuma.cz
+    first_page_url: https://www.cocuma.cz/jobs/
+    card: a.job-thumbnail
+    title: .job-thumbnail-title
+    company: .job-thumbnail-company
     city_selectors:
-      - ".job-thumbnail-location"
-      - "span.location"
-
+    - .job-thumbnail-location
+    - span.location
   LinkedIn:
-    base_url: "https://www.linkedin.com/jobs/search?keywords=&location=Czechia&f_TPR=r86400"
-    domain: "https://www.linkedin.com"
-    card: 'li.jobs-search__results-list > li, li.job-card-container'
-    title: "h3"
-    company: "h4"
-    link: 'a.base-card__full-link, a[href*="/jobs/view/"]'
+    base_url: https://www.linkedin.com/jobs/search?keywords=&location=Czechia&f_TPR=r86400
+    domain: https://www.linkedin.com
+    card: li.jobs-search__results-list > li, li.job-card-container
+    title: h3
+    company: h4
+    link: a.base-card__full-link, a[href*="/jobs/view/"]
     city_selectors:
-      - ".job-card-container__metadata-item"
-      - "span.job-search-card__location"
-
-# Scraper Performance Configuration
+    - .job-card-container__metadata-item
+    - span.job-search-card__location
 performance:
-  scroll_delay_sec: 1.5  # Default delay between scroll actions
-  rate_limit_min: 1.0    # Minimum rate limit delay
-  rate_limit_max: 2.0    # Maximum rate limit delay
-  
-  # Per-scraper overrides
+  scroll_delay_sec: 1.5
+  rate_limit_min: 1.0
+  rate_limit_max: 2.0
   scraper_delays:
     StartupJobs:
-      scroll_delay: 1.8  # Slower for heavy infinite scroll
+      scroll_delay: 1.8
     WTTJ:
       scroll_delay: 1.5
     LinkedIn:
