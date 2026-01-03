@@ -28,3 +28,12 @@ patch_*.py
 
 # Additional build artifacts
 GIT_STATUS_REPORT.md
+
+# Backup files (keep locally, don't commit)
+*.v*_backup
+*_backup.py
+*.backup.*
+
+# Temporary deployment docs
+DEPLOYMENT_STATUS.md
+.cleanup_plan.txt
