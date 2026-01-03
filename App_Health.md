@@ -24,6 +24,10 @@ Dashboard:                ONLINE (GitHub Pages)
 
 ## v1.3 - Stable Scraper Edition
 
+### INFRASTRUCTURE UPGRADES (2026-01-03) ✅
+- **Persistence:** Enabled GitHub Actions caching for `data/intelligence.db` to persist historical data across cloud runs.
+- **Proxy Support:** Added `LINKEDIN_PROXY` support to `scraper.py` to allow bypassing LinkedIn authwalls if a proxy is provided.
+
 ### FIXES APPLIED (2026-01-03) ✅
 - **Report Generation:** Fixed Jinja2 template error (`TypeError: not all arguments converted`) by using Python string formatting (`"{:,}".format()`) instead of invalid filter usage. Also fixed path resolution for templates and output.
 - **Navigation Fix:** Resolved `net::ERR_FAILED` by preventing `intercept_noise` from aborting main navigation requests.

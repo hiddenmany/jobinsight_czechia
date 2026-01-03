@@ -82,10 +82,13 @@ class ScrapeEngine:
         self.semaphore = asyncio.Semaphore(CONCURRENCY)
         self.common_config = CONFIG.get('common', {})
 
-    async def get_context(self):
+    async def get_context(self, proxy_server: Optional[str] = None):
+        proxy = {"server": proxy_server} if proxy_server else None
+        
         context = await self.browser.new_context(
             viewport={"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT},
-            user_agent=get_random_user_agent(),  # Randomized UA to avoid bot detection
+            user_agent=get_random_user_agent(),
+            proxy=proxy
         )
         return context
 
@@ -617,7 +620,11 @@ class LinkedinScraper(BaseScraper):
             logger.warning(f"Skipping {self.site_name} - circuit breaker is open")
             return
         
-        context = await self.engine.get_context()
+        proxy = os.environ.get("LINKEDIN_PROXY")
+        if proxy:
+            logger.info("Using proxy for LinkedIn")
+        
+        context = await self.engine.get_context(proxy_server=proxy)
         page = await context.new_page()
         
         base_url = self.config.get('base_url')
