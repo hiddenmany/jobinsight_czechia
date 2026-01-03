@@ -3,7 +3,7 @@
 [![Market Scraper](https://github.com/hiddenmany/jobinsight_czechia/actions/workflows/weekly_scrape.yml/badge.svg)](https://github.com/hiddenmany/jobinsight_czechia/actions/workflows/weekly_scrape.yml)
 [![Live Dashboard](https://img.shields.io/badge/Live-HR_Intelligence-0055FF?style=for-the-badge&logo=github)](https://hiddenmany.github.io/jobinsight_czechia/)
 
-**v1.0 HR Intelligence Edition** - Actionable market intelligence for HR professionals and employers.
+**v1.1 Stable Scraper Edition** - Actionable market intelligence for HR professionals and employers.
 
 ## 🌐 Live Market Overview
 The latest market intelligence is automatically updated every Monday:
@@ -13,7 +13,13 @@ The latest market intelligence is automatically updated every Monday:
 
 ## 🚀 Core Capabilities
 
-### v1.0 HR Intelligence Features (NEW)
+### v1.1 Updates: Enhanced Stability (NEW)
+- **Robust Scraping:** Fixed critical navigation blocks on StartupJobs (avoiding `net::ERR_FAILED`).
+- **Improved Coverage:** Correctly extracts links from Cocuma's non-standard cards.
+- **Better Parsing:** Updated WTTJ selectors to match current site layout.
+- **Consistent Metrics:** Unified extraction statistics across all sources.
+
+### v1.0 HR Intelligence Features
 - **Role Classification:** Salary breakdown by job function (Developer, Analyst, Sales, HR, etc.)
 - **Seniority Detection:** Compensation by level (Junior, Mid, Senior, Lead, Executive)
 - **Skill Premium Analysis:** Which technical skills command higher pay
@@ -85,7 +91,7 @@ The latest market intelligence is automatically updated every Monday:
 
 ## 📈 HR Intelligence Metrics
 
-The v1.0 report includes:
+The report includes:
 - **Salary by Role:** PM, Developer, Analyst, Sales, etc.
 - **Salary by Seniority:** Junior → Mid → Senior → Lead → Executive progression
 - **Tech Stack Gap:** Modern vs Stable vs Legacy
@@ -93,4 +99,4 @@ The v1.0 report includes:
 - **Top Innovators:** Companies hiring in modern tech stacks
 
 ---
-*Maintained by hiddenmany • v1.0 HR Intelligence Edition*
+*Maintained by hiddenmany • v1.1 Stable Scraper Edition*
