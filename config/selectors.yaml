@@ -67,7 +67,7 @@ scrapers:
     base_url: https://www.startupjobs.cz/nabidky
     domain: https://www.startupjobs.cz
     card: a[href*='/nabidka/']
-    title: h2
+    title: div.font-semibold
     company_selectors:
     - .employer-name
     - span.text-gray-500
@@ -80,8 +80,8 @@ scrapers:
   WTTJ:
     base_url: https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia
     domain: https://www.welcometothejungle.com
-    card: li
-    title: h4
+    card: li[data-testid="search-results-list-item-wrapper"]
+    title: h2
     link: a[href*='/jobs/']
     company_selectors:
     - span.sc-688y7f-0

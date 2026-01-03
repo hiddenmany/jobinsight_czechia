@@ -94,6 +94,11 @@ class ScrapeEngine:
         bad_patterns = noise_cfg.get('bad_patterns', [])
         resource_types = noise_cfg.get('resource_types', [])
         
+        # NEVER abort the main navigation request
+        if route.request.is_navigation_request():
+            await route.continue_()
+            return
+
         if route.request.resource_type in resource_types:
             await route.abort()
         elif any(p in route.request.url for p in bad_patterns):
@@ -168,6 +173,7 @@ class BaseScraper:
         self.engine = engine
         self.site_name = site_name
         self.config = CONFIG.get('scrapers', {}).get(site_name, {})
+        self.extraction_stats = {'total': 0, 'success': 0, 'failed_validation': 0, 'duplicates': 0}
         # Get performance config with per-scraper overrides
         perf_config = CONFIG.get('performance', {})
         self.scroll_delay = perf_config.get('scraper_delays', {}).get(site_name, {}).get('scroll_delay', 
@@ -226,10 +232,6 @@ class BaseScraper:
 class PagedScraper(BaseScraper):
     """Handles scrapers with numbered pagination (Jobs.cz, Prace.cz, Cocuma)."""
     
-    def __init__(self, engine, site_name):
-        super().__init__(engine, site_name)
-        self.extraction_stats = {'total': 0, 'success': 0, 'failed_validation': 0, 'duplicates': 0}
-    
     async def run(self, limit=50):
         # Check circuit breaker
         if CIRCUIT_BREAKER.is_open(self.site_name):
@@ -278,7 +280,11 @@ class PagedScraper(BaseScraper):
                     company_name = await self.extract_company(card)
                     city = await self.extract_city(card)
                     
+                    # Try title element first, then fallback to card itself (fix for Cocuma)
                     link = await title_el.get_attribute("href")
+                    if not link:
+                        link = await card.get_attribute("href")
+                        
                     if not link:
                         logger.debug(f"Skipping card with no link")
                         continue
@@ -451,8 +457,15 @@ class StartupJobsScraper(BaseScraper):
                     if match:
                         salary = match.group(0)
 
+                    title_sel = self.config.get('title', 'h2')
+                    title_el = await card.query_selector(title_sel)
+                    if title_el:
+                        title = (await title_el.inner_text()).split('\n')[0]
+                    else:
+                        title = (await card.inner_text()).split("\n")[0]
+
                     sig = JobSignal(
-                        title=sanitize_text((await card.inner_text()).split("\n")[0]),
+                        title=sanitize_text(title),
                         company=company_name,
                         link=link,
                         source=self.site_name,
