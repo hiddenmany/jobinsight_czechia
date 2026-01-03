@@ -1,0 +1,74 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>JobsCz Insights - Trends</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f4f4f9; }
+            .container { max-width: 1200px; margin: 0 auto; }
+            .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+            h1 { color: #333; }
+            h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+            .nav { margin-bottom: 20px; }
+            .nav a { margin-right: 15px; text-decoration: none; color: #007bff; font-weight: bold; }
+            canvas { max-height: 400px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>JobsCz Market Insights</h1>
+            <div class="nav">
+                <a href="index.html">← Back to Job List</a>
+            </div>
+
+            <div class="card">
+                <h2>Job Volume by Role (Trends)</h2>
+                <canvas id="trendChart"></canvas>
+            </div>
+
+            <div class="card">
+                <h2>Top Skills Demand (Keyword Frequency)</h2>
+                <p>Based on analysis of 1330 keyword matches across database.</p>
+                <canvas id="skillChart"></canvas>
+            </div>
+            
+            <footer style="text-align: center; color: #777; margin-top: 40px;">
+                Generated on 2026-01-04 00:27 | Powered by DuckDB & JobsCzInsight
+            </footer>
+        </div>
+
+        <script>
+            // Trend Chart
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {"labels": ["2026-01-03"], "datasets": [{"label": "Analyst", "data": [156], "fill": false, "tension": 0.1}, {"label": "Designer", "data": [430], "fill": false, "tension": 0.1}, {"label": "Developer", "data": [365], "fill": false, "tension": 0.1}, {"label": "Finance", "data": [125], "fill": false, "tension": 0.1}, {"label": "HR", "data": [2534], "fill": false, "tension": 0.1}, {"label": "Management", "data": [435], "fill": false, "tension": 0.1}, {"label": "Marketing", "data": [103], "fill": false, "tension": 0.1}, {"label": "Operations", "data": [179], "fill": false, "tension": 0.1}, {"label": "Other", "data": [467], "fill": false, "tension": 0.1}, {"label": "PM", "data": [80], "fill": false, "tension": 0.1}, {"label": "QA", "data": [30], "fill": false, "tension": 0.1}, {"label": "Sales", "data": [1062], "fill": false, "tension": 0.1}, {"label": "Support", "data": [140], "fill": false, "tension": 0.1}]},
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+
+            // Skill Chart
+            const skillCtx = document.getElementById('skillChart').getContext('2d');
+            new Chart(skillCtx, {
+                type: 'bar',
+                data: {"labels": ["Excel", "N\u011bm\u010dina", "SAP", "SQL", "English", "Python", "Java", "AWS", "React", "TypeScript", "Docker", "Azure", "PostgreSQL", "Kubernetes", "JavaScript", "MongoDB", "Project Management", "Angular", "Vue", "Agile"], "datasets": [{"label": "Mentions in Job Descriptions", "data": [380, 152, 117, 106, 100, 63, 48, 47, 46, 43, 43, 35, 30, 30, 28, 17, 13, 12, 10, 10], "backgroundColor": "rgba(54, 162, 235, 0.6)"}]},
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        </script>
+    </body>
+    </html>
+    

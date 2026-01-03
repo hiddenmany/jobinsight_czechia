@@ -48,6 +48,10 @@ jobs:
         run: |
           python generate_report.py
 
+      - name: Generate Visual Trends
+        run: |
+          python visualizer.py
+
       - name: Commit and Push Data
         run: |
           git config --global user.name 'Scraper Bot'
