@@ -6,7 +6,7 @@ common:
     - "text=Read more"
     - "text=Show more"
     - "text=See more"
-    - "button:has-text("View more")"
+    - "button:has-text('View more')"
   intercept_noise:
     bad_patterns:
       - "google-analytics"
@@ -85,7 +85,7 @@ scrapers:
   WTTJ:
     base_url: "https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia"
     domain: "https://www.welcometothejungle.com"
-    card: "li[data-testid="search-result-item"], li.ais-InfiniteHits-item" # More specific job card selector
+    card: 'li[data-testid="search-result-item"], li.ais-InfiniteHits-item' # More specific job card selector
     title: "h4"
     link: "a[href*='/jobs/']" # More specific link to avoid company links
     company_selectors:
@@ -109,10 +109,10 @@ scrapers:
   LinkedIn:
     base_url: "https://www.linkedin.com/jobs/search?keywords=&location=Czechia&f_TPR=r86400"
     domain: "https://www.linkedin.com"
-    card: "li.jobs-search__results-list > li, li.job-card-container"
+    card: 'li.jobs-search__results-list > li, li.job-card-container'
     title: "h3"
     company: "h4"
-    link: "a.base-card__full-link, a[href*="/jobs/view/"]"
+    link: 'a.base-card__full-link, a[href*="/jobs/view/"]'
     city_selectors:
       - ".job-card-container__metadata-item"
       - "span.job-search-card__location"
