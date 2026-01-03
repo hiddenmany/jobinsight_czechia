@@ -4,68 +4,144 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>JobsCz Insights - Trends</title>
+        <title>JobsCz Market Intelligence Report</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
         <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f4f4f9; }
-            .container { max-width: 1200px; margin: 0 auto; }
-            .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-            h1 { color: #333; }
-            h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
-            .nav { margin-bottom: 20px; }
-            .nav a { margin-right: 15px; text-decoration: none; color: #007bff; font-weight: bold; }
-            canvas { max-height: 400px; }
+            :root { --primary: #2563eb; --secondary: #1e293b; --bg: #f8fafc; --card: #ffffff; }
+            body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--secondary); padding: 40px; margin: 0; }
+            .container { max-width: 1400px; margin: 0 auto; }
+            
+            header { text-align: center; margin-bottom: 60px; }
+            h1 { font-weight: 800; font-size: 2.5rem; margin-bottom: 10px; color: #0f172a; }
+            .subtitle { color: #64748b; font-size: 1.1rem; }
+            
+            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(600px, 1fr)); gap: 30px; }
+            .card { background: var(--card); padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }
+            
+            h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 25px; border-left: 5px solid var(--primary); padding-left: 15px; }
+            
+            .insight-box { background: #eff6ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; color: #1e40af; }
+            
+            canvas { max-height: 400px; width: 100%; }
+            
+            .nav { position: absolute; top: 20px; left: 20px; }
+            .nav a { text-decoration: none; color: var(--primary); font-weight: 600; }
         </style>
     </head>
     <body>
+        <div class="nav"><a href="index.html">← Back to Raw Data</a></div>
+        
         <div class="container">
-            <h1>JobsCz Market Insights</h1>
-            <div class="nav">
-                <a href="index.html">← Back to Job List</a>
-            </div>
+            <header>
+                <h1>🇨🇿 Czech Job Market Intelligence</h1>
+                <div class="subtitle">Executive Overview • January 2026 Edition</div>
+            </header>
 
-            <div class="card">
-                <h2>Job Volume by Role (Trends)</h2>
-                <canvas id="trendChart"></canvas>
-            </div>
+            <div class="grid">
+                <!-- Salary Analysis -->
+                <div class="card">
+                    <h2>💰 Market Value by Role (Monthly CZK)</h2>
+                    <div class="insight-box">
+                        <strong>CEO Insight:</strong> Roles are ranked by average advertised salary. Use this to benchmark your internal compensation bands.
+                    </div>
+                    <canvas id="salaryChart"></canvas>
+                </div>
 
-            <div class="card">
-                <h2>Top Skills Demand (Keyword Frequency)</h2>
-                <p>Based on analysis of 1330 keyword matches across database.</p>
-                <canvas id="skillChart"></canvas>
+                <!-- Modern Tech Stack -->
+                <div class="card">
+                    <h2>🔥 Modern Tech Demand</h2>
+                    <div class="insight-box">
+                        <strong>CTO Insight:</strong> The most requested technologies in job descriptions today. High volume = easier to hire, but potentially higher turnover.
+                    </div>
+                    <canvas id="skillChart"></canvas>
+                </div>
+
+                <!-- Top Hiring Volume -->
+                <div class="card">
+                    <h2>🏢 Top Hiring Volumes (Overall)</h2>
+                    <div class="insight-box">
+                        <strong>Market Share:</strong> Companies with the highest number of active job listings right now.
+                    </div>
+                    <canvas id="companyChart"></canvas>
+                </div>
+
+                <!-- Tech Hiring in Non-Tech -->
+                <div class="card">
+                    <h2>🤖 Hiring Volume in Modern Stack</h2>
+                    <div class="insight-box">
+                        <strong>Anomaly Detection:</strong> Companies hiring heavily for Modern Stack roles. Watch for non-tech firms (e.g., Retail, Banking) entering the talent war.
+                    </div>
+                    <canvas id="techHiringChart"></canvas>
+                </div>
             </div>
             
-            <footer style="text-align: center; color: #777; margin-top: 40px;">
-                Generated on 2026-01-04 00:27 | Powered by DuckDB & JobsCzInsight
+            <footer style="text-align: center; margin-top: 60px; color: #94a3b8; font-size: 0.8rem;">
+                Generated by JobsCzInsight Intelligence Engine • 2026-01-04 00:33
             </footer>
         </div>
 
         <script>
-            // Trend Chart
-            const trendCtx = document.getElementById('trendChart').getContext('2d');
-            new Chart(trendCtx, {
-                type: 'line',
-                data: {"labels": ["2026-01-03"], "datasets": [{"label": "Analyst", "data": [156], "fill": false, "tension": 0.1}, {"label": "Designer", "data": [430], "fill": false, "tension": 0.1}, {"label": "Developer", "data": [365], "fill": false, "tension": 0.1}, {"label": "Finance", "data": [125], "fill": false, "tension": 0.1}, {"label": "HR", "data": [2534], "fill": false, "tension": 0.1}, {"label": "Management", "data": [435], "fill": false, "tension": 0.1}, {"label": "Marketing", "data": [103], "fill": false, "tension": 0.1}, {"label": "Operations", "data": [179], "fill": false, "tension": 0.1}, {"label": "Other", "data": [467], "fill": false, "tension": 0.1}, {"label": "PM", "data": [80], "fill": false, "tension": 0.1}, {"label": "QA", "data": [30], "fill": false, "tension": 0.1}, {"label": "Sales", "data": [1062], "fill": false, "tension": 0.1}, {"label": "Support", "data": [140], "fill": false, "tension": 0.1}]},
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#64748b';
+
+            // 1. Salary Chart
+            new Chart(document.getElementById('salaryChart'), {
+                type: 'bar',
+                data: {"labels": ["PM", "Developer", "Marketing", "Management", "Analyst", "Sales", "QA", "Other", "Finance", "HR", "Operations", "Designer", "Support"], "datasets": [{"label": "Average Salary (CZK)", "data": [67932, 61576, 58279, 52932, 52232, 50671, 47077, 43134, 42555, 42272, 40896, 40587, 39831], "backgroundColor": "#36A2EB"}, {"label": "Max Salary (CZK)", "data": [135000, 160000, 105000, 200000, 110000, 200000, 150000, 115000, 82500, 900000, 90000, 80000, 75000], "backgroundColor": "#FF6384", "hidden": true}]},
                 options: {
-                    responsive: true,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { position: 'right' }
-                    }
+                    indexAxis: 'y',
+                    plugins: { legend: { display: true } }
                 }
             });
 
-            // Skill Chart
-            const skillCtx = document.getElementById('skillChart').getContext('2d');
-            new Chart(skillCtx, {
+            // 2. Skill Chart
+            new Chart(document.getElementById('skillChart'), {
                 type: 'bar',
-                data: {"labels": ["Excel", "N\u011bm\u010dina", "SAP", "SQL", "English", "Python", "Java", "AWS", "React", "TypeScript", "Docker", "Azure", "PostgreSQL", "Kubernetes", "JavaScript", "MongoDB", "Project Management", "Angular", "Vue", "Agile"], "datasets": [{"label": "Mentions in Job Descriptions", "data": [380, 152, 117, 106, 100, 63, 48, 47, 46, 43, 43, 35, 30, 30, 28, 17, 13, 12, 10, 10], "backgroundColor": "rgba(54, 162, 235, 0.6)"}]},
+                data: {
+                    labels: ["AI", "SQL", "Python", "Java", "AWS", "React", "TypeScript", "Docker", "CI/CD", "Azure", "Kubernetes", "Node.js", "JavaScript", "GCP", "Angular", "Vue", "Machine Learning", "Data Science"],
+                    datasets: [{
+                        label: 'Job Mentions',
+                        data: [4708, 106, 63, 48, 47, 46, 43, 43, 39, 35, 30, 29, 28, 15, 12, 10, 5, 3],
+                        backgroundColor: '#f59e0b'
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 3. Top Companies
+            new Chart(document.getElementById('companyChart'), {
+                type: 'bar',
+                data: {
+                    labels: ["Unknown Employer", "Penny Market s.r.o.", "Dr\u00e1\u010dik - DUVI CZ s.r.o.", "Z\u00e1silkovna s.r.o.", "AXXOS HOTELS & RESORTS, s.r.o.", "MONETA Money Bank, a.s.", "Deklarace odpov\u011bdn\u00e9ho podnik\u00e1n\u00ed z. s.", "Siemens, s.r.o.", "PORR a.s.", "Kaufland \u010cesk\u00e1 republika v.o.s.", "REI s.r.o.", "Skupina \u010cEZ", "\u010clov\u011bk v t\u00edsni, o.p.s.", "D.A.S. pr\u00e1vn\u00ed ochrana, pobo\u010dka ERGO Versicherung Aktiengesellschaft pro \u010cR", "Randstad HR Solutions s.r.o."],
+                    datasets: [{
+                        label: 'Active Listings',
+                        data: [244, 44, 42, 38, 36, 33, 30, 29, 28, 27, 25, 25, 24, 24, 23],
+                        backgroundColor: '#10b981'
+                    }]
+                },
                 options: {
                     indexAxis: 'y',
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    }
+                    plugins: { legend: { display: false } }
+                }
+            });
+            
+            // 4. Tech Hiring Companies
+            new Chart(document.getElementById('techHiringChart'), {
+                type: 'bar',
+                data: {
+                    labels: ["Unknown Employer", "Penny Market s.r.o.", "Dr\u00e1\u010dik - DUVI CZ s.r.o.", "Z\u00e1silkovna s.r.o.", "AXXOS HOTELS & RESORTS, s.r.o.", "Deklarace odpov\u011bdn\u00e9ho podnik\u00e1n\u00ed z. s.", "PORR a.s.", "REI s.r.o.", "TresJob s.r.o.", "IMI International s.r.o.", "Fond ohro\u017een\u00fdch d\u011bt\u00ed", "LATECOERE Czech Republic s.r.o.", "PEAL a.s.", "ALTRON, a.s.", "Obecn\u011b prosp\u011b\u0161n\u00e1 spole\u010dnost D\u016fstojnost"],
+                    datasets: [{
+                        label: 'Modern Stack Roles',
+                        data: [160, 44, 42, 38, 36, 30, 28, 25, 22, 21, 21, 21, 18, 17, 15],
+                        backgroundColor: '#6366f1'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } }
                 }
             });
         </script>

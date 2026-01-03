@@ -7,159 +7,239 @@ from datetime import datetime
 DB_PATH = 'data/intelligence.db'
 OUTPUT_HTML = 'public/trends.html'
 
-# Skills to track (English & Czech variations could be added)
-SKILLS = [
+# Tech Stack Keywords for "Modern Stack" Analysis
+TECH_STACK = [
     "Python", "Java", "JavaScript", "TypeScript", "React", "Angular", "Vue", 
-    "SQL", "PostgreSQL", "MongoDB", "AWS", "Azure", "Docker", "Kubernetes",
-    "Excel", "SAP", "English", "Němčina", "Project Management", "Agile"
+    "Node.js", "SQL", "Docker", "Kubernetes", "AWS", "Azure", "GCP", "CI/CD",
+    "Machine Learning", "AI", "Data Science"
 ]
 
-def get_trend_data(conn):
-    print("Generating Trend Data...")
-    # Group by Date (Day) and Role
-    query = """
+def get_market_intelligence(conn):
+    print("Generating Market Intelligence Data...")
+    
+    # 1. Salary Analysis by Role (Box Plot Approximation: Min, Avg, Max)
+    # We filter out NULL salaries and suspiciously low values (< 20000 CZK)
+    salary_query = """
         SELECT 
-            strftime(scraped_at, '%Y-%m-%d') as scrape_date,
             role_type,
-            COUNT(*) as job_count
+            COUNT(*) as job_count,
+            MIN(avg_salary) as min_sal,
+            AVG(avg_salary) as avg_sal,
+            MAX(avg_salary) as max_sal
         FROM signals
-        WHERE role_type IS NOT NULL
-        GROUP BY 1, 2
-        ORDER BY 1, 2
+        WHERE avg_salary > 20000 AND role_type IS NOT NULL
+        GROUP BY role_type
+        HAVING count(*) > 5
+        ORDER BY avg_sal DESC
     """
-    results = conn.execute(query).fetchall()
+    salary_results = conn.execute(salary_query).fetchall()
     
-    # Structure for Chart.js: { dates: [], datasets: [ { label: 'Role', data: [] } ] }
-    data_map = {}
-    dates = set()
-    
-    for date, role, count in results:
-        dates.add(date)
-        if role not in data_map:
-            data_map[role] = {}
-        data_map[role][date] = count
-        
-    sorted_dates = sorted(list(dates))
-    
-    datasets = []
-    # colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
-    
-    for role, dates_counts in data_map.items():
-        data_points = []
-        for d in sorted_dates:
-            data_points.append(dates_counts.get(d, 0))
-            
-        datasets.append({
-            "label": role,
-            "data": data_points,
-            "fill": False,
-            "tension": 0.1
-        })
-        
-    return {
-        "labels": sorted_dates,
-        "datasets": datasets
+    salary_data = {
+        "labels": [r[0] for r in salary_results],
+        "datasets": [
+            {"label": "Average Salary (CZK)", "data": [int(r[3]) for r in salary_results], "backgroundColor": "#36A2EB"},
+            {"label": "Max Salary (CZK)", "data": [int(r[4]) for r in salary_results], "backgroundColor": "#FF6384", "hidden": True}
+        ]
     }
 
-def get_skill_heatmap(conn):
-    print("Generating Skill Heatmap...")
-    # This is expensive, so we do it simply:
-    # For each skill, count how many descriptions contain it
+    # 2. Top Hiring Companies (Overall)
+    company_query = """
+        SELECT company, COUNT(*) as count 
+        FROM signals 
+        WHERE company IS NOT NULL AND company != ''
+        GROUP BY company 
+        ORDER BY count DESC 
+        LIMIT 15
+    """
+    top_companies = conn.execute(company_query).fetchall()
     
+    # 3. "Hidden Tech" - Non-Tech companies hiring for Tech Roles
+    # We look for descriptions containing TECH_STACK keywords but exclude obvious agencies/tech firms if possible.
+    # For now, we just look for high tech-keyword density companies.
+    
+    # Create a giant OR clause for tech keywords
+    tech_filter = " OR ".join([f"lower(description) LIKE '%{k.lower()}%'" for k in TECH_STACK])
+    
+    tech_hiring_query = f"""
+        SELECT company, COUNT(*) as tech_jobs
+        FROM signals
+        WHERE ({tech_filter})
+        AND company IS NOT NULL
+        GROUP BY company
+        ORDER BY tech_jobs DESC
+        LIMIT 15
+    """
+    tech_hiring_companies = conn.execute(tech_hiring_query).fetchall()
+
+    # 4. Skill Heatmap (Modern Stack)
     skill_counts = []
-    
-    for skill in SKILLS:
-        # Simple case-insensitive match. 
-        # refined: use word boundaries if possible, but LIKE %...% is faster/easier for now
-        query = f"""
-            SELECT COUNT(*) 
-            FROM signals 
-            WHERE lower(description) LIKE '%{skill.lower()}%'
-        """
+    for skill in TECH_STACK:
+        query = f"SELECT COUNT(*) FROM signals WHERE lower(description) LIKE '%{skill.lower()}%'"
         count = conn.execute(query).fetchone()[0]
         skill_counts.append({"skill": skill, "count": count})
-    
-    # Sort by count desc
     skill_counts.sort(key=lambda x: x['count'], reverse=True)
     
     return {
-        "labels": [x['skill'] for x in skill_counts],
-        "datasets": [{
-            "label": 'Mentions in Job Descriptions',
-            "data": [x['count'] for x in skill_counts],
-            "backgroundColor": 'rgba(54, 162, 235, 0.6)'
-        }]
+        "salary": salary_data,
+        "top_companies": {
+            "labels": [r[0] for r in top_companies],
+            "data": [r[1] for r in top_companies]
+        },
+        "tech_hiring": {
+            "labels": [r[0] for r in tech_hiring_companies],
+            "data": [r[1] for r in tech_hiring_companies]
+        },
+        "skills": {
+            "labels": [x['skill'] for x in skill_counts],
+            "data": [x['count'] for x in skill_counts]
+        }
     }
 
-def generate_html(trend_data, skill_data):
+def generate_executive_report(data):
     html_content = f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>JobsCz Insights - Trends</title>
+        <title>JobsCz Market Intelligence Report</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f4f4f9; }}
-            .container {{ max-width: 1200px; margin: 0 auto; }}
-            .card {{ background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }}
-            h1 {{ color: #333; }}
-            h2 {{ border-bottom: 2px solid #eee; padding-bottom: 10px; }}
-            .nav {{ margin-bottom: 20px; }}
-            .nav a {{ margin-right: 15px; text-decoration: none; color: #007bff; font-weight: bold; }}
-            canvas {{ max-height: 400px; }}
+            :root {{ --primary: #2563eb; --secondary: #1e293b; --bg: #f8fafc; --card: #ffffff; }}
+            body {{ font-family: 'Inter', sans-serif; background: var(--bg); color: var(--secondary); padding: 40px; margin: 0; }}
+            .container {{ max-width: 1400px; margin: 0 auto; }}
+            
+            header {{ text-align: center; margin-bottom: 60px; }}
+            h1 {{ font-weight: 800; font-size: 2.5rem; margin-bottom: 10px; color: #0f172a; }}
+            .subtitle {{ color: #64748b; font-size: 1.1rem; }}
+            
+            .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(600px, 1fr)); gap: 30px; }}
+            .card {{ background: var(--card); padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }}
+            
+            h2 {{ font-size: 1.25rem; font-weight: 600; margin-bottom: 25px; border-left: 5px solid var(--primary); padding-left: 15px; }}
+            
+            .insight-box {{ background: #eff6ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; color: #1e40af; }}
+            
+            canvas {{ max-height: 400px; width: 100%; }}
+            
+            .nav {{ position: absolute; top: 20px; left: 20px; }}
+            .nav a {{ text-decoration: none; color: var(--primary); font-weight: 600; }}
         </style>
     </head>
     <body>
+        <div class="nav"><a href="index.html">← Back to Raw Data</a></div>
+        
         <div class="container">
-            <h1>JobsCz Market Insights</h1>
-            <div class="nav">
-                <a href="index.html">← Back to Job List</a>
-            </div>
+            <header>
+                <h1>🇨🇿 Czech Job Market Intelligence</h1>
+                <div class="subtitle">Executive Overview • {datetime.now().strftime('%B %Y')} Edition</div>
+            </header>
 
-            <div class="card">
-                <h2>Job Volume by Role (Trends)</h2>
-                <canvas id="trendChart"></canvas>
-            </div>
+            <div class="grid">
+                <!-- Salary Analysis -->
+                <div class="card">
+                    <h2>💰 Market Value by Role (Monthly CZK)</h2>
+                    <div class="insight-box">
+                        <strong>CEO Insight:</strong> Roles are ranked by average advertised salary. Use this to benchmark your internal compensation bands.
+                    </div>
+                    <canvas id="salaryChart"></canvas>
+                </div>
 
-            <div class="card">
-                <h2>Top Skills Demand (Keyword Frequency)</h2>
-                <p>Based on analysis of {sum(skill_data['datasets'][0]['data'])} keyword matches across database.</p>
-                <canvas id="skillChart"></canvas>
+                <!-- Modern Tech Stack -->
+                <div class="card">
+                    <h2>🔥 Modern Tech Demand</h2>
+                    <div class="insight-box">
+                        <strong>CTO Insight:</strong> The most requested technologies in job descriptions today. High volume = easier to hire, but potentially higher turnover.
+                    </div>
+                    <canvas id="skillChart"></canvas>
+                </div>
+
+                <!-- Top Hiring Volume -->
+                <div class="card">
+                    <h2>🏢 Top Hiring Volumes (Overall)</h2>
+                    <div class="insight-box">
+                        <strong>Market Share:</strong> Companies with the highest number of active job listings right now.
+                    </div>
+                    <canvas id="companyChart"></canvas>
+                </div>
+
+                <!-- Tech Hiring in Non-Tech -->
+                <div class="card">
+                    <h2>🤖 Hiring Volume in Modern Stack</h2>
+                    <div class="insight-box">
+                        <strong>Anomaly Detection:</strong> Companies hiring heavily for Modern Stack roles. Watch for non-tech firms (e.g., Retail, Banking) entering the talent war.
+                    </div>
+                    <canvas id="techHiringChart"></canvas>
+                </div>
             </div>
             
-            <footer style="text-align: center; color: #777; margin-top: 40px;">
-                Generated on {datetime.now().strftime('%Y-%m-%d %H:%M')} | Powered by DuckDB & JobsCzInsight
+            <footer style="text-align: center; margin-top: 60px; color: #94a3b8; font-size: 0.8rem;">
+                Generated by JobsCzInsight Intelligence Engine • {datetime.now().strftime('%Y-%m-%d %H:%M')}
             </footer>
         </div>
 
         <script>
-            // Trend Chart
-            const trendCtx = document.getElementById('trendChart').getContext('2d');
-            new Chart(trendCtx, {{
-                type: 'line',
-                data: {json.dumps(trend_data)},
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#64748b';
+
+            // 1. Salary Chart
+            new Chart(document.getElementById('salaryChart'), {{
+                type: 'bar',
+                data: {json.dumps(data['salary'])},
                 options: {{
-                    responsive: true,
-                    interaction: {{ mode: 'index', intersect: false }},
-                    plugins: {{
-                        legend: {{ position: 'right' }}
-                    }}
+                    indexAxis: 'y',
+                    plugins: {{ legend: {{ display: true }} }}
                 }}
             }});
 
-            // Skill Chart
-            const skillCtx = document.getElementById('skillChart').getContext('2d');
-            new Chart(skillCtx, {{
+            // 2. Skill Chart
+            new Chart(document.getElementById('skillChart'), {{
                 type: 'bar',
-                data: {json.dumps(skill_data)},
+                data: {{
+                    labels: {json.dumps(data['skills']['labels'])},
+                    datasets: [{{
+                        label: 'Job Mentions',
+                        data: {json.dumps(data['skills']['data'])},
+                        backgroundColor: '#f59e0b'
+                    }}]
+                }},
+                options: {{
+                    plugins: {{ legend: {{ display: false }} }}
+                }}
+            }});
+
+            // 3. Top Companies
+            new Chart(document.getElementById('companyChart'), {{
+                type: 'bar',
+                data: {{
+                    labels: {json.dumps(data['top_companies']['labels'])},
+                    datasets: [{{
+                        label: 'Active Listings',
+                        data: {json.dumps(data['top_companies']['data'])},
+                        backgroundColor: '#10b981'
+                    }}]
+                }},
                 options: {{
                     indexAxis: 'y',
-                    responsive: true,
-                    plugins: {{
-                        legend: {{ display: false }}
-                    }}
+                    plugins: {{ legend: {{ display: false }} }}
+                }}
+            }});
+            
+            // 4. Tech Hiring Companies
+            new Chart(document.getElementById('techHiringChart'), {{
+                type: 'bar',
+                data: {{
+                    labels: {json.dumps(data['tech_hiring']['labels'])},
+                    datasets: [{{
+                        label: 'Modern Stack Roles',
+                        data: {json.dumps(data['tech_hiring']['data'])},
+                        backgroundColor: '#6366f1'
+                    }}]
+                }},
+                options: {{
+                    indexAxis: 'y',
+                    plugins: {{ legend: {{ display: false }} }}
                 }}
             }});
         </script>
@@ -169,16 +249,17 @@ def generate_html(trend_data, skill_data):
     
     with open(OUTPUT_HTML, 'w', encoding='utf-8') as f:
         f.write(html_content)
-    print(f"Report generated: {OUTPUT_HTML}")
+    print(f"Executive Report generated: {OUTPUT_HTML}")
 
 def main():
     try:
         conn = duckdb.connect(DB_PATH)
-        trend_data = get_trend_data(conn)
-        skill_data = get_skill_heatmap(conn)
-        generate_html(trend_data, skill_data)
+        data = get_market_intelligence(conn)
+        generate_executive_report(data)
     except Exception as e:
         print(f"Failed: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
