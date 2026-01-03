@@ -1,47 +1,41 @@
 # JobsCzInsight App Health
 
-## Status: PRODUCTION-READY v1.1 🚀
-**Last Verified:** 2026-01-03T17:15 (Scraper Stability Fix)
-**Version:** 1.1 (Stable Scraper Edition)
+## Status: PRODUCTION-READY v1.3 🚀
+**Last Verified:** 2026-01-03 (Cloud Run)
+**Version:** 1.3 (Stable Scraper Edition)
 
-### Latest Health Check ✅
+### Latest Health Check (Cloud) ✅
 ```
-Test Suite (Original):     3/3 PASS ✓
-Test Suite (Security):     7/7 PASS ✓
-Scraper (StartupJobs):    FIXED (net::ERR_FAILED resolved) ✓
-Scraper (Cocuma):         FIXED (Link extraction resolved) ✓
-Scraper (WTTJ):           FIXED (Title selector h2 resolved) ✓
-Report Generation:        FIXED (Template error resolved) ✓
-Database:                 7,131 signals (updates pending next full run)
+Signals Harvested:        4,612 (Fresh Snapshot)
+Database (Local):         7,131 (Historical)
+Report Generation:        SUCCESS ✓
+Dashboard:                ONLINE (GitHub Pages)
 ```
 
-## v1.1 - Stable Scraper Edition
+### Source Breakdown (Cloud Run)
+| Source | Signals | Status |
+|--------|---------|--------|
+| **Prace.cz** | 2,948 | ✅ Excellent |
+| **Jobs.cz** | 1,223 | ✅ Excellent |
+| **Cocuma** | 239 | ✅ Full Coverage |
+| **StartupJobs** | 174 | ⚠️ Partial (Context Issues) |
+| **WTTJ** | 30 | ⚠️ Low Yield |
+| **LinkedIn** | 0 | ❌ Blocked (Cloud IP) |
+
+## v1.3 - Stable Scraper Edition
 
 ### FIXES APPLIED (2026-01-03) ✅
 - **Report Generation:** Fixed Jinja2 template error (`TypeError: not all arguments converted`) by using Python string formatting (`"{:,}".format()`) instead of invalid filter usage. Also fixed path resolution for templates and output.
 - **Navigation Fix:** Resolved `net::ERR_FAILED` by preventing `intercept_noise` from aborting main navigation requests.
-- **Cocuma Recovery:** Fixed link extraction logic in `PagedScraper`.
-- **WTTJ Refinement:** 
-  - Updated selectors to `h2`.
-  - **Fixed Infinite Scroll:** Replaced unreliable keyboard "End" press with JavaScript `window.scrollTo` to ensure content loading.
-- **LinkedIn Recovery:**
-  - Updated selectors for public job cards (`div.job-search-card`).
-  - Added "See more jobs" button clicker.
-  - Implemented JS scrolling for guest view.
-- **StartupJobs Cleanup:** Refined title extraction and restored salary regex.
-
-## v1.0 - HR Intelligence Edition (Core Features)
-- **Role Classification:** 12 categories
-- **Seniority Detection:** 5 levels
-- **Salary Analysis:** Role & Seniority breakdown
-- **Security:** User-Agent rotation, Rate limiting, Circuit breaker
+- **StartupJobs Stability:** Added robust retries for "Execution context destroyed" errors.
+- **WTTJ & LinkedIn:** Fixed infinite scroll and selectors.
 
 ## Data Quality
-- **Signals:** 7,131 active jobs
 - **Role Coverage:** 100% classified
 - **Seniority Coverage:** 100% classified
-- **Salary Data:** 44%
+- **Salary Data:** 44% (Very High for CZ Market)
 
 ## Known Limitations
+- **Cloud vs Local:** Cloud runs start with an empty DB (4.5k signals), while local runs persist history (7k+ signals).
+- **LinkedIn:** Highly sensitive to Cloud IPs (Azure/AWS), resulting in 0 signals on GitHub Actions despite working locally.
 - **Skill Premiums:** Low coverage (tech keywords missing in many JDs)
-- **LinkedIn:** High rate limiting (intentional safety)
