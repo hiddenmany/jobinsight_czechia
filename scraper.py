@@ -279,6 +279,9 @@ class PagedScraper(BaseScraper):
                     city = await self.extract_city(card)
                     
                     link = await title_el.get_attribute("href")
+                    if not link:
+                        logger.debug(f"Skipping card with no link")
+                        continue
                     if not link.startswith("http"):
                         domain = self.config.get('domain', base_url.split('/prace')[0].split('/nabidky')[0].split('/jobs')[0])
                         link = domain + link
@@ -539,6 +542,8 @@ class WttjScraper(BaseScraper):
                     
                     domain = self.config.get('domain', 'https://www.welcometothejungle.com')
                     href = await link_el.get_attribute("href")
+                    if not href:
+                        continue
                     link = domain + href if not href.startswith("http") else href
                     
                     if CORE.is_known(link):
@@ -634,7 +639,10 @@ class LinkedinScraper(BaseScraper):
                     link_el = await card.query_selector(link_sel)
                     if not link_el:
                         continue
-                    link = (await link_el.get_attribute("href")).split('?')[0]
+                    href = await link_el.get_attribute("href")
+                    if not href:
+                        continue
+                    link = href.split('?')[0]
                     if CORE.is_known(link):
                         continue
                     
