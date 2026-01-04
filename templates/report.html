@@ -419,6 +419,18 @@
             </ul>
         </div>
 
+        <!-- Sticky Navigation -->
+        <nav class="sticky-nav">
+            <button class="nav-pill active" onclick="jumpToSection('kpi-summary')">📊 Summary</button>
+            <button class="nav-pill" onclick="jumpToSection('hr-dashboard')">💼 HR Intel</button>
+            <button class="nav-pill" onclick="jumpToSection('market-trends')">📈 Trends</button>
+            <button class="nav-pill" onclick="jumpToSection('benefits-section')">🎁 Benefits</button>
+            <button class="nav-pill" onclick="jumpToSection('work-model-section')">🏠 Work Model</button>
+            <button class="nav-pill" onclick="jumpToSection('economic-reality')">💰 Reality</button>
+        </nav>
+
+        <!-- KPI Summary Section -->
+        <div id="kpi-summary"></div>
         <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-val">{{ total_jobs }}</div>
@@ -535,6 +547,7 @@
         </div>
 
         <!-- MARKET TRENDS & DEEP ANALYSIS -->
+        <div id="market-trends"></div>
         <div class="hr-section" style="margin-top: 60px;">
             <h2>📈 Market Trends & Deep Analysis</h2>
             <p style="color: #666; margin-bottom: 10px; font-size: 0.95rem;">
@@ -966,8 +979,43 @@
         var top_skills_data = {{ json_top_skills | safe }};
         Plotly.newPlot('chart_top_skills', top_skills_data.data, top_skills_data.layout);
 
-        var role_distribution_data = {{ json_role_distribution | safe }};
         Plotly.newPlot('chart_role_distribution', role_distribution_data.data, role_distribution_data.layout);
+
+        // === HYBRID NAVIGATION UX ===
+
+        // Smooth scroll to section
+        function jumpToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                // Smooth scroll to section
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                // Update active nav pill
+                document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+                const activePill = document.querySelector(`[onclick="jumpToSection('${sectionId}')"]`);
+                if (activePill) activePill.classList.add('active');
+            }
+        }
+
+        // Highlight active section on scroll
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                const navOffset = 150;
+                const sections = document.querySelectorAll('[id$="-summary"], [id$="-dashboard"], [id$="-trends"], [id$="-section"], [id$="-reality"]');
+
+                sections.forEach(section => {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= navOffset && rect.bottom >= navOffset) {
+                        document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+                        const sectionId = section.id;
+                        const activePill = document.querySelector(`[onclick="jumpToSection('${sectionId}')"]`);
+                        if (activePill) activePill.classList.add('active');
+                    }
+                });
+            }, 100);
+        });
     </script>
 </body>
 
