@@ -21,28 +21,29 @@ SKILL_PATTERNS = load_skill_patterns()
 def get_market_intelligence(conn):
     print("Generating Market Intelligence Data...")
     
-    # 1. Salary Analysis by Role (Box Plot Approximation: Min, Avg, Max)
+    # 1. Salary Analysis by Role (Percentiles for Honest Reporting)
     # We filter out NULL salaries and suspiciously low values (< 20000 CZK)
     salary_query = """
         SELECT 
             role_type,
             COUNT(*) as job_count,
-            MIN(avg_salary) as min_sal,
-            AVG(avg_salary) as avg_sal,
-            MAX(avg_salary) as max_sal
+            quantile_cont(avg_salary, 0.25) as p25_sal,
+            quantile_cont(avg_salary, 0.50) as median_sal,
+            quantile_cont(avg_salary, 0.75) as p75_sal
         FROM signals
         WHERE avg_salary > 20000 AND role_type IS NOT NULL
         GROUP BY role_type
         HAVING count(*) > 5
-        ORDER BY avg_sal DESC
+        ORDER BY median_sal DESC
     """
     salary_results = conn.execute(salary_query).fetchall()
     
     salary_data = {
         "labels": [r[0] for r in salary_results],
         "datasets": [
-            {"label": "Average Salary (CZK)", "data": [int(r[3]) for r in salary_results], "backgroundColor": "#36A2EB"},
-            {"label": "Max Salary (CZK)", "data": [int(r[4]) for r in salary_results], "backgroundColor": "#FF6384", "hidden": True}
+            {"label": "25th Percentile (Conservative)", "data": [int(r[2]) for r in salary_results], "backgroundColor": "#FFCE56"},
+            {"label": "Median Advertised Salary", "data": [int(r[3]) for r in salary_results], "backgroundColor": "#36A2EB"},
+            {"label": "75th Percentile (Aspirational)", "data": [int(r[4]) for r in salary_results], "backgroundColor": "#FF6384"}
         ]
     }
 
@@ -71,30 +72,16 @@ def get_market_intelligence(conn):
         'AWS', 'Azure', 'GCP', 'AI/ML', 'Data Science'
     ]
 
-    # Use regex patterns for accurate detection
-    tech_conditions = []
-    for skill_name in core_tech_skills:
-        if skill_name in SKILL_PATTERNS:
-            pattern = SKILL_PATTERNS[skill_name]
-            tech_conditions.append(f"regexp_matches(lower(description), '{pattern}')")
-
-    tech_filter = " OR ".join(tech_conditions)
-
-    tech_hiring_query = f"""
-        SELECT company, COUNT(*) as tech_jobs
-        FROM signals
-        WHERE ({tech_filter})
-        AND company IS NOT NULL
-        AND role_type NOT IN {exclude_roles}
-        AND lower(title) NOT LIKE '%prodavač%'
-        AND lower(title) NOT LIKE '%skladník%'
-        AND lower(title) NOT LIKE '%řidič%'
-        AND lower(title) NOT LIKE '%asistent%'
-        GROUP BY company
-        ORDER BY tech_jobs DESC
+    # 3. Role Category Distribution (General Market)
+    role_dist_query = """
+        SELECT role_type, COUNT(*) as count 
+        FROM signals 
+        WHERE role_type IS NOT NULL AND role_type != 'Unknown'
+        GROUP BY role_type 
+        ORDER BY count DESC 
         LIMIT 15
     """
-    tech_hiring_companies = conn.execute(tech_hiring_query).fetchall()
+    role_distribution = conn.execute(role_dist_query).fetchall()
 
     # 4. Skill Heatmap (Modern Stack) - Using accurate regex patterns
     skill_counts = []
@@ -121,9 +108,9 @@ def get_market_intelligence(conn):
             "labels": [r[0] for r in top_companies],
             "data": [r[1] for r in top_companies]
         },
-        "tech_hiring": {
-            "labels": [r[0] for r in tech_hiring_companies],
-            "data": [r[1] for r in tech_hiring_companies]
+        "role_distribution": {
+            "labels": [r[0] for r in role_distribution],
+            "data": [r[1] for r in role_distribution]
         },
         "skills": {
             "labels": [x['skill'] for x in skill_counts],
@@ -172,19 +159,30 @@ def generate_executive_report(data):
                 <div class="subtitle">Executive Overview • {datetime.now().strftime('%B %Y')} Edition</div>
             </header>
 
+            <!-- IMPORTANT LIMITATIONS DISCLAIMER -->
+            <div style="background: #fff1f2; border-left: 5px solid #e11d48; padding: 20px; margin-bottom: 40px; border-radius: 8px;">
+                <h3 style="color: #be123c; margin-top: 0;">⚠️ IMPORTANT LIMITATIONS</h3>
+                <p style="color: #881337; margin-bottom: 10px;">This analysis measures <strong>DEMAND SIGNALS</strong> (what employers post), NOT MARKET REALITY (what actually gets hired/paid).</p>
+                <ul style="color: #9f1239; margin-bottom: 0;">
+                    <li><strong>Ghost Jobs:</strong> Estimated 10-30% of postings may never be filled.</li>
+                    <li><strong>Salary Bias:</strong> Advertised ranges often differ from final offers; top of range is rarely paid.</li>
+                    <li><strong>Inflation:</strong> "Senior" roles may hire at "Mid" levels; skills lists are often aspirational lists.</li>
+                </ul>
+            </div>
+
             <div class="grid">
                 <!-- Salary Analysis -->
                 <div class="card">
-                    <h2>💰 Market Value by Role (Monthly CZK)</h2>
+                    <h2>💰 Advertised Salary Ranges (Monthly CZK)</h2>
                     <div class="insight-box">
-                        <strong>CEO Insight:</strong> Roles are ranked by average advertised salary. Use this to benchmark your internal compensation bands.
+                        <strong>CEO Insight:</strong> Roles are ranked by median advertised salary. Use this to benchmark your internal compensation bands.
                     </div>
                     <canvas id="salaryChart"></canvas>
                 </div>
 
                 <!-- Modern Tech Stack -->
                 <div class="card">
-                    <h2>🔥 Top Technical Skills Demand</h2>
+                    <h2>🔥 Jobs Mentioning Technical Skills</h2>
                     <div class="insight-box">
                         <strong>CTO Insight:</strong> Most frequently mentioned technical skills using accurate pattern matching. Note: Skills appear in only 1-5% of jobs, indicating specialized rather than universal demand.
                     </div>
@@ -200,13 +198,13 @@ def generate_executive_report(data):
                     <canvas id="companyChart"></canvas>
                 </div>
 
-                <!-- Tech Hiring in Non-Tech -->
+                <!-- Role Distribution -->
                 <div class="card">
-                    <h2>🤖 Hiring Volume in Modern Stack</h2>
+                    <h2>📊 Job Market Composition by Sector</h2>
                     <div class="insight-box">
-                        <strong>Anomaly Detection:</strong> Companies hiring heavily for Modern Stack roles. Watch for non-tech firms (e.g., Retail, Banking) entering the talent war.
+                        <strong>Market Structure:</strong> Breakdown of active job listings by role category (e.g., Manufacturing vs. IT vs. Admin).
                     </div>
-                    <canvas id="techHiringChart"></canvas>
+                    <canvas id="roleDistChart"></canvas>
                 </div>
             </div>
             
@@ -262,14 +260,14 @@ def generate_executive_report(data):
                 }}
             }});
             
-            // 4. Tech Hiring Companies
-            new Chart(document.getElementById('techHiringChart'), {{
+            // 4. Role Distribution
+            new Chart(document.getElementById('roleDistChart'), {{
                 type: 'bar',
                 data: {{
-                    labels: {json.dumps(data['tech_hiring']['labels'])},
+                    labels: {json.dumps(data['role_distribution']['labels'])},
                     datasets: [{{
-                        label: 'Modern Stack Roles',
-                        data: {json.dumps(data['tech_hiring']['data'])},
+                        label: 'Active Listings',
+                        data: {json.dumps(data['role_distribution']['data'])},
                         backgroundColor: '#6366f1'
                     }}]
                 }},
@@ -289,7 +287,7 @@ def generate_executive_report(data):
 
 def main():
     try:
-        conn = duckdb.connect(DB_PATH)
+        conn = duckdb.connect(DB_PATH, read_only=True)
         data = get_market_intelligence(conn)
         generate_executive_report(data)
     except Exception as e:

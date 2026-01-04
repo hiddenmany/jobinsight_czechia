@@ -236,6 +236,122 @@ print(f"Found {len(new_entrants_data)} emerging companies")
 trending_benefits = intel.get_trending_benefits()
 trending_benefits_data = trending_benefits.to_dict('records') if not trending_benefits.empty else []
 
+# --- MARKET TRENDS & DEEP ANALYSIS ---
+print("\n=== Analyzing Market Trends ===")
+
+# Salary Percentiles by Role (25th/50th/75th) - like original trends.html
+salary_percentiles_by_role = []
+valid_salaries_df = df[df['avg_salary'] > 0].copy()
+if not valid_salaries_df.empty and 'role_type' in valid_salaries_df.columns:
+    role_percentiles = valid_salaries_df.groupby('role_type')['avg_salary'].agg([
+        ('p25', lambda x: x.quantile(0.25)),
+        ('median', lambda x: x.quantile(0.50)),
+        ('p75', lambda x: x.quantile(0.75)),
+        ('count', 'count')
+    ]).reset_index()
+    role_percentiles = role_percentiles[role_percentiles['count'] >= 5].sort_values('median', ascending=False).head(15)
+    
+    # Create Plotly grouped bar chart for percentiles
+    r_types_pct = role_percentiles['role_type'].tolist()
+    r_p25 = [float(x) for x in role_percentiles['p25'].tolist()]
+    r_median = [float(x) for x in role_percentiles['median'].tolist()]
+    r_p75 = [float(x) for x in role_percentiles['p75'].tolist()]
+    
+    fig_salary_percentiles = go.Figure()
+    fig_salary_percentiles.add_trace(go.Bar(
+        y=r_types_pct,
+        x=r_p25,
+        name='25th Percentile (Conservative)',
+        orientation='h',
+        marker=dict(color='#FFCE56')
+    ))
+    fig_salary_percentiles.add_trace(go.Bar(
+        y=r_types_pct,
+        x=r_median,
+        name='Median Advertised Salary',
+        orientation='h',
+        marker=dict(color='#36A2EB')
+    ))
+    fig_salary_percentiles.add_trace(go.Bar(
+        y=r_types_pct,
+        x=r_p75,
+        name='75th Percentile (Aspirational)',
+        orientation='h',
+        marker=dict(color='#FF6384')
+    ))
+    
+    percentile_layout = {**layout_defaults, 'height': 400, 'barmode': 'group'}
+    fig_salary_percentiles.update_layout(**percentile_layout)
+    fig_salary_percentiles.update_yaxes(title="")
+    fig_salary_percentiles.update_xaxes(title="Monthly CZK")
+    print(f"Generated salary percentiles for {len(r_types_pct)} roles")
+else:
+    fig_salary_percentiles = go.Figure()
+    fig_salary_percentiles.update_layout(**layout_defaults)
+
+# Top Companies by Hiring Volume (all companies) - Convert to Plotly chart
+top_companies_df = df[df['company'] != 'Unknown Employer'].groupby('company').size().reset_index(name='count').sort_values('count', ascending=False).head(15)
+top_companies_list = []
+comp_names = []
+comp_counts = []
+for _, row in top_companies_df.iterrows():
+    clean_company = row['company'].lstrip('•◦◦▦▪▫').strip()
+    clean_company = ' '.join(clean_company.split())
+    top_companies_list.append(clean_company)
+    comp_counts.append(int(row['count']))
+    comp_names.append(clean_company)
+
+fig_top_companies = go.Figure(data=[go.Bar(
+    y=comp_names[::-1],  # Reverse to show highest at top
+    x=comp_counts[::-1],
+    orientation='h',
+    marker=dict(color='#10b981')
+)])
+companies_layout = {**layout_defaults, 'height': 400}
+fig_top_companies.update_layout(**companies_layout)
+fig_top_companies.update_yaxes(title="")
+fig_top_companies.update_xaxes(title="Active Listings")
+print(f"Found {len(comp_names)} top hiring companies")
+
+# Top Skills by Frequency - Convert to Plotly chart
+top_skills_list = []
+skill_names = []
+skill_counts = []
+if not emerging_tech.empty:
+    for _, row in emerging_tech.head(15).iterrows():
+        skill_name = row['Technology']
+        skill_count = int(row['Jobs'])
+        top_skills_list.append(skill_name)
+        skill_names.append(skill_name)
+        skill_counts.append(skill_count)
+
+fig_top_skills = go.Figure(data=[go.Bar(
+    x=skill_names,
+    y=skill_counts,
+    marker=dict(color='#f59e0b')
+)])
+skills_layout = {**layout_defaults, 'height': 350}
+fig_top_skills.update_layout(**skills_layout)
+fig_top_skills.update_xaxes(title="", tickangle=-45)
+fig_top_skills.update_yaxes(title="Job Mentions")
+print(f"Found {len(skill_names)} top skills")
+
+# Role Distribution Chart (like original trends.html)
+role_dist_chart = intel.get_role_distribution().head(15)
+role_labels = role_dist_chart.iloc[:, 0].tolist()
+role_counts_chart = [int(x) for x in role_dist_chart.iloc[:, 1].tolist()]
+
+fig_role_distribution = go.Figure(data=[go.Bar(
+    y=role_labels[::-1],
+    x=role_counts_chart[::-1],
+    orientation='h',
+    marker=dict(color='#6366f1')
+)])
+role_dist_layout = {**layout_defaults, 'height': 400}
+fig_role_distribution.update_layout(**role_dist_layout)
+fig_role_distribution.update_yaxes(title="")
+fig_role_distribution.update_xaxes(title="Active Listings")
+
 # --- v1.3 ECONOMIC REALITY & TALENT DYNAMICS ---
 print("\n=== Analyzing Economic Reality ===")
 
@@ -327,10 +443,20 @@ def clean_json(fig):
         return str(o)
     return json.dumps(fig.to_dict(), default=default_parser)
 
-output_html = template.render(
+# --- v1.4 CONTRACT SALARY SPLIT ---
+contract_salaries = intel.get_salary_by_contract_type()
+hpp_med = contract_salaries.get('HPP', 0)
+brig_med = contract_salaries.get('Brigáda', 0)
+
+hpp_median_fmt = f"{int(hpp_med/1000)}" if hpp_med > 0 else "N/A"
+brig_median_fmt = f"{int(brig_med/1000)}" if brig_med > 0 else "N/A"
+
+template_vars = dict(
     date=datetime.date.today().strftime("%d. %B %Y"),
     total_jobs=len(df),
     med_salary=med_sal_fmt,
+    hpp_median=hpp_median_fmt,      # NEW
+    brig_median=brig_median_fmt,    # NEW
     tech_premium=tech_premium,
     seniority_premium=seniority_premium,  # NEW v1.0
     en_share=en_share,
@@ -354,6 +480,11 @@ output_html = template.render(
     emerging_tech=emerging_tech_data,
     new_entrants=new_entrants_data,
     trending_benefits=trending_benefits_data,
+    # Market Trends & Deep Analysis - Charts
+    json_salary_percentiles=clean_json(fig_salary_percentiles),
+    json_top_companies=clean_json(fig_top_companies),
+    json_top_skills=clean_json(fig_top_skills),
+    json_role_distribution=clean_json(fig_role_distribution),
     # v1.3 Economic Reality & Talent Dynamics
     ico_arbitrage=ico_arbitrage,
     lang_barrier=lang_barrier,
@@ -368,6 +499,8 @@ output_html = template.render(
     json_role=clean_json(fig_role),  # NEW v1.0
     json_seniority=clean_json(fig_seniority)  # NEW v1.0
 )
+
+output_html = template.render(**template_vars)
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 public_dir = os.path.join(base_dir, "public")
@@ -412,6 +545,10 @@ output_html_cz = template_cz.render(
     emerging_tech=emerging_tech_data,
     new_entrants=new_entrants_data,
     trending_benefits=trending_benefits_data,
+    json_salary_percentiles=clean_json(fig_salary_percentiles),
+    json_top_companies=clean_json(fig_top_companies),
+    json_top_skills=clean_json(fig_top_skills),
+    json_role_distribution=clean_json(fig_role_distribution),
     ico_arbitrage=ico_arbitrage,
     lang_barrier=lang_barrier,
     pipeline_health=pipeline_health,

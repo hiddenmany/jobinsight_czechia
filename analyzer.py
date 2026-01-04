@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import re
 import os
 import hashlib
@@ -23,22 +24,42 @@ ROLE_TAXONOMY = {
                   'fullstack', 'full-stack', 'software', 'web developer', 'mobile developer', 
                   'devops', 'sre', 'platform engineer', 'embedded'],
     'Analyst': ['analyst', 'analytik', 'data analyst', 'business analyst', 'bi analyst', 
-                'data scientist', 'data engineer', 'reporting'],
+                'data scientist', 'data engineer', 'reporting', 'statistik'],
     'Designer': ['designer', 'ux', 'ui', 'grafik', 'product designer', 'visual designer', 
                  'creative', 'art director'],
     'QA': ['tester', 'qa', 'quality', 'test engineer', 'automation', 'sdet'],
     'PM': ['project manager', 'product manager', 'scrum master', 'agile coach', 
            'projektový manažer', 'product owner', 'delivery manager'],
-    'Sales': ['sales', 'obchodní', 'account', 'business development', 'key account', 
-              'obchodník', 'rep', 'account executive'],
-    'HR': ['hr', 'recruiter', 'talent', 'people', 'personalist', 'nábor', 'recruitment'],
+    'Sales': ['obchodní zástupce', 'account manager', 'business development', 'key account', 
+              'obchodník', 'sales representative', 'sales manager', 'prodejce aut'],
+    'HR': ['recruiter', 'personalist', 'náborář', 'recruitment', 'human resources', 
+           'hr business partner', 'hr generalist', 'hr specialist', 'hr manager', 'talent acquisition'],
     'Marketing': ['marketing', 'seo', 'content', 'social media', 'brand', 'growth', 
-                  'ppc', 'performance marketing', 'copywriter'],
+                  'ppc', 'performance marketing', 'copywriter', 'redaktor', 'editor'],
     'Support': ['support', 'customer', 'helpdesk', 'podpora', 'zákaznick', 'service desk'],
-    'Operations': ['operations', 'admin', 'assistant', 'office', 'back office', 'koordinátor'],
-    'Finance': ['accountant', 'účetní', 'finance', 'controller', 'controlling', 'fakturace'],
+    'Operations': ['operations', 'admin', 'assistant', 'office manager', 'back office', 'koordinátor', 'referent'],
+    'Finance': ['accountant', 'účetní', 'finance', 'controller', 'controlling', 'fakturant', 'auditor', 'ekonom'],
     'Management': ['head of', 'director', 'cto', 'ceo', 'vp', 'lead', 'manager', 'vedoucí', 
-                   'ředitel', 'team lead', 'tech lead']
+                   'ředitel', 'team lead', 'tech lead', 'směnový mistr', 'mistr'],
+    
+    # --- GENERAL MARKET EXPANSION ---
+    'Healthcare': ['lékař', 'sestra', 'zdravotní', 'farmaceut', 'psycholog', 'fyzioterapeut', 'doktor', 'ošetřovatel'],
+    'Manufacturing': ['dělník', 'operátor výroby', 'montážník', 'svářeč', 'zámečník', 'elektrikář', 'seřizovač', 'technolog výroby', 'mistr výroby', 'obráběč', 'cnc'],
+    'Logistics': ['skladník', 'řidič', 'kurýr', 'logistik', 'zásobovač', 'disponent', 'spediter', 'nákupčí'],
+    'Service': ['prodavač', 'číšník', 'kuchař', 'recepční', 'pokladní', 'barman', 'uklízeč', 'ostraha', 'security'],
+    'Legal': ['právník', 'advokát', 'koncipient', 'paralegal', 'notář', 'compliance'],
+    'Construction': ['stavbyvedoucí', 'projektant', 'architekt', 'zedník', 'instalatér', 'malíř'],
+    'Education': ['učitel', 'lektor', 'trenér', 'školitel', 'pedagog'],
+    
+    # --- NEW CATEGORIES TO REDUCE "OTHER" BUCKET ---
+    'Social Services': ['sociální pracovník', 'sociální služb', 'týdenní teta', 'týdenní strýc', 
+                        'doprovázející', 'pečovatel', 'asisten', 'pracovník v sociálních'],
+    'Hospitality': ['pokojská', 'housekeeper', 'hotel', 'mcdonald', 'mcdonalds', 'barista', 
+                    'obsluha čerpací', 'čerpací stanice', 'fast food', 'restaurace'],
+    'Technical Specialists': ['technolog', 'metrolog', 'laboratorn', 'měření', '3d měření', 
+                              'lab technik', 'chemik', 'fyzik', 'specialista technické'],
+    'Electromechanics': ['elektromechanik', 'nástrojář', 'mechanik', 'elektrotechnik', 
+                         'údržbář', 'servisní technik', 'preparing', 'přípravář']
 }
 
 # --- v1.0 HR INTELLIGENCE: Seniority Detection ---
@@ -57,17 +78,30 @@ SENIORITY_PATTERNS = {
 def classify_role(title: str, description: str = "") -> str:
     """Classify job into role category based on title and description."""
     text = f"{title} {description}".lower()
-    
+    title_lower = title.lower()
+
+    # Helper function for smart matching (avoids Czech substring false positives)
+    def smart_match(text: str, keyword: str) -> bool:
+        # For short keywords that are common substrings, use word boundaries
+        if keyword in ['hr', 'it', 'pr']:
+            # Check if keyword appears as separate word or in compound like "hr-manager"
+            import re
+            pattern = r'\b' + re.escape(keyword) + r'(?:\b|[-_])'
+            return bool(re.search(pattern, text))
+        else:
+            # For longer keywords, simple substring match is fine
+            return keyword in text
+
     # Priority: Check title first (more accurate), then description
     for role, keywords in ROLE_TAXONOMY.items():
-        if any(kw in title.lower() for kw in keywords):
+        if any(smart_match(title_lower, kw) for kw in keywords):
             return role
-    
+
     # Fallback: Check description
     for role, keywords in ROLE_TAXONOMY.items():
-        if any(kw in text for kw in keywords):
+        if any(smart_match(text, kw) for kw in keywords):
             return role
-    
+
     return 'Other'
 
 def detect_seniority(title: str, description: str = "") -> str:
@@ -85,7 +119,7 @@ def detect_seniority(title: str, description: str = "") -> str:
     return 'Mid'  # Default to Mid if unclear
 
 def load_taxonomy():
-    with open(TAXONOMY_PATH, 'r') as f:
+    with open(TAXONOMY_PATH, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
 TAXONOMY = load_taxonomy()
@@ -202,6 +236,12 @@ class IntelligenceCore:
             except Exception:
                 pass  # Column already exists
             
+            # v1.5 Ghost Job Detection
+            try:
+                self.con.execute("ALTER TABLE signals ADD COLUMN ghost_score INTEGER DEFAULT 0")
+            except Exception:
+                pass  # Column already exists
+
             # Create indexes for frequently queried columns
             # These dramatically improve performance for analytics queries
             indexes = [
@@ -258,6 +298,46 @@ class IntelligenceCore:
         
         return result is not None
 
+    def detect_ghost_jobs(self, signal: JobSignal) -> int:
+        """
+        Identify likely ghost jobs based on multiple indicators.
+        Returns a score from 0 (legit) to 100 (ghost).
+        """
+        score = 0
+        desc = (signal.description or "").lower()
+        title = (signal.title or "").lower()
+        
+        # 1. Duplicate Listings by Company (check existing DB)
+        try:
+            dup_count = self.con.execute(
+                "SELECT COUNT(*) FROM signals WHERE company = ? AND title = ?",
+                [signal.company, signal.title]
+            ).fetchone()[0]
+            if dup_count > 3: score += 20
+            if dup_count > 10: score += 30
+        except Exception:
+            pass
+
+        # 2. Vague Description Indicators
+        vague_phrases = [
+            "ideal candidate", "rockstar", "ninja", "superhero",
+            "we are always looking", "join our talent pool",
+            "proaktivní přístup", "tah na branku"
+        ]
+        if any(p in desc for p in vague_phrases):
+            score += 15
+
+        # 3. Unrealistic Requirements (Skill Stuffing)
+        # Count technological keywords
+        skills_count = len(re.findall(r'\b[a-z]{3,}\b', desc))
+        if skills_count > 500: # Extremely long description
+            score += 10
+        
+        # 4. Salary Range anomalies (if present)
+        # Check happens in add_signal where parsed salary is available
+
+        return min(score, 100)
+
     def add_signal(self, signal: JobSignal):
         """Adds a new signal with semantic enrichment and HR classification."""
         # Calculate semantic metrics
@@ -272,14 +352,22 @@ class IntelligenceCore:
         seniority = detect_seniority(signal.title, signal.description)
 
         # Robust Salary Parsing
-        _, _, avg_sal = self._parse_salary(signal.salary)
+        min_sal, max_sal, avg_sal = self._parse_salary(signal.salary, signal.source)
+
+        # v1.5 Ghost Job Detection
+        ghost_score = self.detect_ghost_jobs(signal)
+        if min_sal and max_sal and min_sal > 0:
+            # Check for > 100% spread (e.g. 40k - 120k)
+            spread = (max_sal - min_sal) / min_sal
+            if spread > 1.0:
+                ghost_score += 25
 
         now = datetime.now()
         try:
             self.con.execute(
                 """
                 INSERT OR IGNORE INTO signals 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 [
                     h,
@@ -298,22 +386,27 @@ class IntelligenceCore:
                     now,
                     role,
                     seniority,
+                    ghost_score,
                 ],
             )
         except Exception as e:
             print(f"DB Error: {e}")
 
-    def _parse_salary(self, s: str) -> tuple:
+    def _parse_salary(self, s: str, source: str = None) -> tuple:
         """
         Parse salary string and return (min_salary, max_salary, avg_salary).
-        
+
+        Args:
+            s: Salary string to parse
+            source: Job source (e.g., "StartupJobs") for context-aware parsing
+
         Returns:
             tuple: (min, max, avg) salary values, or (None, None, None) if parsing fails
         """
         if not s or not isinstance(s, str):
             return None, None, None
         s = s.lower().replace(" ", "").replace(" ", "")
-        s = re.sub(r'(\d)\.(\d{3})', r'', s)  # Remove thousand separators only
+        s = re.sub(r'(\d)\.(\d{3})', r'\1\2', s)  # Remove thousand separators only
         # Use compiled regex pattern for performance
         
         # Detect and convert hourly rates to monthly (160 hours/month standard)
@@ -321,7 +414,12 @@ class IntelligenceCore:
             nums_raw = [int(n) for n in SALARY_DIGITS_PATTERN.findall(s)]
             nums = [n * 160 if n < 1000 else n for n in nums_raw]  # Convert hourly to monthly
         else:
-            nums = [int(n) for n in SALARY_DIGITS_PATTERN.findall(s) if int(n) > 1000]
+            nums_raw = [int(n) for n in SALARY_DIGITS_PATTERN.findall(s)]
+            # StartupJobs often uses "600-900 Kč" to mean "600k-900k"
+            if source == 'StartupJobs':
+                nums = [n * 1000 if n < 1000 else n for n in nums_raw]
+            else:
+                nums = [n for n in nums_raw if n > 1000]
         
         # Handle EUR conversion to CZK (approximate rate)
         if "eur" in s:
@@ -454,6 +552,27 @@ class MarketIntelligence:
     def __init__(self):
         self.core = IntelligenceCore(read_only=True)
         self.df = self.core.df
+        self._enrich_contract_type()
+
+    def _enrich_contract_type(self):
+        """Enrich DataFrame with contract_type column."""
+        if self.df.empty:
+            self.df['contract_type'] = 'Unknown'
+            return
+
+        desc = self.df["description"].str.lower()
+        ico_pat = "|".join(TAXONOMY['contract_keywords']['ico'])
+        brig_pat = "|".join(TAXONOMY['contract_keywords']['brigada'])
+
+        # Create conditions
+        conds = [
+            desc.str.contains(ico_pat, na=False),
+            desc.str.contains(brig_pat, na=False)
+        ]
+        choices = ['IČO', 'Brigáda']
+        
+        # Default is HPP
+        self.df['contract_type'] = np.select(conds, choices, default='HPP')
 
     def get_language_barrier(self):
         # Balanced NLP: requires a high density of English words without strict length penalties
@@ -483,22 +602,16 @@ class MarketIntelligence:
         return {"True Remote": is_remote}
 
     def get_contract_split(self):
-        # Multi-category contract detection using taxonomy
-        desc = self.df["description"].str.lower()
-        
-        ico_pat = "|".join(TAXONOMY['contract_keywords']['ico'])
-        brig_pat = "|".join(TAXONOMY['contract_keywords']['brigada'])
-        
-        # Priority: ICO > Brigada > HPP (Standard)
-        # This ensures categories are mutually exclusive for the Pie Chart
-        is_ico = desc.str.contains(ico_pat, na=False)
-        is_brigada = desc.str.contains(brig_pat, na=False) & ~is_ico
-        
-        ico_count = is_ico.sum()
-        brig_count = is_brigada.sum()
-        hpp_count = len(self.df) - ico_count - brig_count
-        
-        return {"HPP": max(0, hpp_count), "IČO": ico_count, "Brigáda": brig_count}
+        """Get distribution of contract types."""
+        if 'contract_type' not in self.df.columns:
+            return {"HPP": 0, "IČO": 0, "Brigáda": 0}
+            
+        counts = self.df['contract_type'].value_counts()
+        return {
+            "HPP": int(counts.get('HPP', 0)),
+            "IČO": int(counts.get('IČO', 0)),
+            "Brigáda": int(counts.get('Brigáda', 0))
+        }
 
     def get_tech_stack_lag(self):
         """Added missing method for Report compatibility."""
@@ -537,6 +650,12 @@ class MarketIntelligence:
         order = ['Junior', 'Mid', 'Senior', 'Lead', 'Executive']
         result['order'] = result['seniority_level'].apply(lambda x: order.index(x) if x in order else 99)
         return result.sort_values('order').drop('order', axis=1)
+
+    def get_salary_by_contract_type(self) -> dict:
+        """Get median salary for HPP vs Brigáda."""
+        valid_sal = self.df[self.df['avg_salary'] > 0]
+        result = valid_sal.groupby('contract_type')['avg_salary'].median()
+        return result.to_dict()
 
     def get_seniority_role_matrix(self) -> pd.DataFrame:
         """Cross-analysis: Median salary by Seniority + Role (for data quality insights)."""
@@ -1158,7 +1277,7 @@ class MarketIntelligence:
             return {'total_nontech': 0, 'ai_mentions': 0, 'percentage': 'N/A', 'available': False}
 
         # AI keywords
-        ai_pattern = r'\bai\b|\bchatgpt\b|\bgpt\b|\bmachine learning\b|\bml\b|\bgenerat|\bart.*inteligence'
+        ai_pattern = r'\bai\b|\bchatgpt\b|\bgpt\b|\bmachine learning\b|\bml\b|\bgenerat|\bart.*intelligence'
 
         desc = nontech_df['description'].fillna('').str.lower()
         has_ai = desc.str.contains(ai_pattern, case=False, na=False, regex=True)

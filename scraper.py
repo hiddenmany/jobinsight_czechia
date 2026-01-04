@@ -6,7 +6,7 @@ import os
 from typing import List, Optional, Dict
 
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
-from playwright_stealth import stealth
+from playwright_stealth import Stealth
 from tqdm.asyncio import tqdm
 
 import analyzer
@@ -119,8 +119,7 @@ class ScrapeEngine:
         async with self.semaphore:
             try:
                 page = await context.new_page()
-                if callable(stealth):
-                    await stealth(page)
+                await Stealth().apply_stealth_async(page)
                 await page.route("**/*", self.intercept_noise)
                 
                 # Add rate limiting
@@ -236,7 +235,7 @@ class BaseScraper:
             fallback_cities = CONFIG.get('common', {}).get('fallback_cities', [])
             for city in fallback_cities:
                 # Use word boundaries to avoid false positives (e.g., "Praha" in "Praha Solutions")
-                pattern = r'' + re.escape(city.lower()) + r''
+                pattern = r'\b' + re.escape(city.lower()) + r'\b'
                 if re.search(pattern, card_text):
                     return city.title()
         except Exception:
@@ -256,6 +255,7 @@ class PagedScraper(BaseScraper):
         
         context = await self.engine.get_context()
         page = await context.new_page()
+        await Stealth().apply_stealth_async(page)  # Apply stealth to listing page
         pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="pg")
 
         base_url = self.config.get('base_url')
@@ -269,105 +269,127 @@ class PagedScraper(BaseScraper):
 
         consecutive_failures = 0  # Track consecutive failures
         
-        for page_num in range(1, limit + 1):
-            if shutdown_handler.is_shutdown_requested():
-                logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
-                break
-            
-            try:
-                # Use first_page_url if configured (fix for Cocuma)
-                if page_num == 1 and 'first_page_url' in self.config:
-                    url = self.config['first_page_url']
-                else:
-                    url = f"{base_url}{page_num}"
+        try:
+            for page_num in range(1, limit + 1):
+                if shutdown_handler.is_shutdown_requested():
+                    logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
+                    break
                 
-                await rate_limit(1.0, 2.0)  # Add rate limiting
+                # Context Rotation: Create fresh browser fingerprint every 10 pages
+                if page_num > 1 and page_num % 10 == 1:
+                    logger.info(f"{self.site_name}: Rotating browser context (page {page_num})")
+                    await context.close()
+                    context = await self.engine.get_context()
+                    page = await context.new_page()
+                    await Stealth().apply_stealth_async(page)
                 
-                await page.goto(url, timeout=PAGE_TIMEOUT_MS)
-                await page.wait_for_selector(card_sel, timeout=SELECTOR_TIMEOUT_MS)
-                cards = await page.query_selector_all(card_sel)
-                if not cards: break
+                # Rate Limit Cooldown: 5-minute pause every 20 pages for rate-limited sites
+                # This avoids server-side IP blocking without needing residential proxies
+                if page_num > 1 and page_num % 20 == 1 and self.site_name in ['Jobs.cz', 'Prace.cz']:
+                    cooldown_minutes = 5
+                    logger.info(f"{self.site_name}: Rate limit cooldown - waiting {cooldown_minutes} minutes (page {page_num})...")
+                    await asyncio.sleep(cooldown_minutes * 60)
+                    # Rotate context after cooldown for fresh fingerprint
+                    await context.close()
+                    context = await self.engine.get_context()
+                    page = await context.new_page()
+                    await Stealth().apply_stealth_async(page)
+                    logger.info(f"{self.site_name}: Cooldown complete, resuming scrape")
 
-                batch = []
-                for card in cards:
-                    title_el = await card.query_selector(title_sel)
-                    if not title_el: continue
+                try:
+                    # Use first_page_url if configured (fix for Cocuma)
+                    if page_num == 1 and 'first_page_url' in self.config:
+                        url = self.config['first_page_url']
+                    else:
+                        url = f"{base_url}{page_num}"
                     
-                    company_name = await self.extract_company(card)
-                    city = await self.extract_city(card)
+                    await rate_limit(1.0, 2.0)  # Add rate limiting
                     
-                    # Try title element first, then fallback to card itself (fix for Cocuma)
-                    link = await title_el.get_attribute("href")
-                    if not link:
-                        link = await card.get_attribute("href")
+                    await page.goto(url, timeout=PAGE_TIMEOUT_MS)
+                    await page.wait_for_selector(card_sel, timeout=SELECTOR_TIMEOUT_MS)
+                    cards = await page.query_selector_all(card_sel)
+                    if not cards: break
+
+                    batch = []
+                    for card in cards:
+                        title_el = await card.query_selector(title_sel)
+                        if not title_el: continue
                         
-                    if not link:
-                        logger.debug(f"Skipping card with no link")
-                        continue
-                    if not link.startswith("http"):
-                        domain = self.config.get('domain', base_url.split('/prace')[0].split('/nabidky')[0].split('/jobs')[0])
-                        link = domain + link
-                    
-                    if CORE.is_known(link):
-                        self.extraction_stats['duplicates'] += 1
-                        continue
+                        company_name = await self.extract_company(card)
+                        city = await self.extract_city(card)
+                        
+                        # Try title element first, then fallback to card itself (fix for Cocuma)
+                        link = await title_el.get_attribute("href")
+                        if not link:
+                            link = await card.get_attribute("href")
+                            
+                        if not link:
+                            logger.debug(f"Skipping card with no link")
+                            continue
+                        if not link.startswith("http"):
+                            domain = self.config.get('domain', base_url.split('/prace')[0].split('/nabidky')[0].split('/jobs')[0])
+                            link = domain + link
+                        
+                        if CORE.is_known(link):
+                            self.extraction_stats['duplicates'] += 1
+                            continue
 
-                    # Salary
-                    salary = None
-                    sal_sel = self.config.get('salary')
-                    if sal_sel:
-                        sal_el = await card.query_selector(sal_sel)
-                        salary = await sal_el.inner_text() if sal_el else None
-                    
-                    # Validate extracted data
-                    self.extraction_stats['total'] += 1
-                    title_text = await title_el.inner_text()
-                    if not validate_job_data(title_text, company_name, link):
-                        self.extraction_stats['failed_validation'] += 1
-                        logger.debug(f"Skipping invalid job data: {link}")
-                        continue
-                    
-                    sig = JobSignal(
-                        title=sanitize_text(await title_el.inner_text()),
-                        company=company_name,
-                        link=link,
-                        source=self.site_name,
-                        salary=salary,
-                        location=city
-                    )
-                    batch.append(sig)
-                    self.extraction_stats['success'] += 1
+                        # Salary
+                        salary = None
+                        sal_sel = self.config.get('salary')
+                        if sal_sel:
+                            sal_el = await card.query_selector(sal_sel)
+                            salary = await sal_el.inner_text() if sal_el else None
+                        
+                        # Validate extracted data
+                        self.extraction_stats['total'] += 1
+                        title_text = await title_el.inner_text()
+                        if not validate_job_data(title_text, company_name, link):
+                            self.extraction_stats['failed_validation'] += 1
+                            logger.debug(f"Skipping invalid job data: {link}")
+                            continue
+                        
+                        sig = JobSignal(
+                            title=sanitize_text(await title_el.inner_text()),
+                            company=company_name,
+                            link=link,
+                            source=self.site_name,
+                            salary=salary,
+                            location=city
+                        )
+                        batch.append(sig)
+                        self.extraction_stats['success'] += 1
 
-                if batch:
-                    await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
-                    for s in batch: CORE.add_signal(s)
-                
-                pbar.update(1)
-                consecutive_failures = 0  # Reset on success
-                CIRCUIT_BREAKER.record_success(self.site_name)
-                
-                if not batch and page_num > 5:
-                    break
+                    if batch:
+                        await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
+                        for s in batch: CORE.add_signal(s)
                     
-            except (PlaywrightTimeout, PlaywrightError) as e:
-                consecutive_failures += 1
-                logger.warning(f"{self.site_name} page {page_num} error: {e}")
-                
-                # Continue instead of break, with failure threshold
-                if consecutive_failures >= 3:
-                    logger.error(f"{self.site_name}: {consecutive_failures} consecutive failures, stopping")
-                    CIRCUIT_BREAKER.record_failure(self.site_name)
-                    break
-                continue  # Try next page
-        
-        # Log extraction metrics
-        logger.info(f"{self.site_name} Extraction Metrics: "
-                   f"Total={self.extraction_stats['total']}, "
-                   f"Success={self.extraction_stats['success']}, "
-                   f"Failed Validation={self.extraction_stats['failed_validation']}, "
-                   f"Duplicates={self.extraction_stats['duplicates']}")
-        
-        await context.close()
+                    pbar.update(1)
+                    consecutive_failures = 0  # Reset on success
+                    CIRCUIT_BREAKER.record_success(self.site_name)
+                    
+                    if not batch and page_num > 5:
+                        break
+                        
+                except (PlaywrightTimeout, PlaywrightError) as e:
+                    consecutive_failures += 1
+                    logger.warning(f"{self.site_name} page {page_num} error: {e}")
+                    
+                    # Continue instead of break, with failure threshold
+                    if consecutive_failures >= 3:
+                        logger.error(f"{self.site_name}: {consecutive_failures} consecutive failures, stopping")
+                        CIRCUIT_BREAKER.record_failure(self.site_name)
+                        break
+                    continue  # Try next page
+        finally:
+            # Log extraction metrics
+            logger.info(f"{self.site_name} Extraction Metrics: "
+                       f"Total={self.extraction_stats['total']}, "
+                       f"Success={self.extraction_stats['success']}, "
+                       f"Failed Validation={self.extraction_stats['failed_validation']}, "
+                       f"Duplicates={self.extraction_stats['duplicates']}")
+            
+            await context.close()
 
 
 class StartupJobsScraper(BaseScraper):
@@ -378,6 +400,7 @@ class StartupJobsScraper(BaseScraper):
         
         context = await self.engine.get_context()
         page = await context.new_page()
+        await Stealth().apply_stealth_async(page)
         
         base_url = self.config.get('base_url')
         card_sel = self.config.get('card')
@@ -516,6 +539,7 @@ class WttjScraper(BaseScraper):
         
         context = await self.engine.get_context()
         page = await context.new_page()
+        await Stealth().apply_stealth_async(page)
         
         base_url = self.config.get('base_url')
         card_sel = self.config.get('card')
@@ -623,9 +647,12 @@ class LinkedinScraper(BaseScraper):
         proxy = os.environ.get("LINKEDIN_PROXY")
         if proxy:
             logger.info("Using proxy for LinkedIn")
+        else:
+            logger.warning("LinkedIn: No LINKEDIN_PROXY env var set. LinkedIn blocks headless browsers without residential proxies. Set: $env:LINKEDIN_PROXY='http://user:pass@proxy:port'")
         
         context = await self.engine.get_context(proxy_server=proxy)
         page = await context.new_page()
+        await Stealth().apply_stealth_async(page)
         
         base_url = self.config.get('base_url')
         card_sel = self.config.get('card')
@@ -746,8 +773,8 @@ async def main():
         
         try:
             await asyncio.gather(
-                jobs_cz.run(limit=75),     # 75 pages * 20 ads = 1500 (PRIMARY SOURCE)
-                prace_cz.run(limit=75),    # 75 pages * 20 ads = 1500 (PRIMARY SOURCE)
+                jobs_cz.run(limit=135),    # 135 pages * 15 ads = ~2000 (BALANCED TARGET)
+                prace_cz.run(limit=50),    # 50 pages * 40 ads = ~2000 (BALANCED TARGET)
                 startup.run(limit=300),    # 300 job ads
                 wttj.run(limit=200),       # 200 job ads (often fails)
                 cocuma.run(limit=10),      # 10 pages (often 0 results)

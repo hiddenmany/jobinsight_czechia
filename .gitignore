@@ -41,3 +41,16 @@ DEPLOYMENT_STATUS.md
 # One-time analysis reports (keep locally)
 HR_EMPLOYER_VALUE_ANALYSIS.md
 VISUAL_REPORT_ANALYSIS.md
+
+# Temporary utility scripts
+enhance_report.py
+check_dracik.py
+inspect_db.py
+
+# Temporary analysis/tracking documents
+AUDIT_REPORT.md
+BUGS_FIXED.md
+DATASET_HISTORY_ANALYSIS.md
+IMPLEMENTATION_VERIFICATION.md
+IMPROVEMENT_MAPPING.md
+"NEXT STEP.txt"

@@ -342,3 +342,27 @@ skill_patterns:
   "Kafka": '\bkafka\b'
   "RabbitMQ": 'rabbitmq|rabbit mq'
   "GraphQL": 'graphql'
+
+  # --- GENERAL MARKET SKILLS ---
+  # Languages
+  "English": 'angličtin|english|en level|b2|c1|pokočilá angličtina'
+  "German": 'němčin|german|de level|pokročilá němčina'
+  "French": 'francouzštin|french'
+  
+  # Office & Admin
+  "Excel": 'excel|tabulkový procesor|pokročilá znalost excelu'
+  "SAP": '\bsap\b'
+  "Power BI": 'power bi|powerbi'
+  "Salesforce": 'salesforce'
+  
+  # Driving & Logistics
+  "Řidičský průkaz B": 'řidičský průkaz.*sk.*b|aktivní řidič|řp sk. b|řidičák b'
+  "VZV": 'vzv|vysokozdvižný vozík|oprávnění na vzv'
+  
+  # Accounting & Finance
+  "Účetnictví": 'znalost účetnictví|podvojné účetnictví|mzdové účetnictví'
+  "IFRS": '\bifrs\b'
+  
+  # Soft Skills (Signal Words)
+  "Communication": 'komunikační dovednosti|komunikativnost|communication skills'
+  "Teamwork": 'týmový hráč|spolupráce|team player'

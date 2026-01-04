@@ -1,54 +1,389 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HR Intelligence Report - Czech Job Market 2026</title>
-    <meta name="description" content="Weekly market intelligence report for HR professionals and employers. Salary benchmarks, role analysis, seniority distribution.">
+    <meta name="description"
+        content="Weekly market intelligence report for HR professionals and employers. Salary benchmarks, role analysis, seniority distribution.">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        
-        body { font-family: 'Inter', sans-serif; background: #f8f9fa; margin: 0; padding: 40px 20px; color: #111; }
-        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 60px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border-radius: 12px; }
-        
-        h1 { font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; margin-bottom: 0.1em; color: #111; }
-        h1 span { color: #0055FF; }
-        
-        .subtitle { color: #666; font-size: 1.2rem; margin-bottom: 60px; border-bottom: 3px solid #111; padding-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-        .version-badge { background: #0055FF; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
-        
-        .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 60px; }
-        .kpi-card { background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #eee; border-left: 4px solid #0055FF; transition: transform 0.2s; }
-        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .kpi-card.highlight { border-left-color: #00FF88; background: linear-gradient(135deg, #f0fff4 0%, #fff 100%); }
-        
-        .kpi-val { font-size: 2.2rem; font-weight: 700; line-height: 1; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .kpi-label { font-size: 0.75rem; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-top: 10px; font-weight: 600; }
-        
-        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin-bottom: 60px; }
-        .section-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; border-left: 4px solid #111; padding-left: 15px; display: flex; align-items: center; }
-        .section-title span { color: #0055FF; margin-right: 10px; }
-        .section-title .badge { background: #0055FF; color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; margin-left: 10px; }
-        
-        .hr-section { background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%); padding: 40px; border-radius: 12px; margin: 40px 0; border: 1px solid #e0e5ff; }
-        .hr-section h2 { font-size: 1.8rem; margin-bottom: 30px; color: #0055FF; }
-        
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        thead tr { text-align: left; border-bottom: 2px solid #111; }
-        th, td { padding: 12px; }
-        tbody tr { border-bottom: 1px solid #eee; }
-        tbody tr:hover { background: #f8f9fa; }
-        
-        .premium-positive { color: #00AA55; font-weight: bold; }
-        .premium-negative { color: #DD3333; font-weight: bold; }
-        
-        .footer { margin-top: 80px; font-size: 0.9rem; color: #888; text-align: center; border-top: 1px solid #eee; padding-top: 30px; }
-        
-        @media(max-width: 1024px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media(max-width: 768px) { .kpi-grid, .chart-grid { grid-template-columns: 1fr; } .container { padding: 20px; } .kpi-val { font-size: 1.8rem; } }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8f9fa;
+            margin: 0;
+            padding: 40px 20px;
+            color: #111;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 60px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+            border-radius: 12px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            margin-bottom: 0.1em;
+            color: #111;
+        }
+
+        h1 span {
+            color: #0055FF;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2rem;
+            margin-bottom: 60px;
+            border-bottom: 3px solid #111;
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .version-badge {
+            background: #0055FF;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+
+        .kpi-card {
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            border-left: 4px solid #0055FF;
+            transition: transform 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .kpi-card.highlight {
+            border-left-color: #00FF88;
+            background: linear-gradient(135deg, #f0fff4 0%, #fff 100%);
+        }
+
+        .kpi-val {
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #111;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #666;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            border-left: 4px solid #111;
+            padding-left: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title span {
+            color: #0055FF;
+            margin-right: 10px;
+        }
+
+        .section-title .badge {
+            background: #0055FF;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+        }
+
+        .hr-section {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+            padding: 40px;
+            border-radius: 12px;
+            margin: 40px 0;
+            border: 1px solid #e0e5ff;
+        }
+
+        .hr-section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: #0055FF;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead tr {
+            text-align: left;
+            border-bottom: 2px solid #111;
+        }
+
+        th,
+        td {
+            padding: 12px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #eee;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .premium-positive {
+            color: #00AA55;
+            font-weight: bold;
+        }
+
+        .premium-negative {
+            color: #DD3333;
+            font-weight: bold;
+        }
+
+        /* === HYBRID NAVIGATION UX === */
+
+        /* Executive Summary Card */
+        .executive-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .executive-summary h2 {
+            margin-top: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .summary-meta {
+            display: flex;
+            gap: 30px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .kpi-highlights {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .kpi-mini {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s;
+        }
+
+        .kpi-mini:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Sticky Navigation */
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: white;
+            border-bottom: 2px solid #e5e7eb;
+            padding: 12px 20px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin: 0 -60px 30px -60px;
+            flex-wrap: wrap;
+        }
+
+        .nav-pill {
+            padding: 8px 16px;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .nav-pill:hover {
+            background: #0055FF;
+            color: white;
+        }
+
+        .nav-pill.active {
+            background: #0055FF;
+            color: white;
+            font-weight: 600;
+        }
+
+        .expand-all-btn {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-left: auto;
+            transition: all 0.2s;
+        }
+
+        .expand-all-btn:hover {
+            background: #f9fafb;
+        }
+
+        /* Collapsible Sections */
+        .collapsible-section {
+            margin-bottom: 30px;
+            border: 1px solid #e5e7eb;
+            border-left: 4px solid #0055FF;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            cursor: pointer;
+            padding: 20px 30px;
+            margin: 0;
+            background: #f9fafb;
+            user-select: none;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-header:hover {
+            background: #f3f4f6;
+        }
+
+        .toggle-icon {
+            display: inline-block;
+            transition: transform 0.3s ease;
+            font-size: 0.9em;
+            min-width: 20px;
+        }
+
+        .collapsible-section.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 30px;
+            max-height: 50000px;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.4s ease-out, opacity 0.3s ease;
+            opacity: 1;
+        }
+
+        .collapsible-section.collapsed .section-content {
+            max-height: 0;
+            padding: 0 30px;
+            opacity: 0;
+        }
+
+        @media(max-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .kpi-highlights {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .sticky-nav {
+                margin: 0 -20px 20px -20px;
+            }
+        }
+
+        @media(max-width: 768px) {
+
+            .kpi-grid,
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .kpi-val {
+                font-size: 1.8rem;
+            }
+
+            .kpi-highlights {
+                grid-template-columns: 1fr;
+            }
+
+            .sticky-nav {
+                padding: 10px;
+            }
+
+            .nav-pill {
+                font-size: 0.75rem;
+                padding: 6px 12px;
+            }
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Czech Job Market <span>Intelligence</span></h1>
@@ -58,7 +393,8 @@
         </div>
 
         <!-- Data Quality Badge -->
-        <div style="background: #e8f5e9; padding: 12px 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4caf50;">
+        <div
+            style="background: #e8f5e9; padding: 12px 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4caf50;">
             <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; font-size: 0.85rem;">
                 <div><strong>Sample Size:</strong> {{ "{:,}".format(total_jobs) }} jobs (Excellent)</div>
                 <div><strong>Salary Coverage:</strong> 44% (Good)</div>
@@ -67,14 +403,33 @@
             </div>
         </div>
 
+        <!-- IMPORTANT LIMITATIONS DISCLAIMER -->
+        <div
+            style="background: #fff1f2; border-left: 5px solid #e11d48; padding: 20px; margin: 30px 0; border-radius: 8px;">
+            <h3 style="color: #be123c; margin-top: 0; font-size: 1.1rem; font-weight: 700;">⚠️ IMPORTANT LIMITATIONS
+            </h3>
+            <p style="color: #881337; margin-bottom: 10px; font-size: 0.95rem;">This analysis measures <strong>DEMAND
+                    SIGNALS</strong> (what employers post), NOT MARKET REALITY (what actually gets hired/paid).</p>
+            <ul style="color: #9f1239; margin-bottom: 0; font-size: 0.9rem; line-height: 1.6;">
+                <li><strong>Ghost Jobs:</strong> Estimated 10-30% of postings may never be filled.</li>
+                <li><strong>Salary Bias:</strong> Advertised ranges often differ from final offers; top of range is
+                    rarely paid.</li>
+                <li><strong>Inflation:</strong> "Senior" roles may hire at "Mid" levels; skills lists are often
+                    aspirational lists.</li>
+            </ul>
+        </div>
+
         <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-val">{{ total_jobs }}</div>
                 <div class="kpi-label">Active Signals</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-val">{{ med_salary }}k</div>
-                <div class="kpi-label">Median Wage (CZK)</div>
+                <div class="kpi-val">{{ hpp_median }}k</div>
+                <div class="kpi-label">Median Wage (HPP)</div>
+                <div style="font-size: 0.8rem; color: #888; margin-top: 5px; font-weight: 500;">
+                    Brigáda: {{ brig_median }}k
+                </div>
             </div>
             <div class="kpi-card highlight">
                 <div class="kpi-val">{{ tech_premium }}</div>
@@ -93,7 +448,7 @@
         <!-- v1.0 HR INTELLIGENCE SECTION -->
         <div class="hr-section">
             <h2>📊 HR Intelligence Dashboard</h2>
-            
+
             <div class="chart-grid">
                 <div>
                     <div class="section-title"><span>A</span> Salary by Role <span class="badge">NEW</span></div>
@@ -123,7 +478,9 @@
                             <tr>
                                 <td style="font-weight: 600;">{{ skill.Skill }}</td>
                                 <td>{{ skill.Median | int }} CZK</td>
-                                <td class="{% if '+' in skill.Premium %}premium-positive{% else %}premium-negative{% endif %}">{{ skill.Premium }}</td>
+                                <td
+                                    class="{% if '+' in skill.Premium %}premium-positive{% else %}premium-negative{% endif %}">
+                                    {{ skill.Premium }}</td>
                                 <td>{{ skill.Jobs }}</td>
                             </tr>
                             {% endfor %}
@@ -134,14 +491,18 @@
             {% endif %}
 
             {% if seniority_role_matrix %}
-            <div style="margin-top: 40px; background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #FFA726;">
-                <div class="section-title" style="border-left-color: #FFA726; cursor: pointer; user-select: none;" onclick="toggleSection('dataQualitySection')">
+            <div
+                style="margin-top: 40px; background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #FFA726;">
+                <div class="section-title" style="border-left-color: #FFA726; cursor: pointer; user-select: none;"
+                    onclick="toggleSection('dataQualitySection')">
                     <span>⚠️ Data Quality Insight: Salary by Seniority + Role</span>
-                    <span id="dataQualityToggle" style="margin-left: auto; font-size: 1.2rem; transition: transform 0.3s;">▼</span>
+                    <span id="dataQualityToggle"
+                        style="margin-left: auto; font-size: 1.2rem; transition: transform 0.3s;">▼</span>
                 </div>
                 <div id="dataQualitySection" style="display: none;">
                     <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
-                        <strong>Why does "Junior" sometimes pay more than "Mid"?</strong> This cross-analysis reveals potential title inflation, classification issues, or role composition bias in the dataset.
+                        <strong>Why does "Junior" sometimes pay more than "Mid"?</strong> This cross-analysis reveals
+                        potential title inflation, classification issues, or role composition bias in the dataset.
                     </p>
                     <div style="overflow-x: auto;">
                         <table>
@@ -157,7 +518,8 @@
                                 {% for item in seniority_role_matrix %}
                                 <tr>
                                     <td style="font-weight: 600;">{{ item.role_type }}</td>
-                                    <td style="{% if item.seniority_level == 'Junior' %}color: #FF9800; font-weight: bold;{% elif item.seniority_level == 'Senior' %}color: #0055FF; font-weight: bold;{% endif %}">
+                                    <td
+                                        style="{% if item.seniority_level == 'Junior' %}color: #FF9800; font-weight: bold;{% elif item.seniority_level == 'Senior' %}color: #0055FF; font-weight: bold;{% endif %}">
                                         {{ item.seniority_level }}
                                     </td>
                                     <td style="font-weight: bold;">{{ item.median_salary | int }} CZK</td>
@@ -172,6 +534,47 @@
             {% endif %}
         </div>
 
+        <!-- MARKET TRENDS & DEEP ANALYSIS -->
+        <div class="hr-section" style="margin-top: 60px;">
+            <h2>📈 Market Trends & Deep Analysis</h2>
+            <p style="color: #666; margin-bottom: 10px; font-size: 0.95rem;">
+                <strong>CEO Insight:</strong> Visual analysis of salary ranges, hiring volumes, skill demand, and market
+                composition.
+            </p>
+            <p style="color: #999; margin-bottom: 30px; font-size: 0.85rem; font-style: italic;">
+                Note: Skills appear in only 1-5% of jobs, indicating specialized rather than universal demand.
+            </p>
+
+            <div style="margin-bottom: 40px;">
+                <div class="section-title">💰 Advertised Salary Ranges (Monthly CZK)</div>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Roles ranked by median advertised
+                    salary. Use this to benchmark your internal compensation bands.</p>
+                <div id="chart_salary_percentiles"></div>
+            </div>
+
+            <div class="chart-grid" style="margin-bottom: 40px;">
+                <div>
+                    <div class="section-title">🏢 Top Hiring Volumes (Overall)</div>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Companies with highest number of
+                        active job listings</p>
+                    <div id="chart_top_companies"></div>
+                </div>
+                <div>
+                    <div class="section-title">🔥 Jobs Mentioning Technical Skills</div>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Most frequently mentioned skills
+                        across all listings</p>
+                    <div id="chart_top_skills"></div>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <div class="section-title">📊 Job Market Composition by Sector</div>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Breakdown of active job listings by
+                    role category</p>
+                <div id="chart_role_distribution"></div>
+            </div>
+        </div>
+
         <!-- v1.1 MARKET INSIGHTS SECTIONS -->
 
         <!-- Benefits Intelligence -->
@@ -181,11 +584,14 @@
 
             <div style="margin-bottom: 40px;">
                 <div class="section-title">Most Common Benefits Offered</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px;">
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px;">
                     {% for benefit in benefits_data[:9] %}
-                    <div style="background: #f8f9fa; padding: 15px 20px; border-radius: 8px; text-align: center; border: 1px solid #e0e5ff;">
+                    <div
+                        style="background: #f8f9fa; padding: 15px 20px; border-radius: 8px; text-align: center; border: 1px solid #e0e5ff;">
                         <div style="font-size: 1.8rem; font-weight: 700; color: #0055FF;">{{ benefit.Percentage }}</div>
-                        <div style="font-size: 0.85rem; color: #666; margin-top: 5px; line-height: 1.3;">{{ benefit.Benefit }}</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 5px; line-height: 1.3;">{{
+                            benefit.Benefit }}</div>
                         <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">{{ benefit.Jobs }} jobs</div>
                     </div>
                     {% endfor %}
@@ -208,7 +614,8 @@
                             {% for role in benefits_by_role %}
                             <tr>
                                 <td style="font-weight: 600;">{{ role.role_type }}</td>
-                                <td style="color: #0055FF; font-weight: bold;">{{ "%.1f"|format(role.avg_benefits) }}</td>
+                                <td style="color: #0055FF; font-weight: bold;">{{ "%.1f"|format(role.avg_benefits) }}
+                                </td>
                                 <td>{{ role.count }}</td>
                             </tr>
                             {% endfor %}
@@ -235,20 +642,25 @@
             </div>
 
             {% if remote_premium and remote_premium.premium != 'N/A' %}
-            <div style="background: linear-gradient(135deg, #f0fff4 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid #00FF88; margin-bottom: 40px;">
-                <div style="font-size: 1.1rem; font-weight: 600; color: #111; margin-bottom: 10px;">💰 Remote Work Salary Premium</div>
+            <div
+                style="background: linear-gradient(135deg, #f0fff4 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid #00FF88; margin-bottom: 40px;">
+                <div style="font-size: 1.1rem; font-weight: 600; color: #111; margin-bottom: 10px;">💰 Remote Work
+                    Salary Premium</div>
                 <div style="display: flex; gap: 30px; flex-wrap: wrap;">
                     <div>
                         <span style="color: #666;">Remote Jobs:</span>
-                        <span style="font-weight: 700; color: #0055FF; margin-left: 8px;">{{ remote_premium.remote_median | int }} CZK</span>
+                        <span style="font-weight: 700; color: #0055FF; margin-left: 8px;">{{
+                            remote_premium.remote_median | int }} CZK</span>
                     </div>
                     <div>
                         <span style="color: #666;">Office Jobs:</span>
-                        <span style="font-weight: 700; margin-left: 8px;">{{ remote_premium.office_median | int }} CZK</span>
+                        <span style="font-weight: 700; margin-left: 8px;">{{ remote_premium.office_median | int }}
+                            CZK</span>
                     </div>
                     <div>
                         <span style="color: #666;">Premium:</span>
-                        <span style="font-weight: 700; color: #00AA55; font-size: 1.2rem; margin-left: 8px;">{{ remote_premium.premium }}</span>
+                        <span style="font-weight: 700; color: #00AA55; font-size: 1.2rem; margin-left: 8px;">{{
+                            remote_premium.premium }}</span>
                     </div>
                 </div>
             </div>
@@ -273,7 +685,8 @@
                                 <td style="font-weight: 600;">{{ role.role_type }}</td>
                                 {% if 'Hybrid' in role %}<td>{{ "%.1f"|format(role.Hybrid) }}%</td>{% endif %}
                                 {% if 'Office' in role %}<td>{{ "%.1f"|format(role.Office) }}%</td>{% endif %}
-                                {% if 'Remote' in role %}<td style="color: #0055FF; font-weight: bold;">{{ "%.1f"|format(role.Remote) }}%</td>{% endif %}
+                                {% if 'Remote' in role %}<td style="color: #0055FF; font-weight: bold;">{{
+                                    "%.1f"|format(role.Remote) }}%</td>{% endif %}
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -287,125 +700,72 @@
         <!-- Location Intelligence - HIDDEN: Most data is generic "CZ", not specific cities -->
         <!-- Will activate when scraper provides city-specific data (Prague, Brno, Ostrava, etc.) -->
 
-        <!-- v1.2 Emerging Market Signals -->
-        {% if emerging_tech or new_entrants or trending_benefits %}
-        <div class="hr-section" style="margin-top: 40px;">
-            <h2>📈 Market Signals & Emerging Trends</h2>
-
-            {% if not data_freshness.trend_analysis_ready %}
-            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #2196F3;">
-                <p style="margin: 0; color: #1565C0; font-size: 0.9rem;">
-                    <strong>📊 Trend Analysis Status:</strong> Currently analyzing <strong>{{ data_freshness.unique_dates }}</strong> day(s) of data.
-                    Weekly salary trends will activate automatically after collecting 7+ days of data.
-                </p>
-            </div>
-            {% endif %}
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-                {% if emerging_tech %}
-                <div>
-                    <div class="section-title">🔥 Hot Technologies</div>
-                    <div style="overflow-x: auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Technology</th>
-                                    <th>Market Share</th>
-                                    <th>Jobs</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for tech in emerging_tech[:8] %}
-                                <tr>
-                                    <td style="font-weight: 600;">{{ tech.Technology }}</td>
-                                    <td style="color: #0055FF; font-weight: bold;">{{ tech['Market Share'] }}</td>
-                                    <td>{{ tech.Jobs }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if new_entrants %}
-                <div>
-                    <div class="section-title">🚀 Active Hiring Companies</div>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Companies with 5-15 active postings (growth phase)</p>
-                    <div style="overflow-x: auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Company</th>
-                                    <th>Active Jobs</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for company in new_entrants[:8] %}
-                                <tr>
-                                    <td style="font-weight: 600;">{{ company.Company }}</td>
-                                    <td style="color: #FF9800; font-weight: bold;">{{ company['Active Jobs'] }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- REMOVED: Duplicate of Benefits Intelligence section above -->
-        </div>
-        {% endif %}
+        <!-- v1.2 section removed - content consolidated into "Market Trends & Deep Analysis" -->
 
         <!-- v1.3 Economic Reality & Talent Dynamics -->
         <div class="hr-section" style="margin-top: 40px;">
             <h2>💰 Economic Reality & Talent Dynamics</h2>
             <p style="color: #666; margin-bottom: 30px; font-size: 0.95rem;">
-                Deep market intelligence revealing compensation arbitrage, talent pipeline health, and real vs "fake" flexibility.
+                Deep market intelligence revealing compensation arbitrage, talent pipeline health, and real vs "fake"
+                flexibility.
             </p>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
                 <!-- IČO vs HPP Arbitrage -->
                 {% if ico_arbitrage.available %}
-                <div style="background: linear-gradient(135deg, #fff3e0 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid #ffb74d;">
-                    <div style="font-size: 0.9rem; font-weight: 600; color: #e65100; margin-bottom: 10px;">📋 IČO vs HPP Arbitrage</div>
+                <div
+                    style="background: linear-gradient(135deg, #fff3e0 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid #ffb74d;">
+                    <div style="font-size: 0.9rem; font-weight: 600; color: #e65100; margin-bottom: 10px;">📋 IČO vs HPP
+                        Arbitrage</div>
                     <div style="font-size: 2rem; font-weight: 700; color: #f57c00;">{{ ico_arbitrage.premium }}</div>
                     <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">
                         IČO: {{ ico_arbitrage.ico_median }} CZK<br>
                         HPP: {{ ico_arbitrage.hpp_median }} CZK
                     </div>
-                    <div style="font-size: 0.75rem; color: #999; margin-top: 8px;">Sample: IČO ({{ico_arbitrage.ico_count}}), HPP ({{ico_arbitrage.hpp_count}})</div>
+                    <div style="font-size: 0.75rem; color: #999; margin-top: 8px;">Sample: IČO
+                        ({{ico_arbitrage.ico_count}}), HPP ({{ico_arbitrage.hpp_count}})</div>
                 </div>
                 {% endif %}
 
                 <!-- Language Barrier Cost - HIDDEN: Sample size too small (n=53) -->
                 {% if lang_barrier.available and lang_barrier.english_count >= 100 %}
-                <div style="background: linear-gradient(135deg, #e8eaf6 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid #7986cb;">
-                    <div style="font-size: 0.9rem; font-weight: 600; color: #303f9f; margin-bottom: 10px;">🌍 Language Barrier Cost</div>
+                <div
+                    style="background: linear-gradient(135deg, #e8eaf6 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid #7986cb;">
+                    <div style="font-size: 0.9rem; font-weight: 600; color: #303f9f; margin-bottom: 10px;">🌍 Language
+                        Barrier Cost</div>
                     <div style="font-size: 2rem; font-weight: 700; color: #3f51b5;">{{ lang_barrier.premium }}</div>
                     <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">
                         English: {{ lang_barrier.english_median }} CZK<br>
                         Czech-only: {{ lang_barrier.czech_median }} CZK
                     </div>
-                    <div style="font-size: 0.75rem; color: #999; margin-top: 8px;">Sample: EN ({{lang_barrier.english_count}}), CZ ({{lang_barrier.czech_count}})</div>
+                    <div style="font-size: 0.75rem; color: #999; margin-top: 8px;">Sample: EN
+                        ({{lang_barrier.english_count}}), CZ ({{lang_barrier.czech_count}})</div>
                 </div>
                 {% endif %}
 
                 <!-- Talent Pipeline Health -->
                 {% if pipeline_health.available %}
-                <div style="background: linear-gradient(135deg, {% if pipeline_health.health_color == 'green' %}#e8f5e9{% elif pipeline_health.health_color == 'orange' %}#fff3e0{% else %}#ffebee{% endif %} 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid {% if pipeline_health.health_color == 'green' %}#81c784{% elif pipeline_health.health_color == 'orange' %}#ffb74d{% else %}#e57373{% endif %};">
-                    <div style="font-size: 0.9rem; font-weight: 600; color: {% if pipeline_health.health_color == 'green' %}#2e7d32{% elif pipeline_health.health_color == 'orange' %}#e65100{% else %}#c62828{% endif %}; margin-bottom: 10px;">🎯 Junior:Senior Ratio</div>
-                    <div style="font-size: 2rem; font-weight: 700; color: {% if pipeline_health.health_color == 'green' %}#4caf50{% elif pipeline_health.health_color == 'orange' %}#ff9800{% else %}#f44336{% endif %};">{{ pipeline_health.ratio }}</div>
+                <div
+                    style="background: linear-gradient(135deg, {% if pipeline_health.health_color == 'green' %}#e8f5e9{% elif pipeline_health.health_color == 'orange' %}#fff3e0{% else %}#ffebee{% endif %} 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid {% if pipeline_health.health_color == 'green' %}#81c784{% elif pipeline_health.health_color == 'orange' %}#ffb74d{% else %}#e57373{% endif %};">
+                    <div
+                        style="font-size: 0.9rem; font-weight: 600; color: {% if pipeline_health.health_color == 'green' %}#2e7d32{% elif pipeline_health.health_color == 'orange' %}#e65100{% else %}#c62828{% endif %}; margin-bottom: 10px;">
+                        🎯 Junior:Senior Ratio</div>
+                    <div
+                        style="font-size: 2rem; font-weight: 700; color: {% if pipeline_health.health_color == 'green' %}#4caf50{% elif pipeline_health.health_color == 'orange' %}#ff9800{% else %}#f44336{% endif %};">
+                        {{ pipeline_health.ratio }}</div>
                     <div style="font-size: 1rem; font-weight: 600; margin-top: 5px;">{{ pipeline_health.health }}</div>
-                    <div style="font-size: 0.75rem; color: #666; margin-top: 8px;">Jr:{{pipeline_health.junior}} | Mid:{{pipeline_health.mid}} | Sr:{{pipeline_health.senior}}</div>
+                    <div style="font-size: 0.75rem; color: #666; margin-top: 8px;">Jr:{{pipeline_health.junior}} |
+                        Mid:{{pipeline_health.mid}} | Sr:{{pipeline_health.senior}}</div>
                 </div>
                 {% endif %}
 
                 <!-- AI Washing -->
                 {% if ai_washing.available %}
-                <div style="background: linear-gradient(135deg, #f3e5f5 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid #ba68c8;">
-                    <div style="font-size: 0.9rem; font-weight: 600; color: #6a1b9a; margin-bottom: 10px;">🤖 AI Washing (Non-Tech)</div>
+                <div
+                    style="background: linear-gradient(135deg, #f3e5f5 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid #ba68c8;">
+                    <div style="font-size: 0.9rem; font-weight: 600; color: #6a1b9a; margin-bottom: 10px;">🤖 AI Washing
+                        (Non-Tech)</div>
                     <div style="font-size: 2rem; font-weight: 700; color: #9c27b0;">{{ ai_washing.percentage }}</div>
                     <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">
                         {{ ai_washing.ai_mentions }} / {{ ai_washing.total_nontech }} jobs
@@ -419,11 +779,15 @@
             {% if remote_flex %}
             <div style="margin-top: 30px;">
                 <div class="section-title">🏠 Remote/Hybrid Flexibility Reality Check</div>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Does "Hybrid" mean flexible freedom or rigid fixed days?</p>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Does "Hybrid" mean flexible freedom or
+                    rigid fixed days?</p>
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                     {% for flex in remote_flex %}
-                    <div style="background: #f8f9fa; padding: 15px 25px; border-radius: 8px; text-align: center; min-width: 160px; border: 1px solid {% if 'Flexible' in flex.Flexibility %}#00e676{% elif 'Rigid' in flex.Flexibility %}#ff5252{% else %}#bdbdbd{% endif %};">
-                        <div style="font-size: 1.6rem; font-weight: 700; color: {% if 'Flexible' in flex.Flexibility %}#00c853{% elif 'Rigid' in flex.Flexibility %}#d32f2f{% else %}#757575{% endif %};">{{ flex.Percentage }}</div>
+                    <div
+                        style="background: #f8f9fa; padding: 15px 25px; border-radius: 8px; text-align: center; min-width: 160px; border: 1px solid {% if 'Flexible' in flex.Flexibility %}#00e676{% elif 'Rigid' in flex.Flexibility %}#ff5252{% else %}#bdbdbd{% endif %};">
+                        <div
+                            style="font-size: 1.6rem; font-weight: 700; color: {% if 'Flexible' in flex.Flexibility %}#00c853{% elif 'Rigid' in flex.Flexibility %}#d32f2f{% else %}#757575{% endif %};">
+                            {{ flex.Percentage }}</div>
                         <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">{{ flex.Flexibility }}</div>
                         <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">{{ flex.Count }} jobs</div>
                     </div>
@@ -463,14 +827,18 @@
 
             <!-- Ghost Jobs -->
             {% if ghost_jobs %}
-            <div style="margin-top: 30px; background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #FFA726;">
-                <div class="section-title" style="border-left-color: #FFA726; cursor: pointer; user-select: none;" onclick="toggleSection('ghostJobsSection')">
+            <div
+                style="margin-top: 30px; background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #FFA726;">
+                <div class="section-title" style="border-left-color: #FFA726; cursor: pointer; user-select: none;"
+                    onclick="toggleSection('ghostJobsSection')">
                     <span>👻 Potential Ghost Jobs (High Repost Volume)</span>
-                    <span id="ghostJobsToggle" style="margin-left: auto; font-size: 1.2rem; transition: transform 0.3s;">▼</span>
+                    <span id="ghostJobsToggle"
+                        style="margin-left: auto; font-size: 1.2rem; transition: transform 0.3s;">▼</span>
                 </div>
                 <div id="ghostJobsSection" style="display: none;">
                     <p style="color: #666; margin-bottom: 15px; font-size: 0.85rem;">
-                        Same title posted 3+ times by the same company. Could indicate high turnover, CV harvesting, or evergreen roles.
+                        Same title posted 3+ times by the same company. Could indicate high turnover, CV harvesting, or
+                        evergreen roles.
                     </p>
                     <div style="overflow-x: auto;">
                         <table>
@@ -523,12 +891,16 @@
                     <tbody>
                         {% for innovator in innovators %}
                         <tr>
-                            <td style="font-weight: 600; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ innovator.company }}">{{ innovator.company }}</td>
+                            <td style="font-weight: 600; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                                title="{{ innovator.company }}">{{ innovator.company }}</td>
                             <td>{{ innovator.count }}</td>
                             <td style="color: #0055FF; font-weight: bold;">{{ innovator.avg_sal }}</td>
                         </tr>
                         {% else %}
-                        <tr><td colspan='3' style='padding: 20px; text-align: center; color: #888;'>Insufficient data for density analysis.</td></tr>
+                        <tr>
+                            <td colspan='3' style='padding: 20px; text-align: center; color: #888;'>Insufficient data
+                                for density analysis.</td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -540,7 +912,8 @@
             <div class="section-title"><span>04</span> Role Distribution (Top 5)</div>
             <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
                 {% for role in top_roles %}
-                <div style="background: #f8f9fa; padding: 15px 25px; border-radius: 8px; text-align: center; min-width: 120px;">
+                <div
+                    style="background: #f8f9fa; padding: 15px 25px; border-radius: 8px; text-align: center; min-width: 120px;">
                     <div style="font-size: 1.5rem; font-weight: 700; color: #0055FF;">{{ role.Count }}</div>
                     <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">{{ role.Role }}</div>
                 </div>
@@ -550,10 +923,12 @@
         {% endif %}
 
         <div class="footer">
-            Generated by <a href="https://github.com/hiddenmany/jobinsight_czechia" style="color:#0055FF; font-weight:bold; text-decoration:none;">JobsCzInsight v1.3</a> - Economic Reality Edition
+            Generated by <a href="https://github.com/hiddenmany/jobinsight_czechia"
+                style="color:#0055FF; font-weight:bold; text-decoration:none;">JobsCzInsight v1.3</a> - Economic Reality
+            Edition
         </div>
     </div>
-    
+
     <script>
         var contract_data = {{ json_contract | safe }};
         Plotly.newPlot('chart_contract', contract_data.data, contract_data.layout);
@@ -580,6 +955,20 @@
                 toggle.textContent = '▼';
             }
         }
+
+        // Market Trends & Deep Analysis Charts
+        var salary_percentiles_data = {{ json_salary_percentiles | safe }};
+        Plotly.newPlot('chart_salary_percentiles', salary_percentiles_data.data, salary_percentiles_data.layout);
+
+        var top_companies_data = {{ json_top_companies | safe }};
+        Plotly.newPlot('chart_top_companies', top_companies_data.data, top_companies_data.layout);
+
+        var top_skills_data = {{ json_top_skills | safe }};
+        Plotly.newPlot('chart_top_skills', top_skills_data.data, top_skills_data.layout);
+
+        var role_distribution_data = {{ json_role_distribution | safe }};
+        Plotly.newPlot('chart_role_distribution', role_distribution_data.data, role_distribution_data.layout);
     </script>
 </body>
+
 </html>

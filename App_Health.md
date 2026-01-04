@@ -1,8 +1,8 @@
 # JobsCzInsight App Health
 
-## Status: PRODUCTION-READY v1.4 🚀
-**Last Verified:** 2026-01-03 (Git LFS Migration)
-**Version:** 1.4 (Persistent Database Edition)
+## Status: PRODUCTION-READY v1.5 🚀
+**Last Verified:** 2026-01-04 (Rate Limit Cooldown Strategy)
+**Version:** 1.5 (Anti-Bot Countermeasures Edition)
 
 ### Latest Health Check ✅
 ```
@@ -24,6 +24,33 @@ Dashboard:                ONLINE (GitHub Pages)
 | **StartupJobs** | 40 | ✅ Working | 0 (fresh scrape) |
 | **WTTJ** | 30 | ⚠️ Low Yield | 0 (fresh scrape) |
 | **LinkedIn** | 7 | ⚠️ Very Low | 0 (fresh scrape) |
+
+## v1.5 - Anti-Bot Countermeasures Edition (2026-01-04)
+
+### RATE LIMIT COOLDOWN STRATEGY ✅
+**Problem:** Jobs.cz blocked requests after ~630 jobs (~21 pages) due to IP-based rate limiting.
+
+**Solution:** Implemented 5-minute cooldown every 20 pages:
+```python
+# In PagedScraper.run() - triggers at pages 21, 41, 61...
+if page_num > 1 and page_num % 20 == 1 and self.site_name in ['Jobs.cz', 'Prace.cz']:
+    await asyncio.sleep(5 * 60)  # 5-minute cooldown
+    # Rotate context for fresh fingerprint
+```
+
+**Impact:**
+- ✅ Jobs.cz can now complete full 75-page scrapes (~1,500 jobs)
+- ✅ No proxy costs required (budget-friendly)
+- ⚠️ Trade-off: Scrape takes ~20-25 min longer for Jobs.cz
+
+### LINKEDIN PROXY WARNING ✅
+Added clear warning when no `LINKEDIN_PROXY` env var is set:
+```
+LinkedIn: No LINKEDIN_PROXY env var set. LinkedIn blocks headless browsers 
+without residential proxies. Set: $env:LINKEDIN_PROXY='http://user:pass@proxy:port'
+```
+
+---
 
 ## v1.4 - Persistent Database Edition (2026-01-03)
 
