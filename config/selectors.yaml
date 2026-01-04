@@ -45,7 +45,8 @@ scrapers:
     title: h2.SearchResultCard__title > a
     company_selectors:
     - '[data-test=''employer-name'']'
-    - .SearchResultCard__footerItem:not(:has-text('Kč')):not(:has-text('Praha')):not(:has-text('Brno')):not(:has-text('Ostrava'))
+    - .SearchResultCard__companyName
+    - .SearchResultCard__footerItem:nth-child(1)
     salary: span.Tag--success
     city_selectors:
     - .SearchResultCard__footerItem:has-text('Praha')

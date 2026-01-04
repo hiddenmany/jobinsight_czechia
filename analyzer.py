@@ -312,20 +312,47 @@ class IntelligenceCore:
         """
         if not s or not isinstance(s, str):
             return None, None, None
-        s = s.lower().replace(" ", "").replace("\xa0", "").replace(".", "")
+        s = s.lower().replace(" ", "").replace(" ", "")
+        s = re.sub(r'(\d)\.(\d{3})', r'', s)  # Remove thousand separators only
         # Use compiled regex pattern for performance
-        nums = [int(n) for n in SALARY_DIGITS_PATTERN.findall(s) if int(n) > 1000]
+        
+        # Detect and convert hourly rates to monthly (160 hours/month standard)
+        if '/hod' in s or '/h' in s or 'hodinu' in s or 'per hour' in s:
+            nums_raw = [int(n) for n in SALARY_DIGITS_PATTERN.findall(s)]
+            nums = [n * 160 if n < 1000 else n for n in nums_raw]  # Convert hourly to monthly
+        else:
+            nums = [int(n) for n in SALARY_DIGITS_PATTERN.findall(s) if int(n) > 1000]
         
         # Handle EUR conversion to CZK (approximate rate)
         if "eur" in s:
             nums = [n * 25 for n in nums]
         
-        if not nums:
-            return None, None, None
         
+        # Distinguish between NULL (missing), 0 (unpaid), and negotiable
+        original_text = s  # Keep original for special case detection
+        
+        # Check for unpaid internships
+        if 'unpaid' in original_text or '0czk' in original_text or '0kč' in original_text:
+            return 0, 0, 0  # Explicitly 0 for unpaid positions
+        
+        # Check for negotiable salary
+        if 'dohodou' in original_text or 'negotiable' in original_text or 'tbd' in original_text:
+            return -1, -1, -1  # Special marker for "to be discussed"
+        
+        if not nums:
+            return None, None, None  # NULL for missing salary data
+        
+        # Salary validation: Flag suspiciously low or high values
         min_sal = min(nums)
         max_sal = max(nums)
         avg_sal = sum(nums) / len(nums)
+        
+        # Sanity check: Monthly salaries in Czech Republic
+        if avg_sal < 15000 or avg_sal > 500000:
+            # Log warning but still return the value
+            import logging
+            logging.debug(f"Suspicious salary detected: {avg_sal} CZK from '{original_text}'")
+        
         return min_sal, max_sal, avg_sal
 
     def get_summary(self):
@@ -532,32 +559,60 @@ class MarketIntelligence:
         return matrix.sort_values(['role_type', 'median_salary'], ascending=[True, False])
     
     def get_skill_premiums(self) -> pd.DataFrame:
-        """Calculate salary premium for top skills (v1.0 HR Intelligence)."""
-        skills = ['react', 'python', 'kubernetes', 'aws', 'typescript', 'java', 'golang', 
-                  'docker', 'node.js', 'angular', '.net', 'rust', 'flutter', 'sql', 'devops',
-                  'azure', 'gcp', 'kafka', 'spring', 'django']
-        
+        """Calculate salary premium for top skills (v1.0 HR Intelligence) - using accurate patterns."""
+        # Use skill_patterns from taxonomy for accurate detection
+        skill_patterns = TAXONOMY.get('skill_patterns', {})
+
+        # Focus on most common skills
+        priority_skills = ['Python', 'JavaScript', 'TypeScript', 'Java', 'Go', 'Rust',
+                           'React', 'Angular', 'Vue', 'Node.js', '.NET', 'Spring',
+                           'SQL', 'MongoDB', 'Redis', 'Docker', 'Kubernetes',
+                           'AWS', 'Azure', 'GCP', 'AI/ML']
+
         valid_sal = self.df[self.df['avg_salary'] > 0]
         if valid_sal.empty:
             return pd.DataFrame(columns=['Skill', 'Median', 'Premium', 'Jobs'])
-        
+
         baseline_median = valid_sal['avg_salary'].median()
-        
+
         premiums = []
-        for skill in skills:
-            mask = valid_sal['description'].fillna('').str.lower().str.contains(skill, regex=False)
-            skill_median = valid_sal[mask]['avg_salary'].median()
-            count = mask.sum()
-            if pd.notna(skill_median) and count >= 10:
-                premium_pct = ((skill_median / baseline_median) - 1) * 100
-                premiums.append({
-                    'Skill': skill.title() if skill != '.net' else '.NET',
-                    'Median': int(skill_median),
-                    'Premium': f"+{int(premium_pct)}%" if premium_pct >= 0 else f"{int(premium_pct)}%",
-                    'Premium_Raw': premium_pct,
-                    'Jobs': count
-                })
-        
+        for skill_name in priority_skills:
+            if skill_name not in skill_patterns:
+                continue
+
+            pattern = skill_patterns[skill_name]
+            try:
+                # Use regex pattern matching for accuracy
+                mask = valid_sal['description'].fillna('').str.lower().str.contains(pattern, regex=True, case=False, na=False)
+                skill_median = valid_sal[mask]['avg_salary'].median()
+                count = mask.sum()
+
+                if pd.notna(skill_median) and count >= 10:
+                    premium_pct = ((skill_median / baseline_median) - 1) * 100
+                    premiums.append({
+                        'Skill': skill_name,
+                        'Median': int(skill_median),
+                        'Premium': f"+{int(premium_pct)}%" if premium_pct >= 0 else f"{int(premium_pct)}%",
+                        'Premium_Raw': premium_pct,
+                        'Jobs': int(count)
+                    })
+            except Exception as e:
+                # Fallback to simple matching if regex fails
+                import logging
+                logging.debug(f"Regex failed for {skill_name}, using fallback: {e}")
+                mask = valid_sal['description'].fillna('').str.lower().str.contains(skill_name.lower(), regex=False)
+                skill_median = valid_sal[mask]['avg_salary'].median()
+                count = mask.sum()
+                if pd.notna(skill_median) and count >= 10:
+                    premium_pct = ((skill_median / baseline_median) - 1) * 100
+                    premiums.append({
+                        'Skill': skill_name,
+                        'Median': int(skill_median),
+                        'Premium': f"+{int(premium_pct)}%" if premium_pct >= 0 else f"{int(premium_pct)}%",
+                        'Premium_Raw': premium_pct,
+                        'Jobs': int(count)
+                    })
+
         if not premiums:
             return pd.DataFrame(columns=['Skill', 'Median', 'Premium', 'Jobs'])
 
@@ -772,40 +827,44 @@ class MarketIntelligence:
 
     def get_emerging_tech_signals(self) -> pd.DataFrame:
         """
-        Detect hot/emerging technologies based on mention frequency.
+        Detect hot/emerging technologies based on mention frequency using accurate patterns.
         """
-        tech_keywords = TAXONOMY['tech_stack']['modern'][:30]  # Top 30 modern techs
+        # Use skill_patterns from taxonomy for accurate detection
+        skill_patterns = TAXONOMY.get('skill_patterns', {})
 
         results = []
-        for tech in tech_keywords:
-            # Special handling for "go" to avoid Czech/English language false positives (verb "go")
-            if tech.lower() in ['go', 'golang']:
-                # STRICT regex: only match "Go" if it's "Golang" or followed by tech context, 
-                # or is "Go" with a capital G and surrounded by word boundaries, 
-                # but NOT as a common start of a sentence or middle of a sentence.
-                # In market analysis, standalone "Go" is dangerous.
-                pattern = r'\bgolang\b|\bGo\s+(?:lang|dev|engineer|programování|vývoj)\b'
-            else:
-                pattern = re.escape(tech)
+        for tech_name, pattern in skill_patterns.items():
+            try:
+                mask = self.df['description'].fillna('').str.lower().str.contains(pattern, regex=True, case=False, na=False)
+                count = mask.sum()
+                percentage = (count / len(self.df)) * 100
 
-            mask = self.df['description'].fillna('').str.lower().str.contains(pattern, regex=True, case=False, na=False)
-            count = mask.sum()
-            percentage = (count / len(self.df)) * 100
-
-            if count >= 50:  # Minimum threshold for significance
-                # Display as "Go/Golang" for clarity
-                display_name = 'Go/Golang' if tech.lower() in ['go', 'golang'] else tech.title()
-                results.append({
-                    'Technology': display_name,
-                    'Jobs': int(count),
-                    'Market Share': f"{percentage:.1f}%",
-                    'Share_Raw': percentage
-                })
+                if count >= 10:  # Minimum threshold for significance (lowered from 50)
+                    results.append({
+                        'Technology': tech_name,
+                        'Jobs': int(count),
+                        'Market Share': f"{percentage:.1f}%",
+                        'Share_Raw': percentage
+                    })
+            except Exception as e:
+                # Fallback to simple matching if regex fails
+                import logging
+                logging.debug(f"Regex failed for {tech_name}: {e}")
+                mask = self.df['description'].fillna('').str.lower().str.contains(tech_name.lower(), regex=False)
+                count = mask.sum()
+                percentage = (count / len(self.df)) * 100
+                if count >= 10:
+                    results.append({
+                        'Technology': tech_name,
+                        'Jobs': int(count),
+                        'Market Share': f"{percentage:.1f}%",
+                        'Share_Raw': percentage
+                    })
 
         if not results:
             return pd.DataFrame(columns=['Technology', 'Jobs', 'Market Share'])
 
-        return pd.DataFrame(results).sort_values('Share_Raw', ascending=False).drop('Share_Raw', axis=1).head(12)
+        return pd.DataFrame(results).sort_values('Share_Raw', ascending=False).drop('Share_Raw', axis=1).head(15)
 
     def get_new_market_entrants(self) -> pd.DataFrame:
         """

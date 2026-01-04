@@ -208,7 +208,7 @@ class BaseScraper:
             if el:
                 txt = (await el.inner_text()).strip()
                 # Remove bullet characters and normalize whitespace
-                txt = txt.lstrip('•\u2022\u2023\u25E6\u25AA\u25AB').strip()
+                txt = re.sub(r'^[••‣◦▪▫\s]+', '', txt).strip()
                 txt = ' '.join(txt.split())
                 if txt and len(txt) > 1:
                     return sanitize_text(txt)
@@ -236,7 +236,7 @@ class BaseScraper:
             fallback_cities = CONFIG.get('common', {}).get('fallback_cities', [])
             for city in fallback_cities:
                 # Use word boundaries to avoid false positives (e.g., "Praha" in "Praha Solutions")
-                pattern = r'' + re.escape(city) + r''
+                pattern = r'' + re.escape(city.lower()) + r''
                 if re.search(pattern, card_text):
                     return city.title()
         except Exception:

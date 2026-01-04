@@ -277,3 +277,68 @@ work_model_keywords:
     - "office"
     - "on-site"
     - "na pracovišti"
+
+# Skill Detection Patterns (with regex for accuracy)
+# Format: display_name -> regex_pattern
+# Regex uses word boundaries (\b) to avoid false positives in Czech text
+# NOTE: DuckDB uses RE2 regex - no negative lookahead/lookbehind support
+skill_patterns:
+  # AI/ML - CRITICAL: Must use word boundaries to avoid matching "detail", "mail", etc.
+  "AI/ML": '\bai\b|\bml\b|artificial intelligence|machine learning|umělá inteligence|strojové učení'
+
+  # Databases
+  "SQL": '\bsql\b|\bmysql\b|\bpostgresql\b|\bpostgres\b|\bmssql\b|\bmariadb\b|\bt-sql\b'
+  "MongoDB": '\bmongodb\b|\bmongo\b'
+  "Redis": '\bredis\b'
+  "Elasticsearch": '\belasticsearch\b|\belastic\b'
+
+  # Programming Languages
+  "Python": 'python'  # Czech declensions: pythonu, pythonist - simple match works
+  "JavaScript": 'javascript|node\.js|nodejs|ecmascript'
+  "TypeScript": 'typescript'
+  "Java": '\bjava\b|java\s+\d+|spring boot|spring framework'
+  "C#": 'c#|c sharp|csharp'
+  "Go": '\bgolang\b'
+  "Rust": '\brust\b'
+  "PHP": '\bphp\b'
+  "Ruby": '\bruby\b|ruby on rails|\brails\b'
+  "Kotlin": '\bkotlin\b'
+  "Swift": '\bswift\b'
+
+  # Frontend Frameworks
+  "React": '\breact\b|reactjs|react native'
+  "Angular": '\bangular\b|angularjs'
+  "Vue": '\bvue\b|vue\.js|vuejs'
+  "Svelte": '\bsvelte\b|sveltekit'
+  "Next.js": 'next\.js|nextjs'
+
+  # Backend Frameworks
+  "Node.js": 'node\.js|nodejs'
+  "Django": '\bdjango\b'
+  "Flask": '\bflask\b'
+  "Spring": 'spring boot|spring framework|spring cloud|springframework'
+  ".NET": '\.net|dotnet|asp\.net'
+  "Express": 'express\.js|expressjs'
+  "NestJS": 'nestjs|nest\.js'
+  "FastAPI": 'fastapi|fast api'
+
+  # Cloud & DevOps
+  "Docker": '\bdocker\b'
+  "Kubernetes": '\bkubernetes\b|\bk8s\b'
+  "AWS": '\baws\b|amazon web services'
+  "Azure": '\bazure\b|microsoft azure'
+  "GCP": '\bgcp\b|google cloud'
+  "CI/CD": 'ci/cd|continuous integration|continuous deployment|jenkins|gitlab ci|github actions'
+  "Terraform": '\bterraform\b'
+  "Ansible": '\bansible\b'
+
+  # Data Science & AI
+  "Data Science": 'data scien|datová analý|datový analý'
+  "Machine Learning": 'machine learning|\bml\b engineer|strojové učení'
+  "PyTorch": 'pytorch'
+  "TensorFlow": 'tensorflow'
+
+  # Messaging & Streaming
+  "Kafka": '\bkafka\b'
+  "RabbitMQ": 'rabbitmq|rabbit mq'
+  "GraphQL": 'graphql'

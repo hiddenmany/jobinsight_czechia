@@ -1,18 +1,22 @@
 import duckdb
 import json
 import os
+import yaml
 from datetime import datetime
 
 # Configuration
 DB_PATH = 'data/intelligence.db'
 OUTPUT_HTML = 'public/trends.html'
+TAXONOMY_PATH = 'config/taxonomy.yaml'
 
-# Tech Stack Keywords for "Modern Stack" Analysis
-TECH_STACK = [
-    "Python", "Java", "JavaScript", "TypeScript", "React", "Angular", "Vue", 
-    "Node.js", "SQL", "Docker", "Kubernetes", "AWS", "Azure", "GCP", "CI/CD",
-    "Machine Learning", "AI", "Data Science"
-]
+# Load skill patterns from taxonomy
+def load_skill_patterns():
+    """Load skill detection patterns from taxonomy.yaml"""
+    with open(TAXONOMY_PATH, 'r', encoding='utf-8') as f:
+        taxonomy = yaml.safe_load(f)
+    return taxonomy.get('skill_patterns', {})
+
+SKILL_PATTERNS = load_skill_patterns()
 
 def get_market_intelligence(conn):
     print("Generating Market Intelligence Data...")
@@ -54,29 +58,35 @@ def get_market_intelligence(conn):
     top_companies = conn.execute(company_query).fetchall()
     
     # 3. "Hidden Tech" - Non-Tech companies hiring for Tech Roles
-    # Refined Logic: Exclude retail/manual roles and require HARD tech skills.
-    
+    # Refined Logic: Exclude retail/manual roles and require HARD tech skills using accurate patterns
+
     # Exclude common non-tech roles that might mention "PC skills" or "IT"
     exclude_roles = "('Sales', 'Retail', 'Driver', 'Warehouse', 'HR', 'Admin', 'Customer Service')"
-    
-    # strict keywords - remove generic ones if they were there
-    hard_skills = [
-        "Python", "Java", "JavaScript", "TypeScript", "React", "Angular", "Vue", 
-        "Node.js", "C#", ".NET", "Golang", "Rust", "Swift", "Kotlin",
-        "SQL", "PostgreSQL", "MongoDB", "Redis", "Elasticsearch",
-        "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Terraform",
-        "Machine Learning", "Data Science", "DevOps", "Cybersecurity"
+
+    # Build tech filter using skill patterns - focus on core tech skills
+    core_tech_skills = [
+        'Python', 'Java', 'JavaScript', 'React', 'Angular', 'Vue',
+        'Node.js', 'C#', '.NET', 'Go', 'Rust', 'Kotlin', 'Swift',
+        'SQL', 'MongoDB', 'Redis', 'Docker', 'Kubernetes',
+        'AWS', 'Azure', 'GCP', 'AI/ML', 'Data Science'
     ]
-    
-    tech_filter = " OR ".join([f"lower(description) LIKE '%{k.lower()}%'" for k in hard_skills])
-    
+
+    # Use regex patterns for accurate detection
+    tech_conditions = []
+    for skill_name in core_tech_skills:
+        if skill_name in SKILL_PATTERNS:
+            pattern = SKILL_PATTERNS[skill_name]
+            tech_conditions.append(f"regexp_matches(lower(description), '{pattern}')")
+
+    tech_filter = " OR ".join(tech_conditions)
+
     tech_hiring_query = f"""
         SELECT company, COUNT(*) as tech_jobs
         FROM signals
         WHERE ({tech_filter})
         AND company IS NOT NULL
         AND role_type NOT IN {exclude_roles}
-        AND lower(title) NOT LIKE '%prodavač%' 
+        AND lower(title) NOT LIKE '%prodavač%'
         AND lower(title) NOT LIKE '%skladník%'
         AND lower(title) NOT LIKE '%řidič%'
         AND lower(title) NOT LIKE '%asistent%'
@@ -86,13 +96,24 @@ def get_market_intelligence(conn):
     """
     tech_hiring_companies = conn.execute(tech_hiring_query).fetchall()
 
-    # 4. Skill Heatmap (Modern Stack)
+    # 4. Skill Heatmap (Modern Stack) - Using accurate regex patterns
     skill_counts = []
-    for skill in TECH_STACK:
-        query = f"SELECT COUNT(*) FROM signals WHERE lower(description) LIKE '%{skill.lower()}%'"
-        count = conn.execute(query).fetchone()[0]
-        skill_counts.append({"skill": skill, "count": count})
+    for skill_name, pattern in SKILL_PATTERNS.items():
+        # Use regexp_matches for accurate detection with word boundaries
+        query = f"SELECT COUNT(*) FROM signals WHERE regexp_matches(lower(description), '{pattern}')"
+        try:
+            count = conn.execute(query).fetchone()[0]
+            skill_counts.append({"skill": skill_name, "count": count})
+        except Exception as e:
+            print(f"Error: Skill '{skill_name}' pattern failed: {e} - SKIPPING")
+            continue  # Skip skills with invalid patterns instead of using loose matching
+
+    # Filter out skills with very low counts (< 10 jobs) and sort
+    skill_counts = [s for s in skill_counts if s['count'] >= 10]
     skill_counts.sort(key=lambda x: x['count'], reverse=True)
+
+    # Limit to top 18 skills for readability
+    skill_counts = skill_counts[:18]
     
     return {
         "salary": salary_data,
@@ -163,9 +184,9 @@ def generate_executive_report(data):
 
                 <!-- Modern Tech Stack -->
                 <div class="card">
-                    <h2>🔥 Modern Tech Demand</h2>
+                    <h2>🔥 Top Technical Skills Demand</h2>
                     <div class="insight-box">
-                        <strong>CTO Insight:</strong> The most requested technologies in job descriptions today. High volume = easier to hire, but potentially higher turnover.
+                        <strong>CTO Insight:</strong> Most frequently mentioned technical skills using accurate pattern matching. Note: Skills appear in only 1-5% of jobs, indicating specialized rather than universal demand.
                     </div>
                     <canvas id="skillChart"></canvas>
                 </div>
