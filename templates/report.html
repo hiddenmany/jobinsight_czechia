@@ -430,7 +430,58 @@
         </nav>
 
         <!-- KPI Summary Section -->
-        <div id="kpi-summary"></div>
+        <div id="kpi-summary" class="executive-summary">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>📊 Executive Summary</h2>
+                <div class="summary-meta">
+                    <span><strong>Last Updated:</strong> {{ summary_kpis.last_updated }}</span>
+                    <span><strong>Total Jobs:</strong> {{ summary_kpis.total_jobs }}</span>
+                </div>
+            </div>
+
+            <p style="margin-top: 0; opacity: 0.9; margin-bottom: 20px;">
+                Strategic overview of the Czech job market based on {{ summary_kpis.total_jobs }} active listings.
+            </p>
+
+            <div class="kpi-highlights">
+                <div class="kpi-mini">
+                    <div style="font-size: 0.8em; opacity: 0.8;">HPP Median Wage</div>
+                    <div style="font-size: 1.4em;">{{ summary_kpis.hpp_median }}k CZK</div>
+                </div>
+                <div class="kpi-mini">
+                    <div style="font-size: 0.8em; opacity: 0.8;">Top Role Demand</div>
+                    <div style="font-size: 1.4em;">{{ summary_kpis.top_role_1 }}</div>
+                    <div style="font-size: 0.7em; opacity: 0.7;">{{ summary_kpis.top_role_count }} jobs</div>
+                </div>
+                <div class="kpi-mini">
+                    <div style="font-size: 0.8em; opacity: 0.8;">Remote Jobs</div>
+                    <div style="font-size: 1.4em;">{{ summary_kpis.remote_share }}</div>
+                </div>
+                <div class="kpi-mini">
+                    <div style="font-size: 0.8em; opacity: 0.8;">IČO Premium</div>
+                    <div style="font-size: 1.4em;">{{ summary_kpis.ico_premium }}</div>
+                </div>
+                <div class="kpi-mini">
+                    <div style="font-size: 0.8em; opacity: 0.8;">Tech Premium</div>
+                    <div style="font-size: 1.4em;">{{ summary_kpis.tech_premium }}</div>
+                </div>
+                <div class="kpi-mini">
+                    <div style="font-size: 0.8em; opacity: 0.8;">Ghost Jobs (Est)</div>
+                    <div style="font-size: 1.4em;">{{ summary_kpis.ghost_jobs }}</div>
+                </div>
+                <div class="kpi-mini">
+                    <div style="font-size: 0.8em; opacity: 0.8;">AI Washing</div>
+                    <div style="font-size: 1.4em;">{{ summary_kpis.ai_washing }}</div>
+                </div>
+                <div class="kpi-mini">
+                    <div style="font-size: 0.8em; opacity: 0.8;">Data Quality</div>
+                    <div style="font-size: 1.4em; color: #4CAF50;">High</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OLD KPI GRID HIDDEN/COLLAPSED BY DEFAULT or KEPT AS DETAILED VIEW -->
+        <!-- We keep it as "Detailed Metrics" -->
         <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-val">{{ total_jobs }}</div>
@@ -458,98 +509,111 @@
         </div>
 
         <!-- v1.0 HR INTELLIGENCE SECTION -->
-        <div class="hr-section">
-            <h2>📊 HR Intelligence Dashboard</h2>
-
-            <div class="chart-grid">
-                <div>
-                    <div class="section-title"><span>A</span> Salary by Role <span class="badge">NEW</span></div>
-                    <div id="chart_role"></div>
-                </div>
-                <div>
-                    <div class="section-title"><span>B</span> Salary by Seniority <span class="badge">NEW</span></div>
-                    <div id="chart_seniority"></div>
-                </div>
+        <div id="hr-dashboard" class="collapsible-section">
+            <div class="section-header" onclick="toggleSection('hr-dashboard')">
+                <span class="toggle-icon">▼</span>
+                <h2 style="margin:0;">📊 HR Intelligence Dashboard</h2>
             </div>
+            <div class="section-content">
 
-            {% if skill_premiums %}
-            <div style="margin-top: 40px;">
-                <div class="section-title"><span>C</span> Skill Premium Rankings <span class="badge">NEW</span></div>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Skill</th>
-                                <th>Median Salary</th>
-                                <th>Premium</th>
-                                <th>Job Count</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for skill in skill_premiums %}
-                            <tr>
-                                <td style="font-weight: 600;">{{ skill.Skill }}</td>
-                                <td>{{ skill.Median | int }} CZK</td>
-                                <td
-                                    class="{% if '+' in skill.Premium %}premium-positive{% else %}premium-negative{% endif %}">
-                                    {{ skill.Premium }}</td>
-                                <td>{{ skill.Jobs }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="chart-grid">
+                    <div>
+                        <div class="section-title"><span>A</span> Salary by Role <span class="badge">NEW</span></div>
+                        <div id="chart_role"></div>
+                    </div>
+                    <div>
+                        <div class="section-title"><span>B</span> Salary by Seniority <span class="badge">NEW</span>
+                        </div>
+                        <div id="chart_seniority"></div>
+                    </div>
                 </div>
-            </div>
-            {% endif %}
 
-            {% if seniority_role_matrix %}
-            <div
-                style="margin-top: 40px; background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #FFA726;">
-                <div class="section-title" style="border-left-color: #FFA726; cursor: pointer; user-select: none;"
-                    onclick="toggleSection('dataQualitySection')">
-                    <span>⚠️ Data Quality Insight: Salary by Seniority + Role</span>
-                    <span id="dataQualityToggle"
-                        style="margin-left: auto; font-size: 1.2rem; transition: transform 0.3s;">▼</span>
-                </div>
-                <div id="dataQualitySection" style="display: none;">
-                    <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
-                        <strong>Why does "Junior" sometimes pay more than "Mid"?</strong> This cross-analysis reveals
-                        potential title inflation, classification issues, or role composition bias in the dataset.
-                    </p>
+                {% if skill_premiums %}
+                <div style="margin-top: 40px;">
+                    <div class="section-title"><span>C</span> Skill Premium Rankings <span class="badge">NEW</span>
+                    </div>
                     <div style="overflow-x: auto;">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Role</th>
-                                    <th>Seniority</th>
+                                    <th>Skill</th>
                                     <th>Median Salary</th>
-                                    <th>Sample Size</th>
+                                    <th>Premium</th>
+                                    <th>Job Count</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for item in seniority_role_matrix %}
+                                {% for skill in skill_premiums %}
                                 <tr>
-                                    <td style="font-weight: 600;">{{ item.role_type }}</td>
+                                    <td style="font-weight: 600;">{{ skill.Skill }}</td>
+                                    <td>{{ skill.Median | int }} CZK</td>
                                     <td
-                                        style="{% if item.seniority_level == 'Junior' %}color: #FF9800; font-weight: bold;{% elif item.seniority_level == 'Senior' %}color: #0055FF; font-weight: bold;{% endif %}">
-                                        {{ item.seniority_level }}
-                                    </td>
-                                    <td style="font-weight: bold;">{{ item.median_salary | int }} CZK</td>
-                                    <td style="color: #999;">{{ item.count }}</td>
+                                        class="{% if '+' in skill.Premium %}premium-positive{% else %}premium-negative{% endif %}">
+                                        {{ skill.Premium }}</td>
+                                    <td>{{ skill.Jobs }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
-            {% endif %}
-        </div>
+                {% endif %}
 
-        <!-- MARKET TRENDS & DEEP ANALYSIS -->
-        <div id="market-trends"></div>
-        <div class="hr-section" style="margin-top: 60px;">
-            <h2>📈 Market Trends & Deep Analysis</h2>
+                {% if seniority_role_matrix %}
+                <div
+                    style="margin-top: 40px; background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #FFA726;">
+                    <div class="section-title" style="border-left-color: #FFA726; cursor: pointer; user-select: none;"
+                        onclick="toggleSection('dataQualitySection')">
+                        <span>⚠️ Data Quality Insight: Salary by Seniority + Role</span>
+                        <span id="dataQualityToggle"
+                            style="margin-left: auto; font-size: 1.2rem; transition: transform 0.3s;">▼</span>
+                    </div>
+                    <div id="dataQualitySection" style="display: none;">
+                        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
+                            <strong>Why does "Junior" sometimes pay more than "Mid"?</strong> This cross-analysis
+                            reveals
+                            potential title inflation, classification issues, or role composition bias in the dataset.
+                        </p>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Role</th>
+                                        <th>Seniority</th>
+                                        <th>Median Salary</th>
+                                        <th>Sample Size</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in seniority_role_matrix %}
+                                    <tr>
+                                        <td style="font-weight: 600;">{{ item.role_type }}</td>
+                                        <td
+                                            style="{% if item.seniority_level == 'Junior' %}color: #FF9800; font-weight: bold;{% elif item.seniority_level == 'Senior' %}color: #0055FF; font-weight: bold;{% endif %}">
+                                            {{ item.seniority_level }}
+                                        </td>
+                                        <td style="font-weight: bold;">{{ item.median_salary | int }} CZK</td>
+                                        <td style="color: #999;">{{ item.count }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div> <!-- End section-content -->
+    </div> <!-- End collapsible-section -->
+
+    <!-- MARKET TRENDS & DEEP ANALYSIS -->
+    <div id="market-trends" class="collapsible-section">
+        <div class="section-header" onclick="toggleSection('market-trends')">
+            <span class="toggle-icon">▼</span>
+            <h2 style="margin:0;">📈 Market Trends & Deep Analysis</h2>
+        </div>
+        <div class="section-content">
             <p style="color: #666; margin-bottom: 10px; font-size: 0.95rem;">
                 <strong>CEO Insight:</strong> Visual analysis of salary ranges, hiring volumes, skill demand, and market
                 composition.
@@ -588,12 +652,19 @@
             </div>
         </div>
 
-        <!-- v1.1 MARKET INSIGHTS SECTIONS -->
+    </div>
+    </div>
 
-        <!-- Benefits Intelligence -->
-        {% if benefits_data %}
-        <div class="hr-section" style="margin-top: 60px;">
-            <h2>🎁 Benefits & Perks Intelligence</h2>
+    <!-- v1.1 MARKET INSIGHTS SECTIONS -->
+
+    <!-- Benefits Intelligence -->
+    {% if benefits_data %}
+    <div id="benefits-section" class="collapsible-section">
+        <div class="section-header" onclick="toggleSection('benefits-section')">
+            <span class="toggle-icon">▼</span>
+            <h2 style="margin:0;">🎁 Benefits & Perks Intelligence</h2>
+        </div>
+        <div class="section-content">
 
             <div style="margin-bottom: 40px;">
                 <div class="section-title">Most Common Benefits Offered</div>
@@ -637,13 +708,18 @@
                 </div>
             </div>
             {% endif %}
-        </div>
-        {% endif %}
+        </div> <!-- End section-content -->
+    </div> <!-- End collapsible-section -->
+    {% endif %}
 
-        <!-- Work Model Intelligence -->
-        {% if work_model_dist %}
-        <div class="hr-section" style="margin-top: 40px;">
-            <h2>🏠 Work Model Intelligence</h2>
+    <!-- Work Model Intelligence -->
+    {% if work_model_dist %}
+    <div id="work-model-section" class="collapsible-section">
+        <div class="section-header" onclick="toggleSection('work-model-section')">
+            <span class="toggle-icon">▼</span>
+            <h2 style="margin:0;">🏠 Work Model Intelligence</h2>
+        </div>
+        <div class="section-content">
 
             <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 40px;">
                 {% for model, count in work_model_dist.items() %}
@@ -707,17 +783,22 @@
                 </div>
             </div>
             {% endif %}
+        </div> <!-- End section-content -->
+    </div> <!-- End collapsible-section -->
+    {% endif %}
+
+    <!-- Location Intelligence - HIDDEN: Most data is generic "CZ", not specific cities -->
+    <!-- Will activate when scraper provides city-specific data (Prague, Brno, Ostrava, etc.) -->
+
+    <!-- v1.2 section removed - content consolidated into "Market Trends & Deep Analysis" -->
+
+    <!-- v1.3 Economic Reality & Talent Dynamics -->
+    <div id="economic-reality" class="collapsible-section">
+        <div class="section-header" onclick="toggleSection('economic-reality')">
+            <span class="toggle-icon">▼</span>
+            <h2 style="margin:0;">💰 Economic Reality & Talent Dynamics</h2>
         </div>
-        {% endif %}
-
-        <!-- Location Intelligence - HIDDEN: Most data is generic "CZ", not specific cities -->
-        <!-- Will activate when scraper provides city-specific data (Prague, Brno, Ostrava, etc.) -->
-
-        <!-- v1.2 section removed - content consolidated into "Market Trends & Deep Analysis" -->
-
-        <!-- v1.3 Economic Reality & Talent Dynamics -->
-        <div class="hr-section" style="margin-top: 40px;">
-            <h2>💰 Economic Reality & Talent Dynamics</h2>
+        <div class="section-content">
             <p style="color: #666; margin-bottom: 30px; font-size: 0.95rem;">
                 Deep market intelligence revealing compensation arbitrage, talent pipeline health, and real vs "fake"
                 flexibility.
@@ -878,68 +959,81 @@
             {% endif %}
         </div>
 
-        <!-- MARKET OVERVIEW SECTION -->
-        <div class="chart-grid">
-            <div>
-                <div class="section-title"><span>01</span> Contract Types</div>
-                <div id="chart_contract"></div>
-            </div>
-            <div>
-                <div class="section-title"><span>02</span> Tech Stack Gap</div>
-                <div id="chart_tech"></div>
-            </div>
-        </div>
+    </div> <!-- End section-content -->
+    </div> <!-- End collapsible-section -->
 
-        <div style="margin-top: 60px;">
-            <div class="section-title"><span>03</span> Top Innovators (Hiring Volume in Modern Stack)</div>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Company</th>
-                            <th>Signals</th>
-                            <th>Avg. Salary (Est)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for innovator in innovators %}
-                        <tr>
-                            <td style="font-weight: 600; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                                title="{{ innovator.company }}">{{ innovator.company }}</td>
-                            <td>{{ innovator.count }}</td>
-                            <td style="color: #0055FF; font-weight: bold;">{{ innovator.avg_sal }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan='3' style='padding: 20px; text-align: center; color: #888;'>Insufficient data
-                                for density analysis.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <!-- MARKET OVERVIEW SECTION -->
+    <div id="market-overview" class="collapsible-section">
+        <div class="section-header" onclick="toggleSection('market-overview')">
+            <span class="toggle-icon">▼</span>
+            <h2 style="margin:0;">📊 Market Statistics & Overview</h2>
         </div>
-
-        {% if top_roles %}
-        <div style="margin-top: 40px;">
-            <div class="section-title"><span>04</span> Role Distribution (Top 5)</div>
-            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
-                {% for role in top_roles %}
-                <div
-                    style="background: #f8f9fa; padding: 15px 25px; border-radius: 8px; text-align: center; min-width: 120px;">
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #0055FF;">{{ role.Count }}</div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">{{ role.Role }}</div>
+        <div class="section-content">
+            <div class="chart-grid">
+                <div>
+                    <div class="section-title"><span>01</span> Contract Types</div>
+                    <div id="chart_contract"></div>
                 </div>
-                {% endfor %}
+                <div>
+                    <div class="section-title"><span>02</span> Tech Stack Gap</div>
+                    <div id="chart_tech"></div>
+                </div>
             </div>
-        </div>
-        {% endif %}
 
-        <div class="footer">
-            Generated by <a href="https://github.com/hiddenmany/jobinsight_czechia"
-                style="color:#0055FF; font-weight:bold; text-decoration:none;">JobsCzInsight v1.3</a> - Economic Reality
-            Edition
-        </div>
+            <div style="margin-top: 60px;">
+                <div class="section-title"><span>03</span> Top Innovators (Hiring Volume in Modern Stack)</div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Signals</th>
+                                <th>Avg. Salary (Est)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for innovator in innovators %}
+                            <tr>
+                                <td style="font-weight: 600; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                                    title="{{ innovator.company }}">{{ innovator.company }}</td>
+                                <td>{{ innovator.count }}</td>
+                                <td style="color: #0055FF; font-weight: bold;">{{ innovator.avg_sal }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan='3' style='padding: 20px; text-align: center; color: #888;'>Insufficient
+                                    data
+                                    for density analysis.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {% if top_roles %}
+            <div style="margin-top: 40px;">
+                <div class="section-title"><span>04</span> Role Distribution (Top 5)</div>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                    {% for role in top_roles %}
+                    <div
+                        style="background: #f8f9fa; padding: 15px 25px; border-radius: 8px; text-align: center; min-width: 120px;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #0055FF;">{{ role.Count }}</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">{{ role.Role }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div> <!-- End section-content -->
+    </div> <!-- End collapsible-section -->
+
+    <div class="footer">
+        Generated by <a href="https://github.com/hiddenmany/jobinsight_czechia"
+            style="color:#0055FF; font-weight:bold; text-decoration:none;">JobsCzInsight v1.3</a> - Economic Reality
+        Edition
+    </div>
     </div>
 
     <script>
@@ -957,15 +1051,9 @@
 
         // Toggle function for collapsible sections
         function toggleSection(sectionId) {
-            var section = document.getElementById(sectionId);
-            var toggle = document.getElementById(sectionId.replace('Section', 'Toggle'));
-
-            if (section.style.display === 'none') {
-                section.style.display = 'block';
-                toggle.textContent = '▲';
-            } else {
-                section.style.display = 'none';
-                toggle.textContent = '▼';
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.toggle('collapsed');
             }
         }
 
@@ -987,6 +1075,11 @@
         function jumpToSection(sectionId) {
             const section = document.getElementById(sectionId);
             if (section) {
+                // Expand section if collapsed
+                if (section.classList.contains('collapsed')) {
+                    section.classList.remove('collapsed');
+                }
+
                 // Smooth scroll to section
                 section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -1003,7 +1096,7 @@
             clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => {
                 const navOffset = 150;
-                const sections = document.querySelectorAll('[id$="-summary"], [id$="-dashboard"], [id$="-trends"], [id$="-section"], [id$="-reality"]');
+                const sections = document.querySelectorAll('[id$="-summary"], [id$="-dashboard"], [id$="-trends"], [id$="-section"], [id$="-reality"], [id$="-overview"]');
 
                 sections.forEach(section => {
                     const rect = section.getBoundingClientRect();
@@ -1016,6 +1109,7 @@
                 });
             }, 100);
         });
+
     </script>
 </body>
 

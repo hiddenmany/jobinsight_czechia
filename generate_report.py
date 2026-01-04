@@ -451,7 +451,25 @@ brig_med = contract_salaries.get('Brigáda', 0)
 hpp_median_fmt = f"{int(hpp_med/1000)}" if hpp_med > 0 else "N/A"
 brig_median_fmt = f"{int(brig_med/1000)}" if brig_med > 0 else "N/A"
 
+# --- EXECUTIVE SUMMARY KPIS ---
+# Get top 3 roles by volume
+top_3_roles = [f"{r['role_type']} ({r['count']})" for r in top_roles[:3]]
+
+summary_kpis = {
+    'total_jobs': len(df),
+    'hpp_median': hpp_median_fmt,
+    'tech_premium': tech_premium,
+    'top_role_1': top_roles[0]['role_type'] if top_roles else "N/A",
+    'top_role_count': top_roles[0]['count'] if top_roles else 0,
+    'remote_share': f"{work_model_dist.get('Full Remote', 0)/len(df)*100:.1f}%" if len(df) > 0 else "0%",
+    'ico_premium': ico_arbitrage.get('premium', 'N/A'),
+    'ghost_jobs': len(ghost_jobs_data),
+    'ai_washing': ai_washing.get('percentage', 'N/A'),
+    'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+}
+
 template_vars = dict(
+    summary_kpis=summary_kpis,  # NEW Phase 1
     date=datetime.date.today().strftime("%d. %B %Y"),
     total_jobs=len(df),
     med_salary=med_sal_fmt,
