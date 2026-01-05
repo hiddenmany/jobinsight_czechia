@@ -269,7 +269,7 @@ if not valid_salaries_df.empty and 'role_type' in valid_salaries_df.columns:
         ('p75', lambda x: x.quantile(0.75)),
         ('count', 'count')
     ]).reset_index()
-    role_percentiles = role_percentiles[role_percentiles['count'] >= 5].sort_values('median', ascending=False).head(15)
+    role_percentiles = role_percentiles[role_percentiles['count'] >= 3].sort_values('median', ascending=False).head(15)
     
     # Create Plotly grouped bar chart for percentiles
     r_types_pct = role_percentiles['role_type'].tolist()

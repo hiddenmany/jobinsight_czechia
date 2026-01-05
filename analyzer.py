@@ -668,7 +668,7 @@ class MarketIntelligence:
             median_salary=('avg_salary', 'median'),
             count=('avg_salary', 'count')
         ).sort_values('median_salary', ascending=False).reset_index()
-        return result[result['count'] >= 5]  # Minimum sample size
+        return result[result['count'] >= 3]  # Minimum sample size (lowered from 5 to reveal more roles)
     
     def get_salary_by_seniority(self) -> pd.DataFrame:
         """Get median salary breakdown by seniority level."""
