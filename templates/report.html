@@ -1076,12 +1076,12 @@
     </div> <!-- End collapsible-section -->
 
     <!-- Data Limitations & Methodology (Collapsible Footer Section) -->
-    <div class="collapsible-section" style="margin-top: 40px;">
+    <div id="limitations-section" class="collapsible-section collapsed" style="margin-top: 40px;">
         <div class="section-header" onclick="toggleSection('limitations-section')" style="background: #fff1f2; border-left: 5px solid #e11d48; cursor: pointer; padding: 15px 20px; border-radius: 8px;">
             <span class="toggle-icon">▼</span>
             <h3 style="margin: 0; color: #be123c; font-size: 1.1rem; font-weight: 700; display: inline;">⚠️ Important Limitations & Methodology</h3>
         </div>
-        <div id="limitations-section" class="section-content" style="display: none; background: #fff1f2; padding: 20px; border-radius: 0 0 8px 8px;">
+        <div class="section-content" style="background: #fff1f2; padding: 20px; border-radius: 0 0 8px 8px;">
             <p style="color: #881337; margin-bottom: 10px; font-size: 0.95rem;">This analysis measures <strong>DEMAND SIGNALS</strong> (what employers post), NOT MARKET REALITY (what actually gets hired/paid).</p>
             <ul style="color: #9f1239; margin-bottom: 0; font-size: 0.9rem; line-height: 1.6;">
                 <li><strong>Ghost Jobs:</strong> Estimated 10-30% of postings may never be filled.</li>
@@ -1116,7 +1116,17 @@
         function toggleSection(sectionId) {
             const section = document.getElementById(sectionId);
             if (section) {
-                section.classList.toggle('collapsed');
+                // Check if this is a standard collapsible-section (uses .collapsed class)
+                if (section.classList.contains('collapsible-section')) {
+                    section.classList.toggle('collapsed');
+                } else {
+                    // Handle inline display toggle (for Ghost Jobs and other nested sections)
+                    if (section.style.display === 'none' || section.style.display === '') {
+                        section.style.display = 'block';
+                    } else {
+                        section.style.display = 'none';
+                    }
+                }
             }
         }
 
@@ -1130,6 +1140,7 @@
         var top_skills_data = {{ json_top_skills | safe }};
         Plotly.newPlot('chart_top_skills', top_skills_data.data, top_skills_data.layout);
 
+        var role_distribution_data = {{ json_role_distribution | safe }};
         Plotly.newPlot('chart_role_distribution', role_distribution_data.data, role_distribution_data.layout);
 
         // === HYBRID NAVIGATION UX ===

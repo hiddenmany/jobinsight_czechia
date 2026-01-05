@@ -14,8 +14,16 @@ intel = analyzer.MarketIntelligence()
 df = intel.df
 print(f"Generating v1.0 HR Intelligence report with {len(df)} market signals.")
 
+# FORCE REANALYSIS - Temporary flag to apply updated classification logic
+# TODO: Remove after database is updated with new role taxonomy (v1.5 classification update)
+FORCE_REANALYZE = os.getenv('FORCE_REANALYZE', 'true').lower() == 'true'
+
+if FORCE_REANALYZE:
+    print("🔄 FORCE REANALYSIS enabled - Applying updated role classification logic...")
+    intel.core.reanalyze_all()
+    df = intel.core.load_as_df()
 # Auto-Recovery: If Tech Status or Role Type is missing, force re-analysis
-if df['tech_status'].isnull().mean() > 0.5 or df['role_type'].isnull().mean() > 0.5 or df.empty:
+elif df['tech_status'].isnull().mean() > 0.5 or df['role_type'].isnull().mean() > 0.5 or df.empty:
     print("⚠️ Detected missing NLP/HR data. Running v1.0 re-analysis...")
     intel.core.reanalyze_all()
     df = intel.core.load_as_df()
