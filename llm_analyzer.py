@@ -78,7 +78,7 @@ def generate_weekly_insights(stats: Dict, api_key: str) -> Dict:
         import google.generativeai as genai
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-3-flash')  # Gemini 3 Flash: fast + high quality
         
         prompt = f"""Jsi HR analytik pro český trh práce. Analyzuj následující data a vytvoř stručný týdenní přehled.
 
