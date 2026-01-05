@@ -78,7 +78,7 @@ def generate_weekly_insights(stats: Dict, api_key: str) -> Dict:
         import google.generativeai as genai
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-pro')  # Gemini 2.5 Pro: best reasoning (GA)
+        model = genai.GenerativeModel('gemini-3-pro-preview')  # Gemini 3 Pro Preview: cutting-edge reasoning
         
         prompt = f"""# ROLE & EXPERTISE
 
