@@ -80,37 +80,146 @@ def generate_weekly_insights(stats: Dict, api_key: str) -> Dict:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-3-pro')  # Gemini 3 Pro: best reasoning quality
         
-        prompt = f"""Jsi HR analytik pro český trh práce. Analyzuj následující data a vytvoř stručný týdenní přehled.
+        prompt = f"""# ROLE & EXPERTISE
 
-AKTUÁLNÍ DATA:
-- Celkem nabídek: {stats.get('total_jobs', 0)}
-- Rozložení rolí: {json.dumps(stats.get('role_distribution', {}), ensure_ascii=False)}
-- Rozložení seniority: {json.dumps(stats.get('seniority_distribution', {}), ensure_ascii=False)}
-- Statistiky platů: {json.dumps(stats.get('salary_stats', {}), ensure_ascii=False)}
-- Zdroje dat: {json.dumps(stats.get('source_distribution', {}), ensure_ascii=False)}
-- Technologický status: {json.dumps(stats.get('tech_status', {}), ensure_ascii=False)}
-- Typ smlouvy: {json.dumps(stats.get('contract_distribution', {}), ensure_ascii=False)}
-- Top města: {json.dumps(stats.get('top_cities', {}), ensure_ascii=False)}
+Jsi seniorní analytik trhu práce a HR stratég s 15+ lety zkušeností v české ekonomice. Máš expertní znalosti v oblastech:
+- Makroekonomických trendů českého pracovního trhu
+- Kompenzačních strategií a salary benchmarkingu
+- Talent acquisition a workforce planning
+- Souvislostí mezi technologickými trendy a poptávkou po pracovní síle
 
-ÚKOL:
-Vytvoř JSON objekt s následující strukturou:
+# KONTEXT ANALÝZY
+
+**Datum analýzy:** {stats.get('analysis_date', 'aktuální týden')}
+**Geografický rozsah:** Česká republika
+**Datové zdroje:** Jobs.cz, Prace.cz, StartupJobs, WTTJ, Cocuma
+
+# SUROVÁ DATA K ANALÝZE
+
+## 1. Objem a struktura trhu
+- **Celkem aktivních nabídek:** {stats.get('total_jobs', 0):,}
+- **Rozložení podle rolí:** {json.dumps(stats.get('role_distribution', {}), ensure_ascii=False, indent=2)}
+- **Rozložení seniority:** {json.dumps(stats.get('seniority_distribution', {}), ensure_ascii=False, indent=2)}
+
+## 2. Kompenzační data
+- **Pokrytí daty o platech:** {stats.get('salary_stats', {}).get('percentage_with_salary', 0)}% nabídek uvádí plat
+- **Mediánová mzda (celkový trh):** {stats.get('salary_stats', {}).get('median', 'N/A')} CZK
+- **Mediány podle rolí:** {json.dumps(stats.get('salary_stats', {}).get('by_role', {}), ensure_ascii=False, indent=2)}
+
+## 3. Technologická vyspělost zaměstnavatelů
+- **Tech stack distribuce:** {json.dumps(stats.get('tech_status', {}), ensure_ascii=False)}
+  - "Modern" = React, TypeScript, Kubernetes, cloud-native
+  - "Stable" = Java, .NET, established stacks
+  - "Dinosaur" = legacy PHP, COBOL, outdated tech
+
+## 4. Smluvní modely
+- **Distribuce typů smluv:** {json.dumps(stats.get('contract_distribution', {}), ensure_ascii=False)}
+  - HPP = hlavní pracovní poměr (zaměstnanec)
+  - IČO = OSVČ/kontraktor
+  - Brigáda = částečný úvazek/dohoda
+
+## 5. Geografické rozložení
+- **Top lokality:** {json.dumps(stats.get('top_cities', {}), ensure_ascii=False)}
+
+## 6. Datové zdroje
+- **Distribuce podle portálu:** {json.dumps(stats.get('source_distribution', {}), ensure_ascii=False)}
+
+# ANALYTICKÝ FRAMEWORK
+
+Proveď následující analytické kroky:
+
+## Krok 1: Kvantitativní analýza
+- Identifikuj statisticky významné vzorce v datech
+- Porovnej proporce (např. % junior vs senior pozic, % remote, % s uvedeným platem)
+- Vypočítej implikované metriky (např. průměrný počet nabídek na roli)
+
+## Krok 2: Kvalitativní interpretace
+- Co data vypovídají o zdraví trhu práce?
+- Jaké jsou implikace pro náborové strategie?
+- Jaké jsou warning signs nebo příležitosti?
+
+## Krok 3: Komparativní kontext
+- Jak se data srovnávají s typickým českým trhem?
+- Jsou některé metriky neobvyklé nebo alarmující?
+
+## Krok 4: Praktická doporučení
+- Konkrétní akce pro HR manažery a recruitery
+- Strategie pro zaměstnavatele vs uchazeče
+
+# POŽADOVANÝ VÝSTUP
+
+Vytvoř JSON objekt s touto strukturou:
+
 {{
-    "summary": "Krátký odstavec (2-3 věty) shrnující stav trhu práce tento týden.",
+    "executive_summary": "Komplexní shrnutí stavu trhu (3-4 věty). Zahrň klíčová čísla a jejich interpretaci. Toto je hlavní zpráva pro vedení.",
+    
+    "market_health_score": {{
+        "score": 7,  // 1-10 škála (10 = extrémně zdravý trh)
+        "reasoning": "Krátké zdůvodnění skóre"
+    }},
+    
     "key_insights": [
-        "📊 První klíčový insight (max 15 slov)",
-        "💰 Druhý klíčový insight o platech (max 15 slov)",
-        "🔥 Třetí insight o trendech (max 15 slov)",
-        "⚠️ Čtvrtý insight - upozornění nebo zajímavost (max 15 slov)"
+        {{
+            "emoji": "📊",
+            "title": "Krátký titulek (max 5 slov)",
+            "insight": "Detailní poznatek s konkrétními čísly (1-2 věty)",
+            "implication": "Co to znamená pro HR/zaměstnavatele",
+            "confidence": "high/medium/low"
+        }},
+        {{
+            "emoji": "💰",
+            "title": "Insight o kompenzacích",
+            "insight": "Analýza platových dat",
+            "implication": "Doporučení pro salary banding",
+            "confidence": "high/medium/low"
+        }},
+        {{
+            "emoji": "🎯",
+            "title": "Talent supply/demand",
+            "insight": "Analýza nabídky vs poptávky",
+            "implication": "Implikace pro recruitment strategy",
+            "confidence": "high/medium/low"
+        }},
+        {{
+            "emoji": "🔮",
+            "title": "Emerging trend",
+            "insight": "Pozorovaný nebo předpokládaný trend",
+            "implication": "Jak se připravit",
+            "confidence": "high/medium/low"
+        }},
+        {{
+            "emoji": "⚠️",
+            "title": "Risk nebo varování",
+            "insight": "Potenciální problém nebo anomálie v datech",
+            "implication": "Mitigační strategie",
+            "confidence": "high/medium/low"
+        }}
     ],
-    "trend_alert": "Jeden výrazný trend nebo varování, pokud existuje. Jinak null."
+    
+    "strategic_recommendations": {{
+        "for_employers": [
+            "Konkrétní akční doporučení #1",
+            "Konkrétní akční doporučení #2"
+        ],
+        "for_candidates": [
+            "Doporučení pro uchazeče #1",
+            "Doporučení pro uchazeče #2"
+        ]
+    }},
+    
+    "data_quality_notes": "Poznámka k limitacím dat nebo interpretaci (např. 'Pouze X% nabídek uvádí plat, což může zkreslovat mediány.')"
 }}
 
-PRAVIDLA:
-- Piš v češtině
-- Buď konkrétní - používej čísla z dat
-- Každý insight začni relevantním emoji
-- Zaměř se na poznatky užitečné pro HR a zaměstnavatele
-- Odpověz POUZE validním JSON objektem, žádný další text"""
+# PRAVIDLA PRO ODPOVĚĎ
+
+1. **Jazyk:** Piš výhradně v češtině (včetně technických termínů kde to dává smysl)
+2. **Přesnost:** Používej POUZE čísla z poskytnutých dat, nevymýšlej
+3. **Konkrétnost:** Každý insight musí obsahovat alespoň jedno konkrétní číslo
+4. **Akčnost:** Doporučení musí být konkrétní a implementovatelná
+5. **Realismus:** Přiznej limitace dat (např. nízké pokrytí platů)
+6. **Formát:** Odpověz POUZE validním JSON objektem, žádný další text před nebo za ním
+
+# ZAČNI ANALÝZU"""
 
         response = model.generate_content(prompt)
         
