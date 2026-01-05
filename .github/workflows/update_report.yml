@@ -60,14 +60,29 @@ jobs:
           git config --global user.name 'Report Bot'
           git config --global user.email 'bot@noreply.github.com'
 
-          # Add only generated reports (NOT database)
-          git add public/ data/*.csv || echo "No files to add"
+          # Check if database was modified (FORCE_REANALYZE updated classifications)
+          if git diff --name-only | grep -q "data/intelligence.db"; then
+            echo "✅ Database modified by FORCE_REANALYZE - including in commit"
+            git add data/intelligence.db
+          fi
+
+          # Add generated reports
+          git add public/ data/*.csv || echo "No CSV files to add"
 
           if git diff --staged --quiet; then
             echo "No report changes to commit"
           else
             git commit -m "chore: regenerate reports from existing data [skip ci]"
-            git pull --rebase origin main
+
+            # Pull with rebase, handling any conflicts
+            git pull --rebase origin main || {
+              echo "Rebase conflict detected, attempting to resolve..."
+              git rebase --abort
+              git pull --no-rebase origin main
+              git push origin main --force-with-lease
+              exit 0
+            }
+
             git push origin main
           fi
 
