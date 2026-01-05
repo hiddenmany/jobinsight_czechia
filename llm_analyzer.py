@@ -1,7 +1,7 @@
 """
 LLM Market Analysis Module
 
-Uses Google Gemini to generate weekly market insights from job data.
+Uses Google Gemini (google-genai SDK) to generate weekly market insights from job data.
 Falls back gracefully if API key is not available.
 """
 
@@ -69,16 +69,17 @@ def get_market_stats(df) -> Dict:
 
 def generate_weekly_insights(stats: Dict, api_key: str) -> Dict:
     """
-    Call Gemini API to generate market insights.
+    Call Gemini API to generate market insights using modern google-genai SDK.
     
     Returns:
         Dict with keys: summary, key_insights (list), trend_alert (optional)
     """
     try:
-        import google.generativeai as genai
+        from google import genai
+        from google.genai import types
         
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-3-pro-preview')  # Gemini 3 Pro Preview: cutting-edge reasoning
+        client = genai.Client(api_key=api_key)
+        model_id = 'gemini-2.0-flash'  # Faster, cheaper, and high quality
         
         prompt = f"""# ROLE & EXPERTISE
 
@@ -181,7 +182,7 @@ Vytvoř JSON objekt s touto strukturou:
             "confidence": "high/medium/low"
         }},
         {{
-            "emoji": "🔮",
+            "emoji": "💡",
             "title": "Emerging trend",
             "insight": "Pozorovaný nebo předpokládaný trend",
             "implication": "Jak se připravit",
@@ -221,29 +222,38 @@ Vytvoř JSON objekt s touto strukturou:
 
 # ZAČNI ANALÝZU"""
 
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model=model_id,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type='application/json',
+            ),
+        )
         
-        # Parse JSON response
-        response_text = response.text.strip()
-        # Clean up potential markdown code blocks
-        if response_text.startswith('```'):
-            response_text = response_text.split('```')[1]
-            if response_text.startswith('json'):
-                response_text = response_text[4:]
-        response_text = response_text.strip()
+        # Parse JSON response directly from the new SDK structure
+        insights = response.parsed if hasattr(response, 'parsed') else None
         
-        insights = json.loads(response_text)
+        if not insights:
+            # Fallback for manual parsing if .parsed is not populated
+            response_text = response.text.strip()
+            # Clean up potential markdown code blocks
+            if response_text.startswith('```'):
+                response_text = response_text.split('```')[1]
+                if response_text.startswith('json'):
+                    response_text = response_text[4:]
+            response_text = response_text.strip()
+            insights = json.loads(response_text)
         
         # Validate structure (support both old 'summary' and new 'executive_summary')
         has_summary = 'executive_summary' in insights or 'summary' in insights
         if not has_summary or 'key_insights' not in insights:
             raise ValueError("Missing required fields in LLM response")
         
-        logger.info("Successfully generated LLM insights")
+        logger.info("Successfully generated LLM insights using google-genai")
         return insights
         
     except ImportError:
-        logger.warning("google-generativeai not installed. Skipping LLM analysis.")
+        logger.warning("google-genai not installed. Skipping LLM analysis.")
         return {}
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse LLM response as JSON: {e}")

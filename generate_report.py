@@ -8,6 +8,10 @@ import numpy as np
 import json
 from jinja2 import Environment, FileSystemLoader
 from llm_analyzer import get_llm_insights
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Setup
 pd.set_option('display.max_columns', None)

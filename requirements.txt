@@ -12,4 +12,5 @@ tqdm==4.67.1
 lxml==6.0.2
 PyYAML==6.0.3
 Jinja2==3.1.6
-google-generativeai>=0.8.0  # Gemini LLM for weekly market insights
+google-genai>=0.1.0  # Modern Gemini SDK for weekly market insights
+python-dotenv>=1.0.0
