@@ -453,14 +453,14 @@ brig_median_fmt = f"{int(brig_med/1000)}" if brig_med > 0 else "N/A"
 
 # --- EXECUTIVE SUMMARY KPIS ---
 # Get top 3 roles by volume
-top_3_roles = [f"{r['role_type']} ({r['count']})" for r in top_roles[:3]]
+top_3_roles = [f"{r['Role']} ({r['Count']})" for r in top_roles[:3]]
 
 summary_kpis = {
     'total_jobs': len(df),
     'hpp_median': hpp_median_fmt,
     'tech_premium': tech_premium,
-    'top_role_1': top_roles[0]['role_type'] if top_roles else "N/A",
-    'top_role_count': top_roles[0]['count'] if top_roles else 0,
+    'top_role_1': top_roles[0]['Role'] if top_roles else "N/A",
+    'top_role_count': top_roles[0]['Count'] if top_roles else 0,
     'remote_share': f"{work_model_dist.get('Full Remote', 0)/len(df)*100:.1f}%" if len(df) > 0 else "0%",
     'ico_premium': ico_arbitrage.get('premium', 'N/A'),
     'ghost_jobs': len(ghost_jobs_data),

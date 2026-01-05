@@ -144,16 +144,19 @@ class ScrapeEngine:
                 
                 for attempt in range(3):
                     try:
-                        # Extraction logic
+                        # Extraction logic with null safety
                         raw_description = await page.evaluate("""() => {
                             const s = ['div.JobDescription', 'article', 'main', '.jd-content', '.job-detail__description'];
-                            for (let x of s) { let el = document.querySelector(x); if (el) return el.innerText; }
-                            return document.body.innerText;
+                            for (let x of s) {
+                                let el = document.querySelector(x);
+                                if (el && el.innerText) return el.innerText;
+                            }
+                            return document.body?.innerText || '';
                         }""")
-                        
+
                         raw_benefits = await page.evaluate("""() => {
                             const tags = Array.from(document.querySelectorAll('.benefit-item, .Tag--success, .Badge--success, [data-test*="benefit"]'));
-                            return tags.map(t => t.innerText.trim()).filter(t => t.length > 1).join(', ');
+                            return tags.map(t => t.innerText?.trim() || '').filter(t => t.length > 1).join(', ');
                         }""")
                         break # Success
                     except PlaywrightError as e:
@@ -766,19 +769,18 @@ async def main():
         # Initialize scrapers
         jobs_cz = PagedScraper(engine, "Jobs.cz")
         prace_cz = PagedScraper(engine, "Prace.cz")
-        cocuma = PagedScraper(engine, "Cocuma") 
+        cocuma = PagedScraper(engine, "Cocuma")
         startup = StartupJobsScraper(engine, "StartupJobs")
         wttj = WttjScraper(engine, "WTTJ")
-        linkedin = LinkedinScraper(engine, "LinkedIn")
-        
+        # LinkedIn removed: blocks headless browsers without residential proxy
+
         try:
             await asyncio.gather(
                 jobs_cz.run(limit=135),    # 135 pages * 15 ads = ~2000 (BALANCED TARGET)
                 prace_cz.run(limit=50),    # 50 pages * 40 ads = ~2000 (BALANCED TARGET)
                 startup.run(limit=300),    # 300 job ads
                 wttj.run(limit=200),       # 200 job ads (often fails)
-                cocuma.run(limit=10),      # 10 pages (often 0 results)
-                linkedin.run(limit=300)    # 300 job ads
+                cocuma.run(limit=10)       # 10 pages (often 0 results)
             )
         except KeyboardInterrupt:
             logger.warning("Received interrupt signal, initiating graceful shutdown...")

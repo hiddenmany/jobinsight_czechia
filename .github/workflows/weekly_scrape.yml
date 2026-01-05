@@ -13,7 +13,8 @@ permissions:
 jobs:
   scrape_and_update:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 240  # 4 hours max (conservative scraping with 5-min cooldowns)
+
     steps:
       - name: Checkout Code with LFS
         uses: actions/checkout@v4
@@ -41,6 +42,7 @@ jobs:
           python -c "import tqdm; print(tqdm.__version__)" || echo "tqdm import failed"
 
       - name: Run Scraper
+        timeout-minutes: 210  # 3.5 hours for scraping (leaves buffer for report generation)
         run: |
           python scraper.py
 
