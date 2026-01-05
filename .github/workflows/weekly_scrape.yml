@@ -59,13 +59,17 @@ jobs:
         run: |
           python visualizer.py
 
+      - name: Update README Stats
+        run: |
+          python update_readme.py
+
       - name: Commit and Push Data
         run: |
           git config --global user.name 'Scraper Bot'
           git config --global user.email 'bot@noreply.github.com'
 
-          # Add database (tracked via Git LFS), CSVs, and report
-          git add data/intelligence.db data/*.csv public/ || echo "No files to add"
+          # Add database (tracked via Git LFS), CSVs, report, and README
+          git add data/intelligence.db data/*.csv public/ README.md || echo "No files to add"
 
           # Only commit if there are changes
           if git diff --staged --quiet; then

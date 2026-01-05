@@ -58,6 +58,10 @@ jobs:
         run: |
           python visualizer.py
 
+      - name: Update README Stats
+        run: |
+          python update_readme.py
+
       - name: Commit and Push Reports
         run: |
           git config --global user.name 'Report Bot'
@@ -70,7 +74,7 @@ jobs:
           fi
 
           # Add generated reports
-          git add public/ data/*.csv || echo "No CSV files to add"
+          git add public/ data/*.csv README.md || echo "No files to add"
 
           if git diff --staged --quiet; then
             echo "No report changes to commit"

@@ -9,6 +9,20 @@
 The latest market intelligence is automatically updated every Monday:
 👉 **[https://hiddenmany.github.io/jobinsight_czechia/](https://hiddenmany.github.io/jobinsight_czechia/)**
 
+<!-- START_STATS -->
+
+### 📊 Current Market Pulse (Auto-Updated)
+| Metric | Value |
+|--------|-------|
+| **Active Job Listings** | `3,160` |
+| **Median Advertised Salary** | `31 421 CZK` |
+| **Top 3 Roles** | Manufacturing, Management, Developer |
+| **Last Updated** | 2026-01-05 17:56 UTC |
+
+> *Based on real-time analysis of 3,160 job postings from major Czech portals.*
+
+<!-- END_STATS -->
+
 ---
 
 ## 🚀 Core Capabilities
