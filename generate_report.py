@@ -513,69 +513,15 @@ summary_kpis = {
     'last_updated': datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 }
 
-template_vars = dict(
-    llm_insights=llm_insights,  # NEW v1.5 LLM Market Analysis
-    summary_kpis=summary_kpis,  # NEW Phase 1
-    date=datetime.date.today().strftime("%d. %B %Y"),
-    total_jobs=len(df),
-    med_salary=med_sal_fmt,
-    hpp_median=hpp_median_fmt,      # NEW
-    brig_median=brig_median_fmt,    # NEW
-    tech_premium=tech_premium,
-    seniority_premium=seniority_premium,  # NEW v1.0
-    en_share=en_share,
-    innovators=innovators,
-    top_roles=top_roles,  # NEW v1.0
-    skill_premiums=skill_data,  # NEW v1.0
-    seniority_role_matrix=seniority_role_data,  # NEW v1.1 - Data Quality Insight
-    # v1.1 Benefits Intelligence
-    benefits_data=benefits_data,
-    benefits_by_role=benefits_role_data,
-    # v1.1 Location Intelligence
-    city_salary_data=city_salary_data,
-    location_data=location_data,
-    # v1.1 Work Model Intelligence
-    work_model_dist=work_model_dist,
-    remote_premium=remote_premium,
-    work_model_by_role=work_model_role_data,
-    # v1.2 Temporal & Emerging Trends
-    data_freshness=data_freshness,
-    salary_trend=trend_data,
-    emerging_tech=emerging_tech_data,
-    new_entrants=new_entrants_data,
-    trending_benefits=trending_benefits_data,
-    # Market Trends & Deep Analysis - Charts
-    json_salary_percentiles=clean_json(fig_salary_percentiles),
-    json_top_companies=clean_json(fig_top_companies),
-    json_top_skills=clean_json(fig_top_skills),
-    json_role_distribution=clean_json(fig_role_distribution),
-    # v1.3 Economic Reality & Talent Dynamics
-    ico_arbitrage=ico_arbitrage,
-    lang_barrier=lang_barrier,
-    pipeline_health=pipeline_health,
-    remote_flex=remote_flex_data,
-    legacy_rot=legacy_rot_data,
-    ai_washing=ai_washing,
-    ghost_jobs=ghost_jobs_data,
-    # Charts
-    json_contract=clean_json(fig_cont),
-    json_tech=clean_json(fig_tech),
-    json_role=clean_json(fig_role),  # NEW v1.0
-    json_seniority=clean_json(fig_seniority)  # NEW v1.0
-)
-
-output_html = template.render(**template_vars)
-
 base_dir = os.path.dirname(os.path.abspath(__file__))
+
 public_dir = os.path.join(base_dir, "public")
+
 os.makedirs(public_dir, exist_ok=True)
 
-with open(os.path.join(public_dir, "index.html"), "w", encoding="utf-8") as f:
-    f.write(output_html)
 
-print(f"v1.0 HR Intelligence report generated: {os.path.join(public_dir, 'index.html')}")
 
-# --- CZECH VERSION ---
+# --- CZECH VERSION (DEFAULT) ---
 
 # Update chart layouts for Czech version before rendering
 
@@ -629,64 +575,120 @@ fig_top_skills.update_layout(yaxis_title="Počet Zmínek")
 
 fig_role_distribution.update_layout(xaxis_title="Aktivní Inzeráty")
 
+
+
 # Czech date format with Czech month names
+
 czech_months = {
+
     1: 'ledna', 2: 'února', 3: 'března', 4: 'dubna',
+
     5: 'května', 6: 'června', 7: 'července', 8: 'srpna',
+
     9: 'září', 10: 'října', 11: 'listopadu', 12: 'prosince'
+
 }
+
 today = datetime.date.today()
+
 czech_date = f"{today.day}. {czech_months[today.month]} {today.year}"
 
+
+
 template_cz = env.get_template('report_cz.html')
+
 output_html_cz = template_cz.render(
+
     llm_insights=llm_insights,  # NEW v1.5 LLM Market Analysis
+
     summary_kpis=summary_kpis,  # NEW Phase 1
+
     date=czech_date,
+
     total_jobs=len(df),
+
     med_salary=med_sal_fmt,
+
     hpp_median=hpp_median_fmt,      # NEW
+
     brig_median=brig_median_fmt,    # NEW
+
     tech_premium=tech_premium,
+
     seniority_premium=seniority_premium,
+
     en_share=en_share,
+
     innovators=innovators,
+
     top_roles=top_roles,
+
     skill_premiums=skill_data,
+
     seniority_role_matrix=seniority_role_data,
+
     benefits_data=benefits_data,
+
     benefits_by_role=benefits_role_data,
+
     city_salary_data=city_salary_data,
+
     location_data=location_data,
+
     work_model_dist=work_model_dist,
+
     remote_premium=remote_premium,
+
     work_model_by_role=work_model_role_data,
+
     data_freshness=data_freshness,
+
     salary_trend=trend_data,
+
     emerging_tech=emerging_tech_data,
+
     new_entrants=new_entrants_data,
+
     trending_benefits=trending_benefits_data,
+
     json_salary_percentiles=clean_json(fig_salary_percentiles),
+
     json_top_companies=clean_json(fig_top_companies),
+
     json_top_skills=clean_json(fig_top_skills),
+
     json_role_distribution=clean_json(fig_role_distribution),
+
     ico_arbitrage=ico_arbitrage,
+
     lang_barrier=lang_barrier,
+
     pipeline_health=pipeline_health,
+
     remote_flex=remote_flex_data,
+
     legacy_rot=legacy_rot_data,
+
     ai_washing=ai_washing,
+
     ghost_jobs=ghost_jobs_data,
+
     json_contract=clean_json(fig_cont),
+
     json_tech=clean_json(fig_tech),
+
     json_role=clean_json(fig_role),
+
     json_seniority=clean_json(fig_seniority)
+
 )
 
-with open(os.path.join(public_dir, "index_cz.html"), "w", encoding="utf-8") as f:
+
+
+with open(os.path.join(public_dir, "index.html"), "w", encoding="utf-8") as f:
 
     f.write(output_html_cz)
 
 
 
-print(f"v1.0 Czech version generated: {os.path.join(public_dir, 'index_cz.html')}")
+print(f"v1.0 Czech HR Intelligence report generated (Default): {os.path.join(public_dir, 'index.html')}")
