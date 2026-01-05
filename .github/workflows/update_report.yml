@@ -50,6 +50,7 @@ jobs:
       - name: Generate Static Report
         env:
           FORCE_REANALYZE: 'false'  # Database already updated with v1.5 taxonomy
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python generate_report.py
 
