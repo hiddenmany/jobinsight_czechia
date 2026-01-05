@@ -20,13 +20,21 @@ FORCE_REANALYZE = os.getenv('FORCE_REANALYZE', 'true').lower() == 'true'
 
 if FORCE_REANALYZE:
     print("🔄 FORCE REANALYSIS enabled - Applying updated role classification logic...")
-    intel.core.reanalyze_all()
-    df = intel.core.load_as_df()
+    # Create write-enabled instance for reanalysis, then reload data
+    write_core = analyzer.IntelligenceCore(read_only=False)
+    write_core.reanalyze_all()
+    write_core.con.close()  # Close write connection
+    # Reload with fresh data
+    intel = analyzer.MarketIntelligence()
+    df = intel.df
 # Auto-Recovery: If Tech Status or Role Type is missing, force re-analysis
 elif df['tech_status'].isnull().mean() > 0.5 or df['role_type'].isnull().mean() > 0.5 or df.empty:
     print("⚠️ Detected missing NLP/HR data. Running v1.0 re-analysis...")
-    intel.core.reanalyze_all()
-    df = intel.core.load_as_df()
+    write_core = analyzer.IntelligenceCore(read_only=False)
+    write_core.reanalyze_all()
+    write_core.con.close()
+    intel = analyzer.MarketIntelligence()
+    df = intel.df
 
 # --- KPI CALCULATION ---
 valid_salaries = df[df['avg_salary'] > 0]
