@@ -776,11 +776,11 @@ async def main():
 
         try:
             await asyncio.gather(
-                jobs_cz.run(limit=200),    # 200 pages * 15 ads = ~3000 (increased to compensate for rate limit losses)
-                prace_cz.run(limit=50),    # 50 pages * 40 ads = ~2000 (BALANCED TARGET)
-                startup.run(limit=300),    # 300 job ads
-                wttj.run(limit=200),       # 200 job ads (often fails)
-                cocuma.run(limit=10)       # 10 pages (often 0 results)
+                jobs_cz.run(limit=100),    # 100 pages target (User Request)
+                prace_cz.run(limit=100),   # 100 pages target (User Request)
+                startup.run(limit=600),    # ~30 pages * 20 items (User Request)
+                wttj.run(limit=600),       # ~30 pages * 20 items (User Request)
+                cocuma.run(limit=30)       # 30 pages target (User Request)
             )
         except KeyboardInterrupt:
             logger.warning("Received interrupt signal, initiating graceful shutdown...")
