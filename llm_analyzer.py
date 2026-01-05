@@ -234,8 +234,9 @@ Vytvoř JSON objekt s touto strukturou:
         
         insights = json.loads(response_text)
         
-        # Validate structure
-        if 'summary' not in insights or 'key_insights' not in insights:
+        # Validate structure (support both old 'summary' and new 'executive_summary')
+        has_summary = 'executive_summary' in insights or 'summary' in insights
+        if not has_summary or 'key_insights' not in insights:
             raise ValueError("Missing required fields in LLM response")
         
         logger.info("Successfully generated LLM insights")
