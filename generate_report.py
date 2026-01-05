@@ -576,6 +576,59 @@ with open(os.path.join(public_dir, "index.html"), "w", encoding="utf-8") as f:
 print(f"v1.0 HR Intelligence report generated: {os.path.join(public_dir, 'index.html')}")
 
 # --- CZECH VERSION ---
+
+# Update chart layouts for Czech version before rendering
+
+fig_tech.update_layout(yaxis_title="Status", xaxis_title="Počet")
+
+# Translate tech status labels
+
+fig_tech.update_yaxes(categoryarray=['Zastaralé', 'Stabilní', 'Moderní'])
+
+for trace in fig_tech.data:
+
+    trace.y = ['Zastaralé' if v == 'Dinosaur' else 'Stabilní' if v == 'Stable' else 'Moderní' if v == 'Modern' else v for v in trace.y]
+
+
+
+fig_role.update_layout(xaxis_title="Medián Platu (Kč)")
+
+fig_seniority.update_layout(yaxis_title="Medián Platu (Kč)")
+
+# Translate seniority labels
+
+for trace in fig_seniority.data:
+
+    trace.x = [v for v in trace.x] # Keep as is for now as they are standard, but could be: ['Junior', 'Střední', 'Senior', 'Vedení']
+
+
+
+fig_salary_percentiles.update_layout(xaxis_title="Měsíční Kč")
+
+# Update legend names for salary percentiles
+
+for trace in fig_salary_percentiles.data:
+
+    if trace.name == '25th Percentile (Conservative)':
+
+        trace.name = '25. percentil (Konzervativní)'
+
+    elif trace.name == 'Median Advertised Salary':
+
+        trace.name = 'Medián inzerovaného platu'
+
+    elif trace.name == '75th Percentile (Aspirational)':
+
+        trace.name = '75. percentil (Aspirační)'
+
+
+
+fig_top_companies.update_layout(xaxis_title="Aktivní Inzeráty")
+
+fig_top_skills.update_layout(yaxis_title="Počet Zmínek")
+
+fig_role_distribution.update_layout(xaxis_title="Aktivní Inzeráty")
+
 # Czech date format with Czech month names
 czech_months = {
     1: 'ledna', 2: 'února', 3: 'března', 4: 'dubna',
@@ -587,9 +640,13 @@ czech_date = f"{today.day}. {czech_months[today.month]} {today.year}"
 
 template_cz = env.get_template('report_cz.html')
 output_html_cz = template_cz.render(
+    llm_insights=llm_insights,  # NEW v1.5 LLM Market Analysis
+    summary_kpis=summary_kpis,  # NEW Phase 1
     date=czech_date,
     total_jobs=len(df),
     med_salary=med_sal_fmt,
+    hpp_median=hpp_median_fmt,      # NEW
+    brig_median=brig_median_fmt,    # NEW
     tech_premium=tech_premium,
     seniority_premium=seniority_premium,
     en_share=en_share,
