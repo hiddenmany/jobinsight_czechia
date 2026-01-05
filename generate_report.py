@@ -147,11 +147,13 @@ for company, row in top_innovators.iterrows():
 
 # --- v1.0 HR INTELLIGENCE CHARTS ---
 
-# 6. Salary by Role (NEW)
+# 6. Salary by Role (NEW) - with sample sizes
 role_sal = intel.get_salary_by_role()
 if not role_sal.empty:
-    # List conversion
-    r_types = role_sal['role_type'].tolist()
+    # List conversion - add sample sizes to labels
+    r_types_raw = role_sal['role_type'].tolist()
+    r_counts = role_sal['count'].tolist()
+    r_types = [f"{role} (n={int(cnt)})" for role, cnt in zip(r_types_raw, r_counts)]
     r_salaries = [float(x) for x in role_sal['median_salary'].tolist()]
 
     fig_role = go.Figure(data=[go.Bar(
@@ -160,7 +162,7 @@ if not role_sal.empty:
         orientation='h',
         marker=dict(color='#0055FF')
     )])
-    role_layout = {**layout_defaults, 'height': 280}
+    role_layout = {**layout_defaults, 'height': max(280, len(r_types) * 25)}
     fig_role.update_layout(**role_layout)
     fig_role.update_yaxes(title="")
     fig_role.update_xaxes(title="Median Salary (CZK)")
@@ -279,10 +281,14 @@ if not valid_salaries_df.empty and 'role_type' in valid_salaries_df.columns:
         ('p75', lambda x: x.quantile(0.75)),
         ('count', 'count')
     ]).reset_index()
-    role_percentiles = role_percentiles[role_percentiles['count'] >= 3].sort_values('median', ascending=False).head(15)
+    # Lower threshold and add sample size to labels
+    role_percentiles = role_percentiles[role_percentiles['count'] >= 1].sort_values('median', ascending=False).head(15)
+    role_percentiles['role_label'] = role_percentiles.apply(
+        lambda row: f"{row['role_type']} (n={int(row['count'])})", axis=1
+    )
     
-    # Create Plotly grouped bar chart for percentiles
-    r_types_pct = role_percentiles['role_type'].tolist()
+    # Create Plotly grouped bar chart for percentiles - use labels with sample sizes
+    r_types_pct = role_percentiles['role_label'].tolist()
     r_p25 = [float(x) for x in role_percentiles['p25'].tolist()]
     r_median = [float(x) for x in role_percentiles['median'].tolist()]
     r_p75 = [float(x) for x in role_percentiles['p75'].tolist()]

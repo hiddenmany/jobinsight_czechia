@@ -776,7 +776,7 @@ async def main():
 
         try:
             await asyncio.gather(
-                jobs_cz.run(limit=135),    # 135 pages * 15 ads = ~2000 (BALANCED TARGET)
+                jobs_cz.run(limit=200),    # 200 pages * 15 ads = ~3000 (increased to compensate for rate limit losses)
                 prace_cz.run(limit=50),    # 50 pages * 40 ads = ~2000 (BALANCED TARGET)
                 startup.run(limit=300),    # 300 job ads
                 wttj.run(limit=200),       # 200 job ads (often fails)
