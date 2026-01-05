@@ -777,7 +777,7 @@ async def main():
         try:
             await asyncio.gather(
                 jobs_cz.run(limit=100),    # 100 pages target (User Request)
-                prace_cz.run(limit=100),   # 100 pages target (User Request)
+                prace_cz.run(limit=50),    # Reduced to 50 to balance volume with Jobs.cz (approx 1:1 ratio)
                 startup.run(limit=600),    # ~30 pages * 20 items (User Request)
                 wttj.run(limit=600),       # ~30 pages * 20 items (User Request)
                 cocuma.run(limit=30)       # 30 pages target (User Request)
