@@ -7,6 +7,7 @@ import datetime
 import numpy as np
 import json
 from jinja2 import Environment, FileSystemLoader
+from llm_analyzer import get_llm_insights
 
 # Setup
 pd.set_option('display.max_columns', None)
@@ -28,6 +29,14 @@ if FORCE_REANALYZE:
 intel = analyzer.MarketIntelligence()
 df = intel.df
 print(f"Generating v1.0 HR Intelligence report with {len(df)} market signals.")
+
+# --- LLM MARKET ANALYSIS ---
+print("\n=== Generating LLM Market Insights ===")
+llm_insights = get_llm_insights(df)
+if llm_insights.get('enabled'):
+    print(f"✅ LLM insights generated: {len(llm_insights.get('key_insights', []))} key insights")
+else:
+    print("⚠️ LLM analysis skipped (GEMINI_API_KEY not set)")
 
 # Auto-Recovery: If Tech Status or Role Type is missing, force re-analysis
 if not FORCE_REANALYZE and (df['tech_status'].isnull().mean() > 0.5 or df['role_type'].isnull().mean() > 0.5 or df.empty):
@@ -505,6 +514,7 @@ summary_kpis = {
 }
 
 template_vars = dict(
+    llm_insights=llm_insights,  # NEW v1.5 LLM Market Analysis
     summary_kpis=summary_kpis,  # NEW Phase 1
     date=datetime.date.today().strftime("%d. %B %Y"),
     total_jobs=len(df),
