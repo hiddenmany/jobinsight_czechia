@@ -474,8 +474,6 @@ def translate_cz(value, category):
 
 env.filters['translate_cz'] = translate_cz
 
-template = env.get_template('report.html')
-
 # Helper to ensure clean JSON serialization without binary artifacts
 def clean_json(fig):
     def default_parser(o):
@@ -578,27 +576,16 @@ fig_role_distribution.update_layout(xaxis_title="Aktivní Inzeráty")
 
 
 # Czech date format with Czech month names
-
 czech_months = {
-
     1: 'ledna', 2: 'února', 3: 'března', 4: 'dubna',
-
     5: 'května', 6: 'června', 7: 'července', 8: 'srpna',
-
     9: 'září', 10: 'října', 11: 'listopadu', 12: 'prosince'
-
 }
-
 today = datetime.date.today()
-
 czech_date = f"{today.day}. {czech_months[today.month]} {today.year}"
 
-
-
-template_cz = env.get_template('report_cz.html')
-
-output_html_cz = template_cz.render(
-
+template = env.get_template('report.html')
+output_html_cz = template.render(
     llm_insights=llm_insights,  # NEW v1.5 LLM Market Analysis
 
     summary_kpis=summary_kpis,  # NEW Phase 1
