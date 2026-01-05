@@ -48,6 +48,8 @@ jobs:
           echo "Database found: $(ls -lh data/intelligence.db)"
 
       - name: Generate Static Report
+        env:
+          FORCE_REANALYZE: 'false'  # Database already updated with v1.5 taxonomy
         run: |
           python generate_report.py
 
