@@ -453,8 +453,10 @@ class IntelligenceCore:
                 nums = [n for n in nums_raw if n > 1000]
         
         # Handle EUR conversion to CZK (approximate rate)
-        if "eur" in s:
+        if "eur" in s or "€" in s:
             nums = [n * 25 for n in nums]
+        elif "usd" in s or "$" in s:
+            nums = [n * 23 for n in nums]
         
         
         # Distinguish between NULL (missing), 0 (unpaid), and negotiable

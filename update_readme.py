@@ -14,11 +14,21 @@ def get_stats():
         # Total active jobs
         total_jobs = con.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
         
-        # Median Salary (non-zero)
-        median_salary = con.execute("""
+        # Median Salary (Professional Roles Only)
+        # Filters out part-time/blue-collar roles to give a representative "Career" market rate
+        prof_roles = (
+            'Developer', 'Analyst', 'Management', 'PM', 'Sales', 'HR', 
+            'Marketing', 'Designer', 'QA', 'Finance', 'Legal', 
+            'Education', 'Technical Specialists', 'Electromechanics'
+        )
+        # Format tuple for SQL IN clause
+        roles_sql = ", ".join([f"'{r}'" for r in prof_roles])
+        
+        median_salary = con.execute(f"""
             SELECT MEDIAN(avg_salary) 
             FROM signals 
-            WHERE avg_salary > 0
+            WHERE avg_salary > 0 
+            AND role_type IN ({roles_sql})
         """).fetchone()[0]
         
         # Top 5 Roles
@@ -65,7 +75,7 @@ def update_readme():
 | Metric | Value |
 |--------|-------|
 | **Active Job Listings** | `{stats['total_jobs']:,}` |
-| **Median Advertised Salary** | `{salary_fmt} CZK` |
+| **Median Advertised Salary (Prof. Roles)** | `{salary_fmt} CZK` |
 | **Top 3 Roles** | {stats['top_roles'][0][0]}, {stats['top_roles'][1][0]}, {stats['top_roles'][2][0]} |
 | **Last Updated** | {datetime.datetime.now().strftime('%Y-%m-%d %H:%M UTC')} |
 
