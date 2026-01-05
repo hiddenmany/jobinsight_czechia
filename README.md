@@ -17,7 +17,7 @@ The latest market intelligence is automatically updated every Monday:
 | **Active Job Listings** | `3,160` |
 | **Median Advertised Salary (Prof. Roles)** | `81 250 CZK` |
 | **Top 3 Roles** | Manufacturing, Management, Developer |
-| **Last Updated** | 2026-01-05 18:00 UTC |
+| **Last Updated** | 2026-01-05 17:02 UTC |
 
 > *Based on real-time analysis of 3,160 job postings from major Czech portals.*
 
