@@ -445,9 +445,10 @@
                     <div style="font-size: 0.9rem; opacity: 0.85;">Active job listings across 5 platforms</div>
                 </div>
                 <div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
-                    <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">💰 Salary Benchmark</div>
+                    <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">💰 Market-Wide Median</div>
                     <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;">{{ hpp_median }}k CZK</div>
-                    <div style="font-size: 0.9rem; opacity: 0.85;">Median monthly wage (HPP contracts)</div>
+                    <div style="font-size: 0.9rem; opacity: 0.85;">All sectors (manufacturing, IT, retail, etc.)</div>
+                    <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 5px;">⚠️ Includes entry-level advertised wages</div>
                 </div>
                 <div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
                     <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">🔥 Hottest Role</div>
@@ -972,9 +973,13 @@
                 </div>
                 <div id="ghostJobsSection" style="display: none;">
                     <p style="color: #666; margin-bottom: 15px; font-size: 0.85rem;">
-                        Same title posted 3+ times by the same company. Could indicate high turnover, CV harvesting, or
-                        evergreen roles.
+                        <strong>Methodology:</strong> Jobs with identical titles posted 3+ times by the same company within our dataset.
+                        May indicate: (1) high turnover, (2) CV harvesting, (3) evergreen talent pool building, or (4) legitimate high-volume hiring.
                     </p>
+                    <div style="background: #fff3e0; padding: 12px; border-radius: 6px; font-size: 0.8rem; color: #e65100; margin-bottom: 15px;">
+                        <strong>⚠️ Not definitive proof of "fake" jobs</strong> - Manufacturing and logistics companies legitimately hire dozens of identical roles.
+                        Use this as a conversation starter, not a blacklist.
+                    </div>
                     <div style="overflow-x: auto;">
                         <table>
                             <thead>

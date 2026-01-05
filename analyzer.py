@@ -43,10 +43,19 @@ ROLE_TAXONOMY = {
                    'ředitel', 'team lead', 'tech lead', 'směnový mistr', 'mistr'],
     
     # --- GENERAL MARKET EXPANSION ---
-    'Healthcare': ['lékař', 'sestra', 'zdravotní', 'farmaceut', 'psycholog', 'fyzioterapeut', 'doktor', 'ošetřovatel'],
-    'Manufacturing': ['dělník', 'operátor výroby', 'montážník', 'svářeč', 'zámečník', 'elektrikář', 'seřizovač', 'technolog výroby', 'mistr výroby', 'obráběč', 'cnc'],
-    'Logistics': ['skladník', 'řidič', 'kurýr', 'logistik', 'zásobovač', 'disponent', 'spediter', 'nákupčí'],
-    'Service': ['prodavač', 'číšník', 'kuchař', 'recepční', 'pokladní', 'barman', 'uklízeč', 'ostraha', 'security'],
+    'Healthcare': ['lékař', 'sestra', 'zdravotní', 'farmaceut', 'psycholog', 'fyzioterapeut', 'doktor', 'ošetřovatel',
+                   'zdravotn', 'lékárn', 'sanitář', 'dentist', 'zubní'],
+    'Manufacturing': ['dělník', 'operátor výroby', 'montážník', 'svářeč', 'zámečník', 'elektrikář', 'seřizovač',
+                      'technolog výroby', 'mistr výroby', 'obráběč', 'cnc', 'výrob', 'provoz', 'linka',
+                      'operátor stroj', 'obsluha stroj', 'lisovač', 'lakýrník', 'lakovna', 'nástrojář',
+                      'operátor lisy', 'montáž', 'pracovník výroby', 'výrobní dělník', 'směna'],
+    'Logistics': ['skladník', 'řidič', 'kurýr', 'logistik', 'zásobovač', 'disponent', 'spediter', 'nákupčí',
+                  'sklad', 'doprav', 'přepravn', 'komisař', 'vysokozdvih', 'manipulant', 'expedient',
+                  'řidič mhd', 'řidič autobusu', 'řidič kamionu', 'řidič vláček', 'řidička', 'řidiči'],
+    'Retail': ['prodavač', 'pokladní', 'prodejce', 'prodejn', 'obchod', 'prodejna', 'market', 'supermarket',
+               'vedoucí prodejny', 'store manager', 'cashier', 'retail'],
+    'Service': ['číšník', 'kuchař', 'recepční', 'barman', 'uklízeč', 'ostraha', 'security', 'hospodyně',
+                'čerpací stanice', 'obsluha', 'údržba', 'technik údržby', 'servis'],
     'Legal': ['právník', 'advokát', 'koncipient', 'paralegal', 'notář', 'compliance'],
     'Construction': ['stavbyvedoucí', 'projektant', 'architekt', 'zedník', 'instalatér', 'malíř'],
     'Education': ['učitel', 'lektor', 'trenér', 'školitel', 'pedagog'],
@@ -93,16 +102,38 @@ def classify_role(title: str, description: str = "") -> str:
             return keyword in text
 
     # Priority: Check title first (more accurate), then description
+    matched_role = None
     for role, keywords in ROLE_TAXONOMY.items():
         if any(smart_match(title_lower, kw) for kw in keywords):
-            return role
+            matched_role = role
+            break
 
-    # Fallback: Check description
-    for role, keywords in ROLE_TAXONOMY.items():
-        if any(smart_match(text, kw) for kw in keywords):
-            return role
+    # If not matched in title, check description
+    if not matched_role:
+        for role, keywords in ROLE_TAXONOMY.items():
+            if any(smart_match(text, kw) for kw in keywords):
+                matched_role = role
+                break
 
-    return 'Other'
+    # Downgrade low-level "Management" to actual role category
+    if matched_role == 'Management':
+        # Check for shift leader / store manager patterns (not true executives)
+        low_wage_indicators = [
+            'směnový', 'vedoucí směny', 'vedoucí prodejny', 'store manager',
+            'team leader výroby', 'mistr výroby', 'vedoucí skladu', 'vedoucí restaurace'
+        ]
+        if any(indicator in title_lower for indicator in low_wage_indicators):
+            # Reclassify based on context
+            if any(kw in title_lower for kw in ['sklad', 'logistik']):
+                return 'Logistics'
+            elif any(kw in title_lower for kw in ['výrob', 'provoz', 'směn']):
+                return 'Manufacturing'
+            elif any(kw in title_lower for kw in ['prodej', 'obchod', 'market']):
+                return 'Retail'
+            elif any(kw in title_lower for kw in ['restaurace', 'kuchyň', 'hotel']):
+                return 'Service'
+
+    return matched_role if matched_role else 'Other'
 
 def detect_seniority(title: str, description: str = "") -> str:
     """Detect seniority level from title and description."""
