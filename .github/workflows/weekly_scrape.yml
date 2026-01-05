@@ -1,9 +1,12 @@
 name: Weekly Job Scraper
 
+# IMPORTANT: This workflow only runs on schedule (Monday 8am) or manual trigger
+# For code changes that need report updates, use update_report.yml instead (no scraping)
 on:
   schedule:
     - cron: '0 8 * * 1' # Runs at 08:00 UTC every Monday
   workflow_dispatch:      # Allows you to click "Run Now" button manually
+  # DO NOT add push triggers here - use update_report.yml for code changes
 
 permissions:
   contents: write
@@ -66,7 +69,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Auto-update: Job market data and report [$(date +'%Y-%m-%d')]"
+            git commit -m "Auto-update: Job market data and report [$(date +'%Y-%m-%d')] [skip ci]"
             # Pull before pushing to handle cases where the repo changed during the scrape
             git pull --rebase origin main
             git push origin main
