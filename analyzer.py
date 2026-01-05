@@ -703,8 +703,8 @@ class MarketIntelligence:
             count=('avg_salary', 'count')
         ).reset_index()
 
-        # Filter out small samples
-        matrix = matrix[matrix['count'] >= 5]
+        # Filter out small samples (lowered from 5 to 3 for sparse Czech salary data)
+        matrix = matrix[matrix['count'] >= 3]
 
         return matrix.sort_values(['role_type', 'median_salary'], ascending=[True, False])
     

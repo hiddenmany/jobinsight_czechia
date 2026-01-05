@@ -262,6 +262,16 @@ print("\n=== Analyzing Market Trends ===")
 # Salary Percentiles by Role (25th/50th/75th) - like original trends.html
 salary_percentiles_by_role = []
 valid_salaries_df = df[df['avg_salary'] > 0].copy()
+
+# DIAGNOSTIC: Show salary data availability per role
+print("\n=== SALARY DATA AVAILABILITY BY ROLE ===")
+salary_counts = df.groupby('role_type').agg(
+    total_jobs=('hash', 'count'),
+    jobs_with_salary=('avg_salary', lambda x: (x > 0).sum())
+).sort_values('total_jobs', ascending=False)
+print(salary_counts.head(15))
+print(f"Total jobs: {len(df)}, Jobs with salary: {len(valid_salaries_df)} ({len(valid_salaries_df)/len(df)*100:.1f}%)")
+
 if not valid_salaries_df.empty and 'role_type' in valid_salaries_df.columns:
     role_percentiles = valid_salaries_df.groupby('role_type')['avg_salary'].agg([
         ('p25', lambda x: x.quantile(0.25)),
