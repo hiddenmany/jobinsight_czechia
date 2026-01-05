@@ -10,29 +10,33 @@ from jinja2 import Environment, FileSystemLoader
 
 # Setup
 pd.set_option('display.max_columns', None)
-intel = analyzer.MarketIntelligence()
-df = intel.df
-print(f"Generating v1.0 HR Intelligence report with {len(df)} market signals.")
 
-# FORCE REANALYSIS - Temporary flag to apply updated classification logic
+# FORCE REANALYSIS - Check flag BEFORE opening any database connections
 # TODO: Remove after database is updated with new role taxonomy (v1.5 classification update)
 FORCE_REANALYZE = os.getenv('FORCE_REANALYZE', 'true').lower() == 'true'
 
 if FORCE_REANALYZE:
     print("🔄 FORCE REANALYSIS enabled - Applying updated role classification logic...")
-    # Create write-enabled instance for reanalysis, then reload data
+    # Open in write mode, do reanalysis, then close
     write_core = analyzer.IntelligenceCore(read_only=False)
+    print(f"Loaded {len(write_core.load_as_df())} market signals for reanalysis.")
     write_core.reanalyze_all()
-    write_core.con.close()  # Close write connection
-    # Reload with fresh data
-    intel = analyzer.MarketIntelligence()
-    df = intel.df
+    write_core.con.close()
+    print("✅ Reanalysis complete. Loading updated data...")
+
+# Now load data for report generation (read-only)
+intel = analyzer.MarketIntelligence()
+df = intel.df
+print(f"Generating v1.0 HR Intelligence report with {len(df)} market signals.")
+
 # Auto-Recovery: If Tech Status or Role Type is missing, force re-analysis
-elif df['tech_status'].isnull().mean() > 0.5 or df['role_type'].isnull().mean() > 0.5 or df.empty:
+if not FORCE_REANALYZE and (df['tech_status'].isnull().mean() > 0.5 or df['role_type'].isnull().mean() > 0.5 or df.empty):
     print("⚠️ Detected missing NLP/HR data. Running v1.0 re-analysis...")
+    intel.core.con.close()  # Close read-only connection first
     write_core = analyzer.IntelligenceCore(read_only=False)
     write_core.reanalyze_all()
     write_core.con.close()
+    # Reload
     intel = analyzer.MarketIntelligence()
     df = intel.df
 
