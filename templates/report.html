@@ -381,15 +381,80 @@
                 padding: 6px 12px;
             }
         }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+
+            .sticky-nav,
+            button {
+                display: none !important;
+            }
+
+            .collapsible-section .section-content {
+                display: block !important;
+            }
+
+            .section-header .toggle-icon {
+                display: none;
+            }
+
+            .kpi-card,
+            .collapsible-section {
+                page-break-inside: avoid;
+            }
+
+            h2 {
+                page-break-after: avoid;
+            }
+
+            .chart-grid,
+            table {
+                page-break-inside: avoid;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Czech Job Market <span>Intelligence</span></h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 style="margin: 0;">Czech Job Market <span>Intelligence</span></h1>
+            <button onclick="window.print()" style="padding: 10px 20px; background: #0055FF; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">🖨️ Print Report</button>
+        </div>
         <div class="subtitle">
             <span>Market Snapshot - {{ "{:,}".format(total_jobs) }} Active Job Listings</span>
-            <span><span class="version-badge">v1.3</span> {{ date }}</span>
+            <span><span class="version-badge">v1.4</span> {{ date }}</span>
+        </div>
+
+        <!-- HERO: 3 Key Insights This Week -->
+        <div style="background: linear-gradient(135deg, #0055FF 0%, #0040CC 100%); color: white; padding: 40px; border-radius: 12px; margin: 30px 0; box-shadow: 0 10px 30px rgba(0, 85, 255, 0.2);">
+            <h2 style="margin-top: 0; color: white; font-size: 1.8rem;">📈 This Week's Key Insights</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-top: 25px;">
+                <div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">💼 Market Activity</div>
+                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;">{{ "{:,}".format(total_jobs) }}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.85;">Active job listings across 5 platforms</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">💰 Salary Benchmark</div>
+                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;">{{ hpp_median }}k CZK</div>
+                    <div style="font-size: 0.9rem; opacity: 0.85;">Median monthly wage (HPP contracts)</div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
+                    <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">🔥 Hottest Role</div>
+                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;">{{ summary_kpis.top_role_1 }}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.85;">{{ summary_kpis.top_role_count }} active openings</div>
+                </div>
+            </div>
         </div>
 
         <!-- Data Quality Badge -->
@@ -399,24 +464,8 @@
                 <div><strong>Sample Size:</strong> {{ "{:,}".format(total_jobs) }} jobs (Excellent)</div>
                 <div><strong>Salary Coverage:</strong> 44% (Good)</div>
                 <div><strong>Data Freshness:</strong> Last 24 hours</div>
-                <div><strong>Sources:</strong> 6 platforms</div>
+                <div><strong>Sources:</strong> 5 platforms</div>
             </div>
-        </div>
-
-        <!-- IMPORTANT LIMITATIONS DISCLAIMER -->
-        <div
-            style="background: #fff1f2; border-left: 5px solid #e11d48; padding: 20px; margin: 30px 0; border-radius: 8px;">
-            <h3 style="color: #be123c; margin-top: 0; font-size: 1.1rem; font-weight: 700;">⚠️ IMPORTANT LIMITATIONS
-            </h3>
-            <p style="color: #881337; margin-bottom: 10px; font-size: 0.95rem;">This analysis measures <strong>DEMAND
-                    SIGNALS</strong> (what employers post), NOT MARKET REALITY (what actually gets hired/paid).</p>
-            <ul style="color: #9f1239; margin-bottom: 0; font-size: 0.9rem; line-height: 1.6;">
-                <li><strong>Ghost Jobs:</strong> Estimated 10-30% of postings may never be filled.</li>
-                <li><strong>Salary Bias:</strong> Advertised ranges often differ from final offers; top of range is
-                    rarely paid.</li>
-                <li><strong>Inflation:</strong> "Senior" roles may hire at "Mid" levels; skills lists are often
-                    aspirational lists.</li>
-            </ul>
         </div>
 
         <!-- Sticky Navigation -->
@@ -480,31 +529,23 @@
             </div>
         </div>
 
-        <!-- OLD KPI GRID HIDDEN/COLLAPSED BY DEFAULT or KEPT AS DETAILED VIEW -->
-        <!-- We keep it as "Detailed Metrics" -->
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-val">{{ total_jobs }}</div>
-                <div class="kpi-label">Active Signals</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-val">{{ hpp_median }}k</div>
-                <div class="kpi-label">Median Wage (HPP)</div>
-                <div style="font-size: 0.8rem; color: #888; margin-top: 5px; font-weight: 500;">
-                    Brigáda: {{ brig_median }}k
-                </div>
-            </div>
+        <!-- Simplified KPI Grid - Core Metrics Only -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 40px;">
             <div class="kpi-card highlight">
                 <div class="kpi-val">{{ tech_premium }}</div>
                 <div class="kpi-label">Modern Tech Premium</div>
             </div>
             <div class="kpi-card highlight">
                 <div class="kpi-val">{{ seniority_premium }}</div>
-                <div class="kpi-label">Senior vs Junior</div>
+                <div class="kpi-label">Senior vs Junior Pay Gap</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-val">{{ en_share }}%</div>
                 <div class="kpi-label">English Friendly</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-val">{{ hpp_median }}k / {{ brig_median }}k</div>
+                <div class="kpi-label">HPP / Brigáda Median</div>
             </div>
         </div>
 
@@ -1029,10 +1070,27 @@
         </div> <!-- End section-content -->
     </div> <!-- End collapsible-section -->
 
+    <!-- Data Limitations & Methodology (Collapsible Footer Section) -->
+    <div class="collapsible-section" style="margin-top: 40px;">
+        <div class="section-header" onclick="toggleSection('limitations-section')" style="background: #fff1f2; border-left: 5px solid #e11d48; cursor: pointer; padding: 15px 20px; border-radius: 8px;">
+            <span class="toggle-icon">▼</span>
+            <h3 style="margin: 0; color: #be123c; font-size: 1.1rem; font-weight: 700; display: inline;">⚠️ Important Limitations & Methodology</h3>
+        </div>
+        <div id="limitations-section" class="section-content" style="display: none; background: #fff1f2; padding: 20px; border-radius: 0 0 8px 8px;">
+            <p style="color: #881337; margin-bottom: 10px; font-size: 0.95rem;">This analysis measures <strong>DEMAND SIGNALS</strong> (what employers post), NOT MARKET REALITY (what actually gets hired/paid).</p>
+            <ul style="color: #9f1239; margin-bottom: 0; font-size: 0.9rem; line-height: 1.6;">
+                <li><strong>Ghost Jobs:</strong> Estimated 10-30% of postings may never be filled.</li>
+                <li><strong>Salary Bias:</strong> Advertised ranges often differ from final offers; top of range is rarely paid.</li>
+                <li><strong>Inflation:</strong> "Senior" roles may hire at "Mid" levels; skills lists are often aspirational.</li>
+                <li><strong>Data Sources:</strong> Jobs.cz, Prace.cz, StartupJobs, WTTJ, Cocuma (LinkedIn removed due to blocking)</li>
+                <li><strong>Methodology:</strong> Automated scraping with 5-minute cooldowns, 14-day retention, duplicate detection via URL + content hash.</li>
+            </ul>
+        </div>
+    </div>
+
     <div class="footer">
         Generated by <a href="https://github.com/hiddenmany/jobinsight_czechia"
-            style="color:#0055FF; font-weight:bold; text-decoration:none;">JobsCzInsight v1.3</a> - Economic Reality
-        Edition
+            style="color:#0055FF; font-weight:bold; text-decoration:none;">JobsCzInsight v1.4</a> - UX Redesign Edition
     </div>
     </div>
 
