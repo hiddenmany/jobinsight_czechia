@@ -432,49 +432,69 @@ class StartupJobsScraper(BaseScraper):
             except Exception as e:
                 logger.warning(f"{self.site_name}: Timed out waiting for {card_sel}: {e}")
 
-            # Robust Infinite Scroll with Button Click and Stall Detection
-            for _ in range(50):
+            # FIX: Button-based pagination - click "Načíst další stránku" repeatedly
+            # StartupJobs has 2 elements per job (mobile/desktop), so we need 2x cards
+            target_cards = limit * 2  # Account for duplicates
+            click_count = 0
+            max_clicks = 50  # Safety limit
+            
+            while click_count < max_clicks:
                 if shutdown_handler.is_shutdown_requested():
                     logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
-                    break 
-                await page.keyboard.press("End")
-                await asyncio.sleep(self.scroll_delay * 1.3)
-                
-                # Try to click "Load more" button if it exists
-                try:
-                    load_more = page.locator("button:has-text('Načíst další'), button:has-text('Zobrazit více'), a.more-jobs")
-                    if await load_more.count() > 0 and await load_more.first.is_visible():
-                        await load_more.first.click(force=True)
-                        await asyncio.sleep(self.scroll_delay * 1.3)
-                except Exception as e:
-                    logger.debug(f"Load more button click failed: {e}")
-                
-                cards = await page.query_selector_all(card_sel)
-                
-                if len(cards) >= limit:
                     break
                 
-                if len(cards) == last_count:
-                    stall_count += 1
-                    if stall_count >= STALL_THRESHOLD:
-                        logger.debug(f"{self.site_name}: Scroll stalled after {len(cards)} cards, exiting early")
-                        break
-                    # If stuck, try scrolling up and down
-                    await page.mouse.wheel(0, -500)
-                    await asyncio.sleep(0.5)
-                    await page.mouse.wheel(0, 500)
-                    await asyncio.sleep(1)
-                else:
-                    stall_count = 0  # Reset on progress
+                # Check current card count
+                cards = await page.query_selector_all(card_sel)
+                current_count = len(cards)
                 
-                new_cards = len(cards) - last_count
-                if new_cards > 0:
-                    pbar.update(min(new_cards, limit - pbar.n))
-                last_count = len(cards)
+                # Update progress bar
+                unique_count = current_count // 2
+                if unique_count > pbar.n:
+                    pbar.update(min(unique_count - pbar.n, limit - pbar.n))
+                
+                # Check if we have enough
+                if current_count >= target_cards:
+                    logger.debug(f"StartupJobs: Reached target ({current_count} elements, {unique_count} unique)")
+                    break
+                
+                # Scroll to bottom and look for button
+                await page.keyboard.press("End")
+                await asyncio.sleep(1.5)
+                
+                # Try to find and click the button using JavaScript (more reliable in headless)
+                try:
+                    # Use JS to find and click button - this worked in browser inspection
+                    clicked = await page.evaluate("""() => {
+                        const buttons = Array.from(document.querySelectorAll('button'));
+                        const loadMore = buttons.find(b => b.innerText.includes('Načíst další stránku'));
+                        if (loadMore) {
+                            loadMore.scrollIntoView();
+                            loadMore.click();
+                            return true;
+                        }
+                        return false;
+                    }""")
+                    
+                    if clicked:
+                        click_count += 1
+                        logger.debug(f"StartupJobs: JS button click #{click_count}, current cards: {current_count}")
+                        await asyncio.sleep(3)  # Wait for content to load after click
+                    else:
+                        # Button not found - we've reached the end
+                        logger.debug(f"StartupJobs: 'Load more' button not found after {click_count} clicks, ending")
+                        break
+                except Exception as e:
+                    logger.debug(f"StartupJobs: JS button click failed: {e}")
+                    if click_count == 0:
+                        continue  # Retry if we haven't clicked yet
+                    break  # Exit if we've already made progress
+            
+            logger.debug(f"StartupJobs: Pagination complete after {click_count} button clicks")
             
             cards = await page.query_selector_all(card_sel)
             batch = []
-            for card in cards[:limit]:
+            seen_links = set()  # FIX: Deduplicate mobile/desktop card variants
+            for card in cards[:limit * 2]:  # Process more cards since ~50% are duplicates
                 try:
                     href = await card.get_attribute("href")
                     if not href:
@@ -486,7 +506,13 @@ class StartupJobsScraper(BaseScraper):
                         domain = self.config.get('domain', 'https://www.startupjobs.cz')
                         link = domain + href
 
+                    # FIX: Skip duplicates (mobile/desktop versions of same card)
+                    if link in seen_links:
+                        continue
+                    seen_links.add(link)
+
                     if CORE.is_known(link):
+                        self.extraction_stats['duplicates'] = self.extraction_stats.get('duplicates', 0) + 1
                         continue
                     
                     company_name = await self.extract_company(card)
@@ -516,6 +542,10 @@ class StartupJobsScraper(BaseScraper):
                     )
                     batch.append(sig)
                     self.extraction_stats['success'] += 1
+                    
+                    # Stop if we've reached the limit
+                    if len(batch) >= limit:
+                        break
                 except Exception as e:
                     logger.debug(f"Failed to process StartupJobs card: {e}")
                     continue
@@ -526,6 +556,7 @@ class StartupJobsScraper(BaseScraper):
                     CORE.add_signal(s)
             
             CIRCUIT_BREAKER.record_success(self.site_name)
+            logger.info(f"StartupJobs completed: {len(batch)} jobs collected")
                 
         except Exception as e:
             logger.error(f"StartupJobs failed: {e}")
@@ -535,6 +566,8 @@ class StartupJobsScraper(BaseScraper):
 
 
 class WttjScraper(BaseScraper):
+    """WTTJ uses URL-based pagination (?page=N), not infinite scroll."""
+    
     async def run(self, limit=200):
         if CIRCUIT_BREAKER.is_open(self.site_name):
             logger.warning(f"Skipping {self.site_name} - circuit breaker is open")
@@ -544,7 +577,8 @@ class WttjScraper(BaseScraper):
         page = await context.new_page()
         await Stealth().apply_stealth_async(page)
         
-        base_url = self.config.get('base_url')
+        # WTTJ base URL without page parameter
+        base_url = self.config.get('base_url')  # https://www.welcometothejungle.com/cs/jobs?aroundQuery=Czechia
         card_sel = self.config.get('card')
         link_sel = self.config.get('link')
         title_sel = self.config.get('title')
@@ -554,85 +588,102 @@ class WttjScraper(BaseScraper):
             await context.close()
             return
         
+        pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
+        total_collected = 0
+        consecutive_empty = 0
+        seen_links = set()  # Track unique links to avoid duplicates
+        
         try:
-            # WTTJ is heavy, wait for commit first then load
-            try:
-                await page.goto(base_url, timeout=PAGE_TIMEOUT_MS, wait_until="commit")
-                await page.wait_for_selector(card_sel, timeout=SELECTOR_TIMEOUT_MS * 2)
-            except Exception as e:
-                logger.warning(f"WTTJ failed initial load: {e}")
-                return
-
-            pbar = tqdm(total=limit, desc=f"[*] {self.site_name}", unit="ads")
-            last_count = 0
-            stall_count = 0
-            
-            # Scroll loop with stall detection
-            for _ in range(40):
+            # FIX: Use URL pagination instead of scroll
+            # WTTJ has ~30 jobs per page, iterate through pages
+            for page_num in range(1, 25):  # Max 25 pages (~750 jobs)
                 if shutdown_handler.is_shutdown_requested():
                     logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
-                    break 
+                    break
                 
-                # Use JS scroll as End key might be flaky on some sites
-                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                await asyncio.sleep(self.scroll_delay)
+                if total_collected >= limit:
+                    break
+                
+                # Construct paginated URL
+                page_url = f"{base_url}&page={page_num}"
+                
+                try:
+                    await rate_limit(1.0, 2.0)  # Rate limiting between pages
+                    await page.goto(page_url, timeout=PAGE_TIMEOUT_MS, wait_until="domcontentloaded")
+                    await page.wait_for_selector(card_sel, timeout=SELECTOR_TIMEOUT_MS * 2)
+                except Exception as e:
+                    logger.warning(f"WTTJ page {page_num} failed to load: {e}")
+                    consecutive_empty += 1
+                    if consecutive_empty >= 3:
+                        logger.debug(f"WTTJ: 3 consecutive failures, stopping")
+                        break
+                    continue
                 
                 cards = await page.query_selector_all(card_sel)
-                if len(cards) >= limit:
-                    break
-                    
-                if len(cards) == last_count:
-                    stall_count += 1
-                    if stall_count >= STALL_THRESHOLD:
-                        logger.debug(f"WTTJ: Scroll stalled after {len(cards)} cards")
+                if not cards:
+                    consecutive_empty += 1
+                    if consecutive_empty >= 2:
+                        logger.debug(f"WTTJ: No cards found on page {page_num}, stopping")
                         break
-                else:
-                    stall_count = 0
-                last_count = len(cards)
-            
-            cards = await page.query_selector_all(card_sel)
-            batch = []
-            for card in cards[:limit]:
-                try:
-                    link_el = await card.query_selector(link_sel)
-                    if not link_el:
-                        continue
-                    
-                    domain = self.config.get('domain', 'https://www.welcometothejungle.com')
-                    href = await link_el.get_attribute("href")
-                    if not href:
-                        continue
-                    link = domain + href if not href.startswith("http") else href
-                    
-                    if CORE.is_known(link):
-                        continue
-                    
-                    company_name = await self.extract_company(card)
-                    city = await self.extract_city(card)
-                    
-                    title_el = await card.query_selector(title_sel) if title_sel else None
-                    title = await title_el.inner_text() if title_el else "Unknown Role"
-
-                    sig = JobSignal(
-                        title=sanitize_text(title),
-                        company=company_name,
-                        link=link,
-                        source=self.site_name,
-                        location=city
-                    )
-                    batch.append(sig)
-                    self.extraction_stats['success'] += 1
-                    pbar.update(1)
-                except Exception as e:
-                    logger.debug(f"Failed to process WTTJ card: {e}")
                     continue
-            
-            if batch:
-                await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
-                for s in batch:
-                    CORE.add_signal(s)
+                
+                consecutive_empty = 0  # Reset on success
+                batch = []
+                
+                for card in cards:
+                    if total_collected >= limit:
+                        break
+                    
+                    try:
+                        link_el = await card.query_selector(link_sel)
+                        if not link_el:
+                            continue
+                        
+                        domain = self.config.get('domain', 'https://www.welcometothejungle.com')
+                        href = await link_el.get_attribute("href")
+                        if not href:
+                            continue
+                        link = domain + href if not href.startswith("http") else href
+                        
+                        # Deduplicate (WTTJ has 2 elements per card: mobile/desktop)
+                        if link in seen_links:
+                            continue
+                        seen_links.add(link)
+                        
+                        if CORE.is_known(link):
+                            self.extraction_stats['duplicates'] = self.extraction_stats.get('duplicates', 0) + 1
+                            continue
+                        
+                        company_name = await self.extract_company(card)
+                        city = await self.extract_city(card)
+                        
+                        title_el = await card.query_selector(title_sel) if title_sel else None
+                        title = await title_el.inner_text() if title_el else "Unknown Role"
+
+                        sig = JobSignal(
+                            title=sanitize_text(title),
+                            company=company_name,
+                            link=link,
+                            source=self.site_name,
+                            location=city
+                        )
+                        batch.append(sig)
+                        self.extraction_stats['success'] += 1
+                        total_collected += 1
+                        pbar.update(1)
+                    except Exception as e:
+                        logger.debug(f"Failed to process WTTJ card: {e}")
+                        continue
+                
+                if batch:
+                    await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
+                    for s in batch:
+                        CORE.add_signal(s)
+                
+                logger.debug(f"WTTJ page {page_num}: collected {len(batch)} jobs (total: {total_collected})")
             
             CIRCUIT_BREAKER.record_success(self.site_name)
+            logger.info(f"WTTJ completed: {total_collected} jobs collected")
             
         except Exception as e:
             logger.warning(f"WTTJ scraping failed: {e}")

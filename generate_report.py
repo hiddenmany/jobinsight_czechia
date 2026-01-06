@@ -362,12 +362,21 @@ fig_top_companies.update_yaxes(title="")
 fig_top_companies.update_xaxes(title="Active Listings")
 print(f"Found {len(comp_names)} top hiring companies")
 
-# Top Skills by Frequency - Convert to Plotly chart
+# Top Skills by Frequency - Convert to Plotly chart (Technical skills only)
+SOFT_SKILLS_EXCLUDE = [
+    'English', 'Teamwork', 'Communication', 'Collaboration', 'Leadership',
+    'Problem Solving', 'Time Management', 'Organizational Skills', 'Multitasking',
+    'Attention to Detail', 'Customer Service', 'Presentation Skills', 'Negotiation',
+    'Řidičský průkaz B', 'Řidičský průkaz', 'Driver License', 'Driving License'
+]
+
 top_skills_list = []
 skill_names = []
 skill_counts = []
 if not emerging_tech.empty:
-    for _, row in emerging_tech.head(15).iterrows():
+    # Filter out soft skills to show only technical skills
+    technical_skills = emerging_tech[~emerging_tech['Technology'].isin(SOFT_SKILLS_EXCLUDE)]
+    for _, row in technical_skills.head(15).iterrows():
         skill_name = row['Technology']
         skill_count = int(row['Jobs'])
         top_skills_list.append(skill_name)
@@ -497,6 +506,9 @@ brig_med = contract_salaries.get('Brigáda', 0)
 
 hpp_median_fmt = f"{int(hpp_med/1000)}" if hpp_med > 0 else "N/A"
 brig_median_fmt = f"{int(brig_med/1000)}" if brig_med > 0 else "N/A"
+
+# --- v1.5 ISPV BENCHMARKS ---
+ispv_benchmarks = intel.load_ispv_benchmarks()
 
 # --- EXECUTIVE SUMMARY KPIS ---
 # Get top 3 roles by volume
@@ -650,6 +662,8 @@ output_html_cz = template.render(
 
     json_role_distribution=clean_json(fig_role_distribution),
 
+
+
     ico_arbitrage=ico_arbitrage,
 
     lang_barrier=lang_barrier,
@@ -666,12 +680,15 @@ output_html_cz = template.render(
 
     json_contract=clean_json(fig_cont),
 
-    json_tech=clean_json(fig_tech),
+
 
     json_role=clean_json(fig_role),
 
-    json_seniority=clean_json(fig_seniority)
 
+
+    json_seniority=clean_json(fig_seniority),
+    
+    ispv_benchmarks=ispv_benchmarks      # NEW
 )
 
 

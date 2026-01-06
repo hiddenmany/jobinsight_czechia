@@ -1,14 +1,20 @@
 import pandas as pd
 import numpy as np
-import re
+import json
+import logging
+from datetime import datetime, timedelta
+from collections import Counter
 import os
+import re
 import hashlib
 import unicodedata
 import duckdb
 import yaml
-from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger('HR-Intel-Analyzer')
 
 # --- ARCHITECTURAL CONSTANTS ---
 DB_PATH = "data/intelligence.db"
@@ -133,6 +139,11 @@ def classify_role(title: str, description: str = "") -> str:
             elif any(kw in title_lower for kw in ['restaurace', 'kuchyň', 'hotel']):
                 return 'Service'
 
+    # Executive downgrading logic (User request) -> Mid/Junior if retail/sales without C-level keywords
+    # "Sales Executive", "Account Executive" -> Mid (standard industry title inflation)
+    if 'executive' in title_lower and not any(x in title_lower for x in ['head', 'director', 'chief', 'c-level', 'vp', 'president', 'ředitel']):
+         return 'Sales' if 'sales' in title_lower or 'account' in title_lower else 'Mid'
+         
     return matched_role if matched_role else 'Other'
 
 def detect_seniority(title: str, description: str = "") -> str:
@@ -606,6 +617,48 @@ class MarketIntelligence:
         
         # Default is HPP
         self.df['contract_type'] = np.select(conds, choices, default='HPP')
+
+    def load_ispv_benchmarks(self):
+        """Loads official ISPV salary benchmarks from JSON"""
+        try:
+            path = os.path.join('data', 'ispv_salaries.json')
+            if os.path.exists(path):
+                with open(path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load ISPV benchmarks: {e}")
+        return {}
+
+    def analyze_skills(self, df):
+        """Extracts top technical skills from description/title"""
+        if 'title' not in df.columns and 'description' not in df.columns:
+            return {}
+            
+        text_data = df['title'].fillna('') + ' ' + df.get('description', '').fillna('')
+        all_text = ' '.join(text_data).lower()
+        
+        # Define skills with exclusions to remove soft skills
+        tech_keywords = {
+            'python', 'java', 'javascript', 'typescript', 'react', 'angular', 'vue', 
+            'node.js', 'sql', 'nosql', 'aws', 'azure', 'gcp', 'docker', 'kubernetes',
+            'git', 'ci/cd', 'linux', 'agile', 'scrum', 'sap', 'salesforce', 'excel'
+        }
+        
+        # Generic words to explicitly ignore if they appear in simple extraction
+        ignore_words = {
+            'communication', 'teamwork', 'english', 'czech', 'german', 'leadership', 
+            'management', 'driving license', 'řidičský průkaz', 'komunikace', 'týmová práce'
+        }
+        
+        found_skills = []
+        # Simple word extraction (can be improved with regex/NLP)
+        words = all_text.split()
+        for word in words:
+            clean_word = word.strip('.,()[]/').lower()
+            if clean_word in tech_keywords and clean_word not in ignore_words:
+                found_skills.append(clean_word)
+                
+        return dict(Counter(found_skills).most_common(15))
 
     def get_language_barrier(self):
         # Balanced NLP: requires a high density of English words without strict length penalties

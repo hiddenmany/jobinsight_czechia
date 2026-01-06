@@ -79,7 +79,7 @@ def generate_weekly_insights(stats: Dict, api_key: str) -> Dict:
         from google.genai import types
         
         client = genai.Client(api_key=api_key)
-        model_id = 'gemini-3-pro-preview'  # Most powerful reasoning model
+        model_id = 'gemini-2.0-flash'  # Faster, cheaper, and high quality
         
         prompt = f"""# ROLE & EXPERTISE
 
