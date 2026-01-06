@@ -16,6 +16,30 @@ load_dotenv()
 # Setup
 pd.set_option('display.max_columns', None)
 
+# --- CZECH LOCALE FORMATTING ---
+def format_number_cz(number):
+    """Format number with Czech thousand separator (space)"""
+    if pd.isna(number) or number is None:
+        return "N/A"
+    try:
+        # Convert to int if it's a whole number
+        if isinstance(number, (int, float)) and number == int(number):
+            number = int(number)
+        # Format with space as thousand separator
+        return f"{number:,}".replace(',', ' ')
+    except (ValueError, TypeError):
+        return str(number)
+
+def format_currency_cz(amount):
+    """Format currency in Czech format (e.g., '50 000 Kč')"""
+    if pd.isna(amount) or amount is None:
+        return "N/A"
+    try:
+        formatted = format_number_cz(int(amount))
+        return f"{formatted} Kč"
+    except (ValueError, TypeError):
+        return str(amount)
+
 # FORCE REANALYSIS - Check flag BEFORE opening any database connections
 # TODO: Remove after database is updated with new role taxonomy (v1.5 classification update)
 FORCE_REANALYZE = os.getenv('FORCE_REANALYZE', 'true').lower() == 'true'
@@ -445,6 +469,10 @@ print(f"Potential ghost jobs detected: {len(ghost_jobs_data)}")
 # --- RENDER ---
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 env = Environment(loader=FileSystemLoader(template_dir))
+
+# Register Czech formatting filters
+env.filters['format_number_cz'] = format_number_cz
+env.filters['format_currency_cz'] = format_currency_cz
 
 # v1.3 Localization dictionary
 t_cz = {

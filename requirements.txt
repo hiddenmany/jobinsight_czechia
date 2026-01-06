@@ -14,3 +14,4 @@ PyYAML==6.0.3
 Jinja2==3.1.6
 google-genai>=0.1.0  # Modern Gemini SDK for weekly market insights
 python-dotenv>=1.0.0
+pytest

@@ -4,10 +4,11 @@ import os
 import yaml
 from datetime import datetime
 
-# Configuration
-DB_PATH = 'data/intelligence.db'
-OUTPUT_HTML = 'public/trends.html'
-TAXONOMY_PATH = 'config/taxonomy.yaml'
+# Configuration - use absolute paths for reliability
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(_BASE_DIR, 'data', 'intelligence.db')
+OUTPUT_HTML = os.path.join(_BASE_DIR, 'public', 'trends.html')
+TAXONOMY_PATH = os.path.join(_BASE_DIR, 'config', 'taxonomy.yaml')
 
 # Load skill patterns from taxonomy
 def load_skill_patterns():
@@ -58,20 +59,6 @@ def get_market_intelligence(conn):
     """
     top_companies = conn.execute(company_query).fetchall()
     
-    # 3. "Hidden Tech" - Non-Tech companies hiring for Tech Roles
-    # Refined Logic: Exclude retail/manual roles and require HARD tech skills using accurate patterns
-
-    # Exclude common non-tech roles that might mention "PC skills" or "IT"
-    exclude_roles = "('Sales', 'Retail', 'Driver', 'Warehouse', 'HR', 'Admin', 'Customer Service')"
-
-    # Build tech filter using skill patterns - focus on core tech skills
-    core_tech_skills = [
-        'Python', 'Java', 'JavaScript', 'React', 'Angular', 'Vue',
-        'Node.js', 'C#', '.NET', 'Go', 'Rust', 'Kotlin', 'Swift',
-        'SQL', 'MongoDB', 'Redis', 'Docker', 'Kubernetes',
-        'AWS', 'Azure', 'GCP', 'AI/ML', 'Data Science'
-    ]
-
     # 3. Role Category Distribution (General Market)
     role_dist_query = """
         SELECT role_type, COUNT(*) as count 
@@ -86,8 +73,12 @@ def get_market_intelligence(conn):
     # 4. Skill Heatmap (Modern Stack) - Using accurate regex patterns
     skill_counts = []
     for skill_name, pattern in SKILL_PATTERNS.items():
-        # Use regexp_matches for accurate detection with word boundaries
-        query = f"SELECT COUNT(*) FROM signals WHERE regexp_matches(lower(description), '{pattern}')"
+        # Security: Validate pattern is a safe string before using in SQL
+        # Escape single quotes to prevent SQL injection
+        safe_pattern = pattern.replace("'", "''") if isinstance(pattern, str) else None
+        if not safe_pattern:
+            continue
+        query = f"SELECT COUNT(*) FROM signals WHERE regexp_matches(lower(description), '{safe_pattern}')"
         try:
             count = conn.execute(query).fetchone()[0]
             skill_counts.append({"skill": skill_name, "count": count})

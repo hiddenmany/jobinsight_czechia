@@ -13,158 +13,54 @@ import yaml
 from dataclasses import dataclass
 from typing import Optional
 
+# New module imports
+from parsers import SalaryParser, THOUSAND_SEP_PATTERN
+from classifiers import JobClassifier
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('HR-Intel-Analyzer')
 
 # --- ARCHITECTURAL CONSTANTS ---
-DB_PATH = "data/intelligence.db"
+DB_PATH = os.path.join(os.path.dirname(__file__), "data", "intelligence.db")
 TAXONOMY_PATH = os.path.join(os.path.dirname(__file__), "config", "taxonomy.yaml")
-
-# Compiled regex patterns for performance (Fix 4.3)
-SALARY_DIGITS_PATTERN = re.compile(r"(\d+)")
-THOUSAND_SEP_PATTERN = re.compile(r"(\d)\.(\d{3})")
-
-# --- v1.0 HR INTELLIGENCE: Role Classification ---
-ROLE_TAXONOMY = {
-    'Developer': ['developer', 'programátor', 'engineer', 'vývojář', 'frontend', 'backend', 
-                  'fullstack', 'full-stack', 'software', 'web developer', 'mobile developer', 
-                  'devops', 'sre', 'platform engineer', 'embedded'],
-    'Analyst': ['analyst', 'analytik', 'data analyst', 'business analyst', 'bi analyst', 
-                'data scientist', 'data engineer', 'reporting', 'statistik'],
-    'Designer': ['designer', 'ux', 'ui', 'grafik', 'product designer', 'visual designer', 
-                 'creative', 'art director'],
-    'QA': ['tester', 'qa', 'quality', 'test engineer', 'automation', 'sdet'],
-    'PM': ['project manager', 'product manager', 'scrum master', 'agile coach', 
-           'projektový manažer', 'product owner', 'delivery manager'],
-    'Sales': ['obchodní zástupce', 'account manager', 'business development', 'key account', 
-              'obchodník', 'sales representative', 'sales manager', 'prodejce aut'],
-    'HR': ['recruiter', 'personalist', 'náborář', 'recruitment', 'human resources', 
-           'hr business partner', 'hr generalist', 'hr specialist', 'hr manager', 'talent acquisition'],
-    'Marketing': ['marketing', 'seo', 'content', 'social media', 'brand', 'growth', 
-                  'ppc', 'performance marketing', 'copywriter', 'redaktor', 'editor'],
-    'Support': ['support', 'customer', 'helpdesk', 'podpora', 'zákaznick', 'service desk'],
-    'Operations': ['operations', 'admin', 'assistant', 'office manager', 'back office', 'koordinátor', 'referent'],
-    'Finance': ['accountant', 'účetní', 'finance', 'controller', 'controlling', 'fakturant', 'auditor', 'ekonom'],
-    'Management': ['head of', 'director', 'cto', 'ceo', 'vp', 'lead', 'manager', 'vedoucí', 
-                   'ředitel', 'team lead', 'tech lead', 'směnový mistr', 'mistr'],
-    
-    # --- GENERAL MARKET EXPANSION ---
-    'Healthcare': ['lékař', 'sestra', 'zdravotní', 'farmaceut', 'psycholog', 'fyzioterapeut', 'doktor', 'ošetřovatel',
-                   'zdravotn', 'lékárn', 'sanitář', 'dentist', 'zubní'],
-    'Manufacturing': ['dělník', 'operátor výroby', 'montážník', 'svářeč', 'zámečník', 'elektrikář', 'seřizovač',
-                      'technolog výroby', 'mistr výroby', 'obráběč', 'cnc', 'výrob', 'provoz', 'linka',
-                      'operátor stroj', 'obsluha stroj', 'lisovač', 'lakýrník', 'lakovna', 'nástrojář',
-                      'operátor lisy', 'montáž', 'pracovník výroby', 'výrobní dělník', 'směna'],
-    'Logistics': ['skladník', 'řidič', 'kurýr', 'logistik', 'zásobovač', 'disponent', 'spediter', 'nákupčí',
-                  'sklad', 'doprav', 'přepravn', 'komisař', 'vysokozdvih', 'manipulant', 'expedient',
-                  'řidič mhd', 'řidič autobusu', 'řidič kamionu', 'řidič vláček', 'řidička', 'řidiči'],
-    'Retail': ['prodavač', 'pokladní', 'prodejce', 'prodejn', 'obchod', 'prodejna', 'market', 'supermarket',
-               'vedoucí prodejny', 'store manager', 'cashier', 'retail'],
-    'Service': ['číšník', 'kuchař', 'recepční', 'barman', 'uklízeč', 'ostraha', 'security', 'hospodyně',
-                'čerpací stanice', 'obsluha', 'údržba', 'technik údržby', 'servis'],
-    'Legal': ['právník', 'advokát', 'koncipient', 'paralegal', 'notář', 'compliance'],
-    'Construction': ['stavbyvedoucí', 'projektant', 'architekt', 'zedník', 'instalatér', 'malíř'],
-    'Education': ['učitel', 'lektor', 'trenér', 'školitel', 'pedagog'],
-    
-    # --- NEW CATEGORIES TO REDUCE "OTHER" BUCKET ---
-    'Social Services': ['sociální pracovník', 'sociální služb', 'týdenní teta', 'týdenní strýc', 
-                        'doprovázející', 'pečovatel', 'asisten', 'pracovník v sociálních'],
-    'Hospitality': ['pokojská', 'housekeeper', 'hotel', 'mcdonald', 'mcdonalds', 'barista', 
-                    'obsluha čerpací', 'čerpací stanice', 'fast food', 'restaurace'],
-    'Technical Specialists': ['technolog', 'metrolog', 'laboratorn', 'měření', '3d měření', 
-                              'lab technik', 'chemik', 'fyzik', 'specialista technické'],
-    'Electromechanics': ['elektromechanik', 'nástrojář', 'mechanik', 'elektrotechnik', 
-                         'údržbář', 'servisní technik', 'preparing', 'přípravář']
-}
-
-# --- v1.0 HR INTELLIGENCE: Seniority Detection ---
-SENIORITY_PATTERNS = {
-    'Junior': ['junior', 'entry', 'trainee', 'intern', 'graduate', 'absolvent', 
-               '0-2 let', '1-2 roky', 'začátečník', 'entry-level'],
-    'Mid': ['mid', 'regular', '2-5 let', '3-5 let', '2+ let', 'medior'],
-    'Senior': ['senior', 'experienced', 'sr.', '5+ let', '5-10 let', 'zkušený', 
-               'pokročilý', 'specialist'],
-    'Lead': ['lead', 'principal', 'staff', 'architect', 'tech lead', 'team lead', 
-             'vedoucí týmu', 'chapter lead'],
-    'Executive': ['head of', 'director', 'vp', 'chief', 'cto', 'ceo', 'cfo', 'coo',
-                  'ředitel', 'c-level', 'executive']
-}
-
-def classify_role(title: str, description: str = "") -> str:
-    """Classify job into role category based on title and description."""
-    text = f"{title} {description}".lower()
-    title_lower = title.lower()
-
-    # Helper function for smart matching (avoids Czech substring false positives)
-    def smart_match(text: str, keyword: str) -> bool:
-        # For short keywords that are common substrings, use word boundaries
-        if keyword in ['hr', 'it', 'pr']:
-            # Check if keyword appears as separate word or in compound like "hr-manager"
-            import re
-            pattern = r'\b' + re.escape(keyword) + r'(?:\b|[-_])'
-            return bool(re.search(pattern, text))
-        else:
-            # For longer keywords, simple substring match is fine
-            return keyword in text
-
-    # Priority: Check title first (more accurate), then description
-    matched_role = None
-    for role, keywords in ROLE_TAXONOMY.items():
-        if any(smart_match(title_lower, kw) for kw in keywords):
-            matched_role = role
-            break
-
-    # If not matched in title, check description
-    if not matched_role:
-        for role, keywords in ROLE_TAXONOMY.items():
-            if any(smart_match(text, kw) for kw in keywords):
-                matched_role = role
-                break
-
-    # Downgrade low-level "Management" to actual role category
-    if matched_role == 'Management':
-        # Check for shift leader / store manager patterns (not true executives)
-        low_wage_indicators = [
-            'směnový', 'vedoucí směny', 'vedoucí prodejny', 'store manager',
-            'team leader výroby', 'mistr výroby', 'vedoucí skladu', 'vedoucí restaurace'
-        ]
-        if any(indicator in title_lower for indicator in low_wage_indicators):
-            # Reclassify based on context
-            if any(kw in title_lower for kw in ['sklad', 'logistik']):
-                return 'Logistics'
-            elif any(kw in title_lower for kw in ['výrob', 'provoz', 'směn']):
-                return 'Manufacturing'
-            elif any(kw in title_lower for kw in ['prodej', 'obchod', 'market']):
-                return 'Retail'
-            elif any(kw in title_lower for kw in ['restaurace', 'kuchyň', 'hotel']):
-                return 'Service'
-
-    # Executive downgrading logic (User request) -> Mid/Junior if retail/sales without C-level keywords
-    # "Sales Executive", "Account Executive" -> Mid (standard industry title inflation)
-    if 'executive' in title_lower and not any(x in title_lower for x in ['head', 'director', 'chief', 'c-level', 'vp', 'president', 'ředitel']):
-         return 'Sales' if 'sales' in title_lower or 'account' in title_lower else 'Mid'
-         
-    return matched_role if matched_role else 'Other'
-
-def detect_seniority(title: str, description: str = "") -> str:
-    """Detect seniority level from title and description."""
-    text = f"{title} {description}".lower()
-    
-    # Priority order: Executive > Lead > Senior > Junior > Mid (default)
-    priority_order = ['Executive', 'Lead', 'Senior', 'Junior', 'Mid']
-    
-    for level in priority_order:
-        patterns = SENIORITY_PATTERNS[level]
-        if any(p in text for p in patterns):
-            return level
-    
-    return 'Mid'  # Default to Mid if unclear
 
 def load_taxonomy():
     with open(TAXONOMY_PATH, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
 TAXONOMY = load_taxonomy()
+
+# --- PRE-COMPILED REGEX PATTERNS (Performance fix: compile once at module load) ---
+def _build_word_boundary_pattern(keywords: list) -> re.Pattern:
+    """Build a compiled regex pattern with word boundaries for keyword matching."""
+    if not keywords:
+        return None
+    escaped = [re.escape(k) for k in keywords]
+    return re.compile(r'\b(' + '|'.join(escaped) + r')\b', re.IGNORECASE)
+
+# Compile patterns from taxonomy at module load
+_TECH_KEYWORDS = set(TAXONOMY.get('tech_stack', {}).get('modern', []) + TAXONOMY.get('tech_stack', {}).get('legacy', []))
+_TECH_PATTERN = _build_word_boundary_pattern(list(_TECH_KEYWORDS))
+_TOXICITY_PATTERN = _build_word_boundary_pattern(TAXONOMY.get('toxicity', {}).get('red_flags', []))
+_LEGACY_PATTERN = _build_word_boundary_pattern(TAXONOMY.get('tech_stack', {}).get('legacy', []))
+_MODERN_PATTERN = _build_word_boundary_pattern(TAXONOMY.get('tech_stack', {}).get('modern', []))
+
+# Benefit display names (shared by get_benefits_analysis and get_trending_benefits)
+BENEFIT_DISPLAY_NAMES = {
+    'meal_vouchers': 'Meal Vouchers',
+    'fitness': 'Fitness/MultiSport',
+    'education': 'Education Budget',
+    'equipment': 'Home Office Equipment',
+    'stock_equity': 'Stock Options/Equity',
+    'bonuses': 'Performance Bonuses',
+    'extra_salary': '13th/14th Salary',
+    'sick_days': 'Paid Sick Days',
+    'extra_vacation': 'Extra Vacation Days',
+    'wellness': 'Wellness Programs',
+    'parental': 'Parental Benefits',
+    'pension': 'Pension Contribution',
+    'cafeteria': 'Flexible Benefits (Cafeteria)'
+}
 
 @dataclass
 class JobSignal:
@@ -201,28 +97,34 @@ class SemanticEngine:
 
     @staticmethod
     def is_tech_relevant(title: str, description: str) -> bool:
-        """Filters out non-tech signals to keep the report focused."""
-        # Using a subset of modern/legacy for relevance check
-        tech_keywords = set(TAXONOMY['tech_stack']['modern'] + TAXONOMY['tech_stack']['legacy'])
-        text = f"{title} {description}".lower()
-        return any(k in text for k in tech_keywords)
+        """Filters out non-tech signals to keep the report focused.
+        Uses pre-compiled regex for performance.
+        """
+        if not _TECH_PATTERN:
+            return False
+        text = f"{title} {description}"
+        return bool(_TECH_PATTERN.search(text))
 
     @staticmethod
     def analyze_toxicity(description: str) -> int:
-        """Detects toxic red flags in JDs. Returns score 0-100."""
-        flags = TAXONOMY.get('toxicity', {}).get('red_flags', [])
-        d = description.lower() if description else ""
-        score = sum(30 for f in flags if f in d)
-        return min(score, 100)
+        """Detects toxic red flags in JDs. Returns score 0-100.
+        Uses pre-compiled regex for performance.
+        """
+        if not _TOXICITY_PATTERN or not description:
+            return 0
+        matches = _TOXICITY_PATTERN.findall(description)
+        return min(len(matches) * 30, 100)
 
     @staticmethod
     def analyze_tech_lag(description: str) -> str:
-        """Calculates technological obsolescence score. Returns 'Modern', 'Stable', or 'Dinosaur'."""
-        legacy = TAXONOMY['tech_stack']['legacy']
-        modern = TAXONOMY['tech_stack']['modern']
-        d = description.lower() if description else ""
-        legacy_hit = sum(1 for x in legacy if x in d)
-        modern_hit = sum(1 for x in modern if x in d)
+        """Calculates technological obsolescence score. Returns 'Modern', 'Stable', or 'Dinosaur'.
+        Uses pre-compiled regex for performance.
+        """
+        if not description:
+            return "Stable"
+        
+        legacy_hit = len(_LEGACY_PATTERN.findall(description)) if _LEGACY_PATTERN else 0
+        modern_hit = len(_MODERN_PATTERN.findall(description)) if _MODERN_PATTERN else 0
 
         if legacy_hit > modern_hit:
             return "Dinosaur"
@@ -390,11 +292,11 @@ class IntelligenceCore:
         )
 
         # v1.0 HR Intelligence: Role and Seniority classification
-        role = classify_role(signal.title, signal.description)
-        seniority = detect_seniority(signal.title, signal.description)
+        role = JobClassifier.classify_role(signal.title, signal.description)
+        seniority = JobClassifier.detect_seniority(signal.title, signal.description)
 
         # Robust Salary Parsing
-        min_sal, max_sal, avg_sal = self._parse_salary(signal.salary, signal.source)
+        min_sal, max_sal, avg_sal = SalaryParser.parse(signal.salary, signal.source)
 
         # v1.5 Ghost Job Detection
         ghost_score = self.detect_ghost_jobs(signal)
@@ -432,70 +334,7 @@ class IntelligenceCore:
                 ],
             )
         except Exception as e:
-            print(f"DB Error: {e}")
-
-    def _parse_salary(self, s: str, source: str = None) -> tuple:
-        """
-        Parse salary string and return (min_salary, max_salary, avg_salary).
-
-        Args:
-            s: Salary string to parse
-            source: Job source (e.g., "StartupJobs") for context-aware parsing
-
-        Returns:
-            tuple: (min, max, avg) salary values, or (None, None, None) if parsing fails
-        """
-        if not s or not isinstance(s, str):
-            return None, None, None
-        s = s.lower().replace(" ", "").replace(" ", "")
-        s = re.sub(r'(\d)\.(\d{3})', r'\1\2', s)  # Remove thousand separators only
-        # Use compiled regex pattern for performance
-        
-        # Detect and convert hourly rates to monthly (160 hours/month standard)
-        if '/hod' in s or '/h' in s or 'hodinu' in s or 'per hour' in s:
-            nums_raw = [int(n) for n in SALARY_DIGITS_PATTERN.findall(s)]
-            nums = [n * 160 if n < 1000 else n for n in nums_raw]  # Convert hourly to monthly
-        else:
-            nums_raw = [int(n) for n in SALARY_DIGITS_PATTERN.findall(s)]
-            # StartupJobs often uses "600-900 Kč" to mean "600k-900k"
-            if source == 'StartupJobs':
-                nums = [n * 1000 if n < 1000 else n for n in nums_raw]
-            else:
-                nums = [n for n in nums_raw if n > 1000]
-        
-        # Handle EUR conversion to CZK (approximate rate)
-        if "eur" in s or "€" in s:
-            nums = [n * 25 for n in nums]
-        elif "usd" in s or "$" in s:
-            nums = [n * 23 for n in nums]
-        
-        
-        # Distinguish between NULL (missing), 0 (unpaid), and negotiable
-        original_text = s  # Keep original for special case detection
-        
-        # Check for unpaid internships
-        if 'unpaid' in original_text or '0czk' in original_text or '0kč' in original_text:
-            return 0, 0, 0  # Explicitly 0 for unpaid positions
-        
-        # Check for negotiable salary
-        if 'dohodou' in original_text or 'negotiable' in original_text or 'tbd' in original_text:
-            return -1, -1, -1  # Special marker for "to be discussed"
-        
-        if not nums:
-            return None, None, None  # NULL for missing salary data
-        
-        # Salary validation: Flag suspiciously low or high values
-        min_sal = min(nums)
-        max_sal = max(nums)
-        avg_sal = sum(nums) / len(nums)
-        
-        # Sanity check: Monthly salaries in Czech Republic
-        if avg_sal < 15000 or avg_sal > 500000:
-            # Log warning but still return the value
-            import logging
-            logging.debug(f"Suspicious salary detected: {avg_sal} CZK from '{original_text}'")
-        
-        return min_sal, max_sal, avg_sal
+            logger.error(f"DB Error: {e}")
 
     def get_summary(self):
         if self.df.empty:
@@ -525,33 +364,37 @@ class IntelligenceCore:
         
         after = self.con.execute("SELECT count(*) FROM signals").fetchone()[0]
         removed = before - after
-        print(f"Cleanup: Removed {removed} expired listings. {after} active signals remaining.")
+        logger.info(f"Cleanup: Removed {removed} expired listings. {after} active signals remaining.")
 
     def reanalyze_all(self):
         """Re-runs semantic analysis and HR classification on all existing records."""
-        print("Re-analyzing all stored signals with v1.0 HR Intelligence...")
-        rows = self.con.execute("SELECT hash, title, description FROM signals").fetchall()
-        for h, title, desc in rows:
+        logger.info("Re-analyzing all stored signals with v1.0 HR Intelligence...")
+        rows = self.con.execute("SELECT hash, title, description, salary_raw, source FROM signals").fetchall()
+        for h, title, desc, salary_str, source in rows:
             tox = SemanticEngine.analyze_toxicity(desc)
             tech = SemanticEngine.analyze_tech_lag(desc)
-            role = classify_role(title or "", desc or "")
-            seniority = detect_seniority(title or "", desc or "")
+            role = JobClassifier.classify_role(title or "", desc or "")
+            seniority = JobClassifier.detect_seniority(title or "", desc or "")
+            
+            # Re-parse salary to apply recent parser fixes (e.g. k-notation)
+            min_sal, max_sal, avg_sal = SalaryParser.parse(salary_str, source)
+            
             self.con.execute(
-                "UPDATE signals SET toxicity_score = ?, tech_status = ?, role_type = ?, seniority_level = ? WHERE hash = ?",
-                [tox, tech, role, seniority, h]
+                "UPDATE signals SET toxicity_score = ?, tech_status = ?, role_type = ?, seniority_level = ?, avg_salary = ? WHERE hash = ?",
+                [tox, tech, role, seniority, avg_sal, h]
             )
         # Invalidate cache after updates
         self.load_as_df()
-        print(f"v1.0 Migration complete: {len(rows)} signals updated with role/seniority.")
+        logger.info(f"v1.0 Migration complete: {len(rows)} signals updated with role/seniority/salary.")
 
     def vacuum_database(self):
         """Compact database to reclaim space from deleted records."""
         try:
-            print("Compacting database (VACUUM)...")
+            logger.info("Compacting database (VACUUM)...")
             self.con.execute("VACUUM")
-            print("Database compaction complete.")
+            logger.info("Database compaction complete.")
         except Exception as e:
-            print(f"Warning: VACUUM failed: {e}")
+            logger.warning(f"Warning: VACUUM failed: {e}")
 
     def get_database_stats(self) -> dict:
         """Get comprehensive database statistics for monitoring."""
@@ -591,14 +434,34 @@ class IntelligenceCore:
             }
 
 
-# Legacy class for App compatibility
+# Legacy class for App compatibility - now uses facade pattern to delegate to analysis modules
 class MarketIntelligence:
+    """
+    Facade class providing backward-compatible API while delegating to focused analysis modules.
+    
+    Usage:
+        intel = MarketIntelligence()
+        intel.get_salary_by_role()  # Delegates to SalaryAnalysis
+        intel.df  # Direct DataFrame access still works
+    """
+    
     def __init__(self):
+        from analysis.salary_analysis import SalaryAnalysis
+        from analysis.benefits_analysis import BenefitsAnalysis
+        from analysis.location_analysis import LocationAnalysis
+        from analysis.trends_analysis import TrendsAnalysis
+        
         self.core = IntelligenceCore(read_only=True)
         self.df = self.core.df
         self._enrich_contract_type()
+        
+        # Compose analysis modules (delegation pattern)
+        self._salary = SalaryAnalysis(self.df, TAXONOMY)
+        self._benefits = BenefitsAnalysis(self.df, TAXONOMY)
+        self._location = LocationAnalysis(self.df, TAXONOMY)
+        self._trends = TrendsAnalysis(self.df, TAXONOMY)
 
-    def _enrich_contract_type(self):
+    def _enrich_contract_type(self) -> None:
         """Enrich DataFrame with contract_type column."""
         if self.df.empty:
             self.df['contract_type'] = 'Unknown'
@@ -608,14 +471,11 @@ class MarketIntelligence:
         ico_pat = "|".join(TAXONOMY['contract_keywords']['ico'])
         brig_pat = "|".join(TAXONOMY['contract_keywords']['brigada'])
 
-        # Create conditions
         conds = [
             desc.str.contains(ico_pat, na=False),
             desc.str.contains(brig_pat, na=False)
         ]
         choices = ['IČO', 'Brigáda']
-        
-        # Default is HPP
         self.df['contract_type'] = np.select(conds, choices, default='HPP')
 
     def load_ispv_benchmarks(self):
@@ -717,231 +577,54 @@ class MarketIntelligence:
         return self.df['seniority_level'].value_counts().reset_index()
     
     def get_salary_by_role(self) -> pd.DataFrame:
-        """Get median salary breakdown by role type."""
-        valid_sal = self.df[self.df['avg_salary'] > 0]
-        result = valid_sal.groupby('role_type').agg(
-            median_salary=('avg_salary', 'median'),
-            count=('avg_salary', 'count')
-        ).sort_values('median_salary', ascending=False).reset_index()
-        return result[result['count'] >= 1]  # Minimum sample size (show all roles with salary data)
+        """Get median salary breakdown by role type. Delegates to SalaryAnalysis."""
+        return self._salary.get_salary_by_role()
     
     def get_salary_by_seniority(self) -> pd.DataFrame:
-        """Get median salary breakdown by seniority level."""
-        valid_sal = self.df[self.df['avg_salary'] > 0]
-        result = valid_sal.groupby('seniority_level').agg(
-            median_salary=('avg_salary', 'median'),
-            count=('avg_salary', 'count')
-        ).reset_index()
-        # Order by seniority progression
-        order = ['Junior', 'Mid', 'Senior', 'Lead', 'Executive']
-        result['order'] = result['seniority_level'].apply(lambda x: order.index(x) if x in order else 99)
-        return result.sort_values('order').drop('order', axis=1)
+        """Get median salary breakdown by seniority level. Delegates to SalaryAnalysis."""
+        return self._salary.get_salary_by_seniority()
 
     def get_salary_by_contract_type(self) -> dict:
-        """Get median salary for HPP vs Brigáda."""
-        valid_sal = self.df[self.df['avg_salary'] > 0]
-        result = valid_sal.groupby('contract_type')['avg_salary'].median()
-        return result.to_dict()
+        """Get median salary for HPP vs Brigáda. Delegates to SalaryAnalysis."""
+        return self._salary.get_salary_by_contract_type()
 
     def get_seniority_role_matrix(self) -> pd.DataFrame:
-        """Cross-analysis: Median salary by Seniority + Role (for data quality insights)."""
-        valid_sal = self.df[self.df['avg_salary'] > 0]
-
-        # Get top roles
-        top_roles = valid_sal['role_type'].value_counts().head(6).index
-
-        # Filter and pivot
-        filtered = valid_sal[valid_sal['role_type'].isin(top_roles)]
-
-        matrix = filtered.groupby(['seniority_level', 'role_type']).agg(
-            median_salary=('avg_salary', 'median'),
-            count=('avg_salary', 'count')
-        ).reset_index()
-
-        # Filter out small samples (lowered from 5 to 3 for sparse Czech salary data)
-        matrix = matrix[matrix['count'] >= 3]
-
-        return matrix.sort_values(['role_type', 'median_salary'], ascending=[True, False])
+        """Cross-analysis: Median salary by Seniority + Role. Delegates to SalaryAnalysis."""
+        return self._salary.get_seniority_role_matrix()
     
     def get_skill_premiums(self) -> pd.DataFrame:
-        """Calculate salary premium for top skills (v1.0 HR Intelligence) - using accurate patterns."""
-        # Use skill_patterns from taxonomy for accurate detection
-        skill_patterns = TAXONOMY.get('skill_patterns', {})
-
-        # Focus on most common skills
-        priority_skills = ['Python', 'JavaScript', 'TypeScript', 'Java', 'Go', 'Rust',
-                           'React', 'Angular', 'Vue', 'Node.js', '.NET', 'Spring',
-                           'SQL', 'MongoDB', 'Redis', 'Docker', 'Kubernetes',
-                           'AWS', 'Azure', 'GCP', 'AI/ML']
-
-        valid_sal = self.df[self.df['avg_salary'] > 0]
-        if valid_sal.empty:
-            return pd.DataFrame(columns=['Skill', 'Median', 'Premium', 'Jobs'])
-
-        baseline_median = valid_sal['avg_salary'].median()
-
-        premiums = []
-        for skill_name in priority_skills:
-            if skill_name not in skill_patterns:
-                continue
-
-            pattern = skill_patterns[skill_name]
-            try:
-                # Use regex pattern matching for accuracy
-                mask = valid_sal['description'].fillna('').str.lower().str.contains(pattern, regex=True, case=False, na=False)
-                skill_median = valid_sal[mask]['avg_salary'].median()
-                count = mask.sum()
-
-                if pd.notna(skill_median) and count >= 10:
-                    premium_pct = ((skill_median / baseline_median) - 1) * 100
-                    premiums.append({
-                        'Skill': skill_name,
-                        'Median': int(skill_median),
-                        'Premium': f"+{int(premium_pct)}%" if premium_pct >= 0 else f"{int(premium_pct)}%",
-                        'Premium_Raw': premium_pct,
-                        'Jobs': int(count)
-                    })
-            except Exception as e:
-                # Fallback to simple matching if regex fails
-                import logging
-                logging.debug(f"Regex failed for {skill_name}, using fallback: {e}")
-                mask = valid_sal['description'].fillna('').str.lower().str.contains(skill_name.lower(), regex=False)
-                skill_median = valid_sal[mask]['avg_salary'].median()
-                count = mask.sum()
-                if pd.notna(skill_median) and count >= 10:
-                    premium_pct = ((skill_median / baseline_median) - 1) * 100
-                    premiums.append({
-                        'Skill': skill_name,
-                        'Median': int(skill_median),
-                        'Premium': f"+{int(premium_pct)}%" if premium_pct >= 0 else f"{int(premium_pct)}%",
-                        'Premium_Raw': premium_pct,
-                        'Jobs': int(count)
-                    })
-
-        if not premiums:
-            return pd.DataFrame(columns=['Skill', 'Median', 'Premium', 'Jobs'])
-
-        return pd.DataFrame(premiums).sort_values('Premium_Raw', ascending=False).drop('Premium_Raw', axis=1)
+        """Calculate salary premium for top skills. Delegates to SalaryAnalysis."""
+        return self._salary.get_skill_premiums()
 
     # --- v1.1 BENEFITS INTELLIGENCE ---
 
     def get_benefits_analysis(self) -> pd.DataFrame:
-        """Analyze which benefits are most commonly offered."""
-        benefits_cats = TAXONOMY.get('benefits_keywords', {})
-
-        # User-friendly display names
-        benefit_display_names = {
-            'meal_vouchers': 'Meal Vouchers',
-            'fitness': 'Fitness/MultiSport',
-            'education': 'Education Budget',
-            'equipment': 'Home Office Equipment',
-            'stock_equity': 'Stock Options/Equity',
-            'bonuses': 'Performance Bonuses',
-            'extra_salary': '13th/14th Salary',
-            'sick_days': 'Paid Sick Days',
-            'extra_vacation': 'Extra Vacation Days',
-            'wellness': 'Wellness Programs',
-            'parental': 'Parental Benefits',
-            'pension': 'Pension Contribution',
-            'cafeteria': 'Flexible Benefits (Cafeteria)'
-        }
-
-        results = []
-        for benefit_name, keywords in benefits_cats.items():
-            pattern = '|'.join([re.escape(kw) for kw in keywords])
-            mask = self.df['description'].fillna('').str.lower().str.contains(pattern, regex=True, case=False)
-            count = mask.sum()
-            percentage = (count / len(self.df)) * 100
-
-            if count > 0:
-                display_name = benefit_display_names.get(benefit_name, benefit_name.title())
-                results.append({
-                    'Benefit': display_name,
-                    'Jobs': int(count),
-                    'Percentage': f"{percentage:.1f}%",
-                    'Percentage_Raw': percentage
-                })
-
-        if not results:
-            return pd.DataFrame(columns=['Benefit', 'Jobs', 'Percentage'])
-
-        return pd.DataFrame(results).sort_values('Percentage_Raw', ascending=False).drop('Percentage_Raw', axis=1)
+        """Analyze which benefits are most commonly offered. Delegates to BenefitsAnalysis."""
+        return self._benefits.get_benefits_analysis()
 
     def get_benefits_by_role(self) -> pd.DataFrame:
-        """Show which roles get the best benefits (top 3 benefits)."""
-        benefits_cats = TAXONOMY.get('benefits_keywords', {})
-
-        # Count benefits per job
-        def count_benefits(desc):
-            if not isinstance(desc, str):
-                return 0
-            desc_lower = desc.lower()
-            count = 0
-            for keywords in benefits_cats.values():
-                pattern = '|'.join([re.escape(kw) for kw in keywords])
-                if re.search(pattern, desc_lower):
-                    count += 1
-            return count
-
-        self.df['benefit_count'] = self.df['description'].apply(count_benefits)
-
-        result = self.df.groupby('role_type').agg(
-            avg_benefits=('benefit_count', 'mean'),
-            count=('role_type', 'count')
-        ).sort_values('avg_benefits', ascending=False).reset_index()
-
-        # Clean up temp column
-        self.df.drop('benefit_count', axis=1, inplace=True, errors='ignore')
-
-        return result[result['count'] >= 10].head(8)  # Top 8 roles with enough samples
+        """Show which roles get the best benefits. Delegates to BenefitsAnalysis."""
+        return self._benefits.get_benefits_by_role()
 
     # --- v1.1 LOCATION INTELLIGENCE ---
 
     def get_salary_by_city(self) -> pd.DataFrame:
-        """Get median salary breakdown by city/location."""
-        valid_sal = self.df[self.df['avg_salary'] > 0]
-
-        # Get top cities by job count
-        top_cities = valid_sal['city'].value_counts().head(10).index
-        city_data = valid_sal[valid_sal['city'].isin(top_cities)]
-
-        result = city_data.groupby('city').agg(
-            median_salary=('avg_salary', 'median'),
-            count=('avg_salary', 'count')
-        ).sort_values('median_salary', ascending=False).reset_index()
-
-        return result[result['count'] >= 20]  # Minimum 20 samples
+        """Get median salary breakdown by city/location. Delegates to SalaryAnalysis."""
+        return self._salary.get_salary_by_city()
 
     def get_location_distribution(self) -> pd.DataFrame:
-        """Get job distribution by location."""
-        top_cities = self.df['city'].value_counts().head(10).reset_index()
-        top_cities.columns = ['City', 'Count']
-        return top_cities
+        """Get job distribution by location. Delegates to LocationAnalysis."""
+        return self._location.get_location_distribution()
 
     # --- v1.1 WORK MODEL INTELLIGENCE ---
 
     def get_work_model_distribution(self) -> dict:
-        """Classify jobs by work model: Remote, Hybrid, Office."""
-        work_model_kw = TAXONOMY.get('work_model_keywords', {})
-
-        remote_pattern = '|'.join(work_model_kw.get('remote', []))
-        hybrid_pattern = '|'.join(work_model_kw.get('hybrid', []))
-
-        desc = self.df['description'].fillna('').str.lower()
-
-        # Priority: Remote > Hybrid > Office
-        is_remote = desc.str.contains(remote_pattern, case=False, na=False, regex=True)
-        is_hybrid = desc.str.contains(hybrid_pattern, case=False, na=False, regex=True) & ~is_remote
-
-        remote_count = is_remote.sum()
-        hybrid_count = is_hybrid.sum()
-        office_count = len(self.df) - remote_count - hybrid_count
-
-        return {
-            "Full Remote": int(remote_count),
-            "Hybrid": int(hybrid_count),
-            "Office Only": int(office_count)
-        }
+        """Classify jobs by work model. Delegates to LocationAnalysis."""
+        result = self._location.get_work_model_distribution()
+        # Convert DataFrame to dict format for backward compatibility
+        if isinstance(result, pd.DataFrame):
+            return dict(zip(result['Work Model'], result['Count']))
+        return result
 
     def get_work_model_by_role(self) -> pd.DataFrame:
         """Show work model distribution for top roles."""
@@ -979,56 +662,14 @@ class MarketIntelligence:
         return result
 
     def get_remote_salary_premium(self) -> dict:
-        """Calculate salary premium for remote vs office jobs."""
-        work_model_kw = TAXONOMY.get('work_model_keywords', {})
-        remote_pattern = '|'.join(work_model_kw.get('remote', []))
-
-        valid_sal = self.df[self.df['avg_salary'] > 0]
-        desc = valid_sal['description'].fillna('').str.lower()
-
-        is_remote = desc.str.contains(remote_pattern, case=False, na=False, regex=True)
-
-        remote_median = valid_sal[is_remote]['avg_salary'].median()
-        office_median = valid_sal[~is_remote]['avg_salary'].median()
-
-        if pd.notna(remote_median) and pd.notna(office_median) and office_median > 0:
-            premium_pct = int(((remote_median / office_median) - 1) * 100)
-            return {
-                'remote_median': int(remote_median),
-                'office_median': int(office_median),
-                'premium': f"+{premium_pct}%" if premium_pct >= 0 else f"{premium_pct}%",
-                'premium_raw': premium_pct
-            }
-
-        return {'remote_median': 0, 'office_median': 0, 'premium': 'N/A', 'premium_raw': 0}
+        """Calculate salary premium for remote vs office jobs. Delegates to SalaryAnalysis."""
+        return self._salary.get_remote_salary_premium()
 
     # --- v1.2 TEMPORAL & EMERGING TRENDS ---
 
     def get_salary_trend_weekly(self) -> pd.DataFrame:
-        """
-        Get weekly median salary trends (requires 7+ days of data).
-        Returns empty DataFrame if insufficient data.
-        """
-        import pandas as pd
-
-        df_with_dates = self.df.copy()
-        df_with_dates['scraped_date'] = pd.to_datetime(df_with_dates['scraped_at']).dt.date
-
-        unique_dates = df_with_dates['scraped_date'].nunique()
-
-        if unique_dates < 7:
-            return pd.DataFrame(columns=['week', 'median_salary', 'count'])
-
-        valid_sal = df_with_dates[df_with_dates['avg_salary'] > 0]
-        valid_sal['week'] = pd.to_datetime(valid_sal['scraped_at']).dt.to_period('W')
-
-        trend = valid_sal.groupby('week').agg(
-            median_salary=('avg_salary', 'median'),
-            count=('avg_salary', 'count')
-        ).reset_index()
-
-        trend['week'] = trend['week'].astype(str)
-        return trend
+        """Get weekly median salary trends. Delegates to SalaryAnalysis."""
+        return self._salary.get_salary_trend_weekly()
 
     def get_emerging_tech_signals(self) -> pd.DataFrame:
         """
@@ -1101,22 +742,6 @@ class MarketIntelligence:
         """
         benefits_cats = TAXONOMY.get('benefits_keywords', {})
 
-        benefit_display_names = {
-            'meal_vouchers': 'Meal Vouchers',
-            'fitness': 'Fitness/MultiSport',
-            'education': 'Education Budget',
-            'equipment': 'Home Office Equipment',
-            'stock_equity': 'Stock Options/Equity',
-            'bonuses': 'Performance Bonuses',
-            'extra_salary': '13th/14th Salary',
-            'sick_days': 'Paid Sick Days',
-            'extra_vacation': 'Extra Vacation Days',
-            'wellness': 'Wellness Programs',
-            'parental': 'Parental Benefits',
-            'pension': 'Pension Contribution',
-            'cafeteria': 'Flexible Benefits'
-        }
-
         results = []
         for benefit_name, keywords in benefits_cats.items():
             pattern = '|'.join([re.escape(kw) for kw in keywords])
@@ -1125,7 +750,7 @@ class MarketIntelligence:
             percentage = (count / len(self.df)) * 100
 
             if count >= 100:  # Minimum threshold
-                display_name = benefit_display_names.get(benefit_name, benefit_name.title())
+                display_name = BENEFIT_DISPLAY_NAMES.get(benefit_name, benefit_name.title())
                 results.append({
                     'Benefit': display_name,
                     'Adoption': f"{percentage:.1f}%",

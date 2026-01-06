@@ -127,8 +127,9 @@
         }
 
         .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: var(--spacing-lg);
             margin-bottom: var(--spacing-3xl);
         }
@@ -140,6 +141,8 @@
             border: 1px solid var(--color-border-secondary);
             border-left: 4px solid var(--color-primary);
             transition: transform var(--transition-fast);
+            flex: 0 1 200px;
+            min-width: 180px;
         }
 
         .kpi-card:hover {
@@ -415,10 +418,6 @@
         }
 
         @media(max-width: 1024px) {
-            .kpi-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
             .kpi-highlights {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -429,8 +428,6 @@
         }
 
         @media(max-width: 768px) {
-
-            .kpi-grid,
             .chart-grid {
                 grid-template-columns: 1fr;
             }
@@ -614,16 +611,385 @@
             border-left: none;
             border-top: 3px solid var(--color-primary);
         }
+
+        /* === UTILITY CLASSES === */
+
+        /* Chart Container */
+        .chart-container {
+            margin-bottom: var(--spacing-3xl);
+        }
+
+        /* Chart Empty State */
+        .chart-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            background: var(--color-bg-tertiary);
+            border-radius: var(--radius-md);
+            color: var(--color-text-secondary);
+        }
+
+        .chart-empty-icon {
+            font-size: 2rem;
+            opacity: 0.5;
+        }
+
+        .chart-empty-text {
+            margin-top: var(--spacing-sm);
+        }
+
+        /* Chart Error State */
+        .chart-error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            background: var(--color-error-light);
+            border-radius: var(--radius-md);
+            color: var(--color-error);
+            border: 1px solid var(--color-error);
+        }
+
+        .chart-error-icon {
+            font-size: 2rem;
+        }
+
+        .chart-error-text {
+            margin-top: var(--spacing-sm);
+        }
+
+        /* Stat Card */
+        .stat-card {
+            background: var(--color-bg-secondary);
+            padding: var(--spacing-lg) var(--spacing-xl);
+            border-radius: var(--radius-md);
+            text-align: center;
+            min-width: 160px;
+        }
+
+        .stat-card-value {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .stat-card-label {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            margin-top: var(--spacing-xs);
+        }
+
+        .stat-card-detail {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-muted);
+            margin-top: var(--spacing-xs);
+        }
+
+        /* Insight Card */
+        .insight-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            border-left: 3px solid var(--color-primary);
+        }
+
+        .insight-card-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .insight-card-title {
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .insight-card-text {
+            font-size: var(--font-size-sm);
+            line-height: 1.6;
+            opacity: 0.85;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: var(--color-bg-secondary);
+            padding: var(--spacing-lg) var(--spacing-xl);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--color-primary);
+            margin: var(--spacing-xl) 0;
+        }
+
+        .info-box-title {
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--color-text-primary);
+        }
+
+        .info-box-text {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: var(--color-warning-light);
+            padding: var(--spacing-lg) var(--spacing-xl);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--color-warning);
+            margin: var(--spacing-xl) 0;
+        }
+
+        /* Success Box */
+        .success-box {
+            background: var(--color-success-light);
+            padding: var(--spacing-lg) var(--spacing-xl);
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--color-success);
+            margin: var(--spacing-xl) 0;
+        }
+
+        /* Flex Utilities */
+        .flex {
+            display: flex;
+        }
+
+        .flex-column {
+            flex-direction: column;
+        }
+
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+
+        .flex-center {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .flex-between {
+            justify-content: space-between;
+        }
+
+        .flex-gap-sm {
+            gap: var(--spacing-sm);
+        }
+
+        .flex-gap-md {
+            gap: var(--spacing-md);
+        }
+
+        .flex-gap-lg {
+            gap: var(--spacing-lg);
+        }
+
+        /* Text Utilities */
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: var(--color-text-muted);
+        }
+
+        .text-secondary {
+            color: var(--color-text-secondary);
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        .font-semibold {
+            font-weight: 600;
+        }
+
+        /* Spacing Utilities */
+        .mb-xs { margin-bottom: var(--spacing-xs); }
+        .mb-sm { margin-bottom: var(--spacing-sm); }
+        .mb-md { margin-bottom: var(--spacing-md); }
+        .mb-lg { margin-bottom: var(--spacing-lg); }
+        .mb-xl { margin-bottom: var(--spacing-xl); }
+        .mb-2xl { margin-bottom: var(--spacing-2xl); }
+        .mb-3xl { margin-bottom: var(--spacing-3xl); }
+
+        .mt-xs { margin-top: var(--spacing-xs); }
+        .mt-sm { margin-top: var(--spacing-sm); }
+        .mt-md { margin-top: var(--spacing-md); }
+        .mt-lg { margin-top: var(--spacing-lg); }
+        .mt-xl { margin-top: var(--spacing-xl); }
+        .mt-2xl { margin-top: var(--spacing-2xl); }
+        .mt-3xl { margin-top: var(--spacing-3xl); }
+
+        .m-0 { margin: 0; }
+        .p-0 { padding: 0; }
+        .ml-auto { margin-left: auto; }
+
+        /* Header Utilities */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .print-button {
+            padding: var(--spacing-sm) var(--spacing-xl);
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: var(--font-size-sm);
+            transition: background var(--transition-fast);
+        }
+
+        .print-button:hover {
+            background: var(--color-primary-dark);
+        }
+
+        /* AI Health Score */
+        .health-score-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: var(--spacing-lg) var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            text-align: center;
+        }
+
+        .health-score-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+
+        .health-score-label {
+            font-size: var(--font-size-xs);
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .health-score-reasoning {
+            font-size: var(--font-size-sm);
+            margin-top: var(--spacing-xs);
+            opacity: 0.7;
+        }
+
+        /* Executive Summary Box */
+        .executive-summary-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: var(--spacing-xl) var(--spacing-2xl);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-3xl);
+            border-left: 4px solid #60a5fa;
+        }
+
+        .summary-label {
+            font-size: var(--font-size-xs);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .summary-text {
+            font-size: var(--font-size-lg);
+            line-height: 1.7;
+            margin: 0;
+            opacity: 0.95;
+        }
+
+        /* Insight Grid */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmin(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-3xl);
+        }
+
+        /* Recommendations */
+        .recommendation-box {
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-md);
+            border: 1px solid;
+        }
+
+        .recommendation-box-employers {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .recommendation-box-candidates {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .recommendation-title {
+            font-weight: 700;
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .recommendation-list {
+            margin: 0;
+            padding-left: var(--spacing-xl);
+            font-size: var(--font-size-sm);
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .recommendation-list li {
+            margin-bottom: var(--spacing-sm);
+        }
+
+        /* Data Quality Badge */
+        .data-quality-badge {
+            background: var(--color-success-light);
+            padding: var(--spacing-md) var(--spacing-xl);
+            border-radius: var(--radius-md);
+            margin: var(--spacing-xl) 0;
+            border-left: 4px solid var(--color-success);
+        }
+
+        .data-quality-stats {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: var(--spacing-lg);
+            font-size: var(--font-size-sm);
+        }
+
+        /* Icon Text Combo */
+        .icon-text {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .icon-large {
+            font-size: 2rem;
+        }
+
+        /* Opacity Utilities */
+        .opacity-60 { opacity: 0.6; }
+        .opacity-70 { opacity: 0.7; }
+        .opacity-80 { opacity: 0.8; }
+        .opacity-90 { opacity: 0.9; }
+        .opacity-95 { opacity: 0.95; }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h1 style="margin: 0;">Český Trh Práce <span>Intelligence</span></h1>
-            <button onclick="window.print()"
-                style="padding: 10px 20px; background: #0055FF; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">🖨️
-                Tisk Reportu</button>
+        <div class="page-header">
+            <h1 class="m-0">Český Trh Práce <span>Intelligence</span></h1>
+            <button onclick="window.print()" class="print-button">🖨️ Tisk Reportu</button>
         </div>
         <div class="subtitle">
             <span>Tržní Přehled - {{ "{:,}".format(total_jobs) }} Aktivních Inzerátů</span>
@@ -653,24 +1019,21 @@
 
             <!-- Header with Market Health Score -->
             <div class="ai-header">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 2rem;">🤖</span>
+                <div class="icon-text">
+                    <span class="icon-large">🤖</span>
                     <div>
                         <h2>AI Analýza Trhu</h2>
                     </div>
                 </div>
                 {% if llm_insights.market_health_score %}
-                <div
-                    style="background: rgba(255, 255, 255, 0.1); padding: 15px 25px; border-radius: 12px; text-align: center;">
-                    <div
-                        style="font-size: 2.5rem; font-weight: 800; color: {% if llm_insights.market_health_score.score >= 7 %}#4ade80{% elif llm_insights.market_health_score.score >= 4 %}#fbbf24{% else %}#f87171{% endif %};">
+                <div class="health-score-card">
+                    <div class="health-score-value"
+                        style="color: {% if llm_insights.market_health_score.score >= 7 %}#4ade80{% elif llm_insights.market_health_score.score >= 4 %}#fbbf24{% else %}#f87171{% endif %};">
                         {{ llm_insights.market_health_score.score }}/10
                     </div>
-                    <div style="font-size: 0.75rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">
-                        Zdraví Trhu</div>
+                    <div class="health-score-label">Zdraví Trhu</div>
                     {% if llm_insights.market_health_score.reasoning %}
-                    <div style="font-size: 0.8rem; margin-top: 5px; opacity: 0.7;">{{
-                        llm_insights.market_health_score.reasoning }}</div>
+                    <div class="health-score-reasoning">{{ llm_insights.market_health_score.reasoning }}</div>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -678,52 +1041,40 @@
 
             <!-- Executive Summary -->
             {% if llm_insights.executive_summary %}
-            <div
-                style="background: rgba(255, 255, 255, 0.05); padding: 20px 25px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #60a5fa;">
-                <div
-                    style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 10px;">
-                    📋 Shrnutí pro Vedení</div>
-                <p style="font-size: 1.1rem; line-height: 1.7; margin: 0; opacity: 0.95;">
-                    {{ llm_insights.executive_summary }}
-                </p>
+            <div class="executive-summary-box">
+                <div class="summary-label">📋 Shrnutí pro Vedení</div>
+                <p class="summary-text">{{ llm_insights.executive_summary }}</p>
             </div>
             {% elif llm_insights.summary %}
-            <p style="font-size: 1.05rem; line-height: 1.6; opacity: 0.95; margin-bottom: 25px;">
-                {{ llm_insights.summary }}
-            </p>
+            <p class="summary-text opacity-95 mb-2xl">{{ llm_insights.summary }}</p>
             {% endif %}
 
             <!-- Key Insights Grid -->
             {% if llm_insights.key_insights %}
-            <div style="margin-bottom: 30px;">
-                <div
-                    style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 15px;">
-                    🔍 Klíčové Poznatky</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+            <div class="mb-3xl">
+                <div class="summary-label">🔍 Klíčové Poznatky</div>
+                <div class="insights-grid">
                     {% for insight in llm_insights.key_insights %}
-                    <div
-                        style="background: rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 10px; backdrop-filter: blur(10px);">
+                    <div class="insight-card">
                         {% if insight is mapping %}
                         <!-- Rich insight object format -->
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <div class="insight-card-header">
                             <span style="font-size: 1.5rem;">{{ insight.emoji }}</span>
-                            <span style="font-weight: 700; font-size: 1rem;">{{ insight.title }}</span>
+                            <span class="font-bold" style="font-size: 1rem;">{{ insight.title }}</span>
                             {% if insight.confidence %}
-                            <span
-                                style="margin-left: auto; font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; background: {% if insight.confidence == 'high' %}rgba(74, 222, 128, 0.3){% elif insight.confidence == 'medium' %}rgba(251, 191, 36, 0.3){% else %}rgba(248, 113, 113, 0.3){% endif %};">
+                            <span class="ml-auto"
+                                style="font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; background: {% if insight.confidence == 'high' %}rgba(74, 222, 128, 0.3){% elif insight.confidence == 'medium' %}rgba(251, 191, 36, 0.3){% else %}rgba(248, 113, 113, 0.3){% endif %};">
                                 {{ insight.confidence }}
                             </span>
                             {% endif %}
                         </div>
-                        <p style="margin: 0 0 10px 0; font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">{{
-                            insight.insight }}</p>
+                        <p class="insight-card-text mb-sm">{{ insight.insight }}</p>
                         {% if insight.implication %}
-                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.7; font-style: italic;">→ {{
-                            insight.implication }}</p>
+                        <p class="insight-card-text opacity-70" style="font-style: italic;">→ {{ insight.implication }}</p>
                         {% endif %}
                         {% else %}
                         <!-- Simple string format (backwards compatibility) -->
-                        <div style="font-size: 0.95rem; line-height: 1.5;">{{ insight }}</div>
+                        <div class="insight-card-text">{{ insight }}</div>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -733,30 +1084,27 @@
 
             <!-- Strategic Recommendations -->
             {% if llm_insights.strategic_recommendations %}
-            <div
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
+            <div class="insights-grid mb-2xl">
                 {% if llm_insights.strategic_recommendations.for_employers %}
-                <div
-                    style="background: rgba(59, 130, 246, 0.15); padding: 20px; border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                    <div style="font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <div class="recommendation-box recommendation-box-employers">
+                    <div class="recommendation-title">
                         <span>🏢</span> Pro zaměstnavatele
                     </div>
-                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6; opacity: 0.9;">
+                    <ul class="recommendation-list">
                         {% for rec in llm_insights.strategic_recommendations.for_employers %}
-                        <li style="margin-bottom: 8px;">{{ rec }}</li>
+                        <li>{{ rec }}</li>
                         {% endfor %}
                     </ul>
                 </div>
                 {% endif %}
                 {% if llm_insights.strategic_recommendations.for_candidates %}
-                <div
-                    style="background: rgba(16, 185, 129, 0.15); padding: 20px; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.3);">
-                    <div style="font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <div class="recommendation-box recommendation-box-candidates">
+                    <div class="recommendation-title">
                         <span>👤</span> Pro uchazeče
                     </div>
-                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6; opacity: 0.9;">
+                    <ul class="recommendation-list">
                         {% for rec in llm_insights.strategic_recommendations.for_candidates %}
-                        <li style="margin-bottom: 8px;">{{ rec }}</li>
+                        <li>{{ rec }}</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -766,16 +1114,14 @@
 
             <!-- Data Quality Note -->
             {% if llm_insights.data_quality_notes %}
-            <div
-                style="font-size: 0.8rem; opacity: 0.6; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div class="text-secondary opacity-60" style="font-size: 0.8rem; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
                 ⚠️ {{ llm_insights.data_quality_notes }}
             </div>
             {% endif %}
 
             <!-- Legacy trend_alert support -->
             {% if llm_insights.trend_alert %}
-            <div
-                style="margin-top: 25px; padding: 15px 20px; background: rgba(255, 107, 107, 0.2); border-left: 4px solid #ff6b6b; border-radius: 4px;">
+            <div class="warning-box mt-2xl">
                 <strong style="color: #ff6b6b;">🚨 Upozornění na Trend:</strong> {{ llm_insights.trend_alert }}
             </div>
             {% endif %}
@@ -783,9 +1129,8 @@
         {% endif %}
 
         <!-- Data Quality Badge -->
-        <div
-            style="background: #e8f5e9; padding: 12px 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4caf50;">
-            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; font-size: 0.85rem;">
+        <div class="data-quality-badge">
+            <div class="data-quality-stats">
                 <div><strong>Velikost vzorku:</strong> {{ "{:,}".format(total_jobs) }} pozic (Výborné)</div>
                 <div><strong>Pokrytí platů:</strong> 44% (Dobré)</div>
                 <div><strong>Aktuálnost dat:</strong> Posledních 24 hodin</div>
@@ -1468,10 +1813,10 @@
             // Check for empty or invalid data
             if (!chartData || !chartData.data || chartData.data.length === 0) {
                 container.innerHTML = `
-                    <div class="chart-empty" style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-bg-tertiary, #f3f4f6); border-radius: 8px; color: var(--color-text-secondary, #666);">
-                        <div style="text-align: center;">
-                            <div style="font-size: 2rem; opacity: 0.5;">📊</div>
-                            <div style="margin-top: 10px;">Data nejsou dostupná</div>
+                    <div class="chart-empty">
+                        <div class="text-center">
+                            <div class="chart-empty-icon">📊</div>
+                            <div class="chart-empty-text">Data nejsou dostupná</div>
                         </div>
                     </div>`;
                 return;
@@ -1482,10 +1827,10 @@
             } catch (error) {
                 console.error(`Chart rendering failed for ${chartName}:`, error);
                 container.innerHTML = `
-                    <div class="chart-error" style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-error-light, #ffebee); border-radius: 8px; color: var(--color-error, #DD3333); border: 1px solid var(--color-error, #DD3333);">
-                        <div style="text-align: center;">
-                            <div style="font-size: 2rem;">⚠️</div>
-                            <div style="margin-top: 10px;">Graf se nepodařilo načíst</div>
+                    <div class="chart-error">
+                        <div class="text-center">
+                            <div class="chart-error-icon">⚠️</div>
+                            <div class="chart-error-text">Graf se nepodařilo načíst</div>
                         </div>
                     </div>`;
             }
@@ -1577,6 +1922,74 @@
                 }
             }, 100);
         }, { passive: true }); // Passive flag for scroll performance
+
+        // === EVENT DELEGATION & KEYBOARD ACCESSIBILITY ===
+
+        // Delegated event handler for interactive elements
+        document.addEventListener('click', (e) => {
+            const target = e.target.closest('[data-action]');
+            if (!target) return;
+
+            const action = target.dataset.action;
+            const param = target.dataset.param;
+
+            switch (action) {
+                case 'jump-to-section':
+                    if (param) jumpToSection(param);
+                    break;
+                case 'toggle-section':
+                    if (param) toggleSection(param);
+                    break;
+                case 'print':
+                    window.print();
+                    break;
+            }
+        });
+
+        // Keyboard navigation (Enter/Space for buttons and interactive elements)
+        document.addEventListener('keydown', (e) => {
+            // Only handle Enter and Space on interactive elements
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+
+            const target = e.target.closest('[data-action]');
+            if (!target) return;
+
+            // Prevent default space behavior (scrolling)
+            if (e.key === ' ') {
+                e.preventDefault();
+            }
+
+            // Trigger click on the element
+            target.click();
+        });
+
+        // Update aria-expanded on section toggle
+        const originalToggleSection = toggleSection;
+        toggleSection = function(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section && section.classList.contains('collapsible-section')) {
+                const header = section.querySelector('.section-header');
+                const isCollapsed = section.classList.contains('collapsed');
+
+                // Update aria-expanded
+                if (header) {
+                    header.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+                }
+            }
+
+            // Call original function
+            originalToggleSection(sectionId);
+
+            // Update aria-expanded after toggle
+            if (section && section.classList.contains('collapsible-section')) {
+                const header = section.querySelector('.section-header');
+                const isCollapsed = section.classList.contains('collapsed');
+
+                if (header) {
+                    header.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+                }
+            }
+        };
 
     </script>
 </body>

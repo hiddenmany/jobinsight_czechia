@@ -39,7 +39,7 @@ except Exception as e:
     raise
 
 # --- CONSTANTS ---
-CONCURRENCY = 10
+CONCURRENCY = 5
 PAGE_TIMEOUT_MS = 60000          # 60 seconds for page loads
 SELECTOR_TIMEOUT_MS = 10000      # 10 seconds for selectors
 DETAIL_TIMEOUT_MS = 30000        # 30 seconds for detail pages
@@ -59,8 +59,9 @@ SALARY_PATTERN = re.compile(
     re.IGNORECASE
 )
 
-CORE = IntelligenceCore()
-CIRCUIT_BREAKER = CircuitBreaker(failure_threshold=5, timeout_seconds=300)
+# --- GLOBAL INSTANCES (Initialized in main) ---
+CORE = None
+CIRCUIT_BREAKER = None
 
 # Setup logging
 logging.basicConfig(
@@ -69,10 +70,6 @@ logging.basicConfig(
     handlers=[logging.FileHandler("scraper.log"), logging.StreamHandler()]
 )
 logger = logging.getLogger("OmniScrape")
-
-# Setup graceful shutdown
-shutdown_handler.setup_signal_handlers()
-
 
 class ScrapeEngine:
     """The heavy-duty engine that handles browser lifecycle and concurrency."""
@@ -810,6 +807,13 @@ class LinkedinScraper(BaseScraper):
 async def main():
     logger.info("=== OMNISCRAPE v18.0: Enhanced Security & Reliability ===")
     
+    global CORE, CIRCUIT_BREAKER
+    CORE = IntelligenceCore()
+    CIRCUIT_BREAKER = CircuitBreaker(failure_threshold=5, timeout_seconds=300)
+    
+    # Setup graceful shutdown
+    shutdown_handler.setup_signal_handlers()
+    
     # Register cleanup callbacks
     shutdown_handler.register_cleanup(lambda: logger.info("Cleanup: Saving progress..."))
 
@@ -826,13 +830,22 @@ async def main():
         # LinkedIn removed: blocks headless browsers without residential proxy
 
         try:
+            # Batch 1: High-volume standard boards (Concurrent)
+            logger.info("Batch 1: Standard Job Boards")
             await asyncio.gather(
-                jobs_cz.run(limit=100),    # 100 pages target (User Request)
-                prace_cz.run(limit=50),    # Reduced to 50 to balance volume with Jobs.cz (approx 1:1 ratio)
-                startup.run(limit=600),    # ~30 pages * 20 items (User Request)
-                wttj.run(limit=600),       # ~30 pages * 20 items (User Request)
-                cocuma.run(limit=30)       # 30 pages target (User Request)
+                jobs_cz.run(limit=100),
+                prace_cz.run(limit=50)
             )
+
+            # Batch 2: Tech-focused & sensitive sites (Sequential for reliability)
+            logger.info("Batch 2: Tech-focused Sites")
+            await startup.run(limit=600)
+            await wttj.run(limit=600)
+
+            # Batch 3: Niche / Others
+            logger.info("Batch 3: Niche Channels")
+            await cocuma.run(limit=30)
+            
         except KeyboardInterrupt:
             logger.warning("Received interrupt signal, initiating graceful shutdown...")
             shutdown_handler.request_shutdown()
@@ -858,5 +871,5 @@ async def main():
     logger.info("=== SCRAPING COMPLETE ===")
 
 if __name__ == "__main__":
-    CORE.reanalyze_all()
     asyncio.run(main())
+

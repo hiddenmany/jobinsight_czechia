@@ -3,14 +3,15 @@ import pandas as pd
 
 def test_salary_parsing():
     print("[TEST] Salary Parsing...")
-    core = analyzer.IntelligenceCore()
+    # Using the new SalaryParser class
+    from parsers import SalaryParser
     cases = [
         ("40 000 - 60 000 Kč", 40000, 60000, 50000),  # min, max, avg
         ("od 35.000 CZK", 35000, 35000, 35000),
         ("Not a salary", None, None, None)
     ]
     for input_str, expected_min, expected_max, expected_avg in cases:
-        min_sal, max_sal, avg_sal = core._parse_salary(input_str)
+        min_sal, max_sal, avg_sal = SalaryParser.parse(input_str)
         # Handle float/int comparison - both None or approximately equal
         if expected_avg is None:
             assert avg_sal is None, f"Failed case: {input_str} -> avg={avg_sal} (expected None)"

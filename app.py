@@ -155,4 +155,4 @@ with c2:
     st.altair_chart(vibe_chart, use_container_width=True)
 
 st.markdown("---")
-st.caption("JobsCzInsight v15.1 // Production Ready // Swiss Design System 2.0")
+st.caption("JobsCzInsight v18.0 // Production Ready // Swiss Design System 2.0")
