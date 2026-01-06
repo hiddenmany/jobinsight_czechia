@@ -169,7 +169,7 @@ modern_df = df[(df['tech_status'] == 'Modern') & (df['company'] != 'Unknown Empl
 top_innovators = modern_df.groupby('company').agg(
     count=('hash', 'count'),
     avg_sal=('avg_salary', lambda x: x[x>0].median())
-).sort_values('count', ascending=False).head(10)
+).sort_values(['count', 'avg_sal'], ascending=[False, False]).head(10)
 
 innovators = []
 for company, row in top_innovators.iterrows():
