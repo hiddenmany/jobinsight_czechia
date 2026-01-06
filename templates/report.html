@@ -7,13 +7,77 @@
     <title>HR Intelligence Report - Český Trh Práce 2026</title>
     <meta name="description"
         content="Týdenní tržní intelligence report pro HR profesionály a zaměstnavatele. Platové benchmarky, analýza rolí, distribuce seniorit.">
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"
+        integrity="sha384-Hl48Kq2HifOWdXEjMsKo6qxqvRLTYqIGbvlENBmkHAxZKIGCXv43H6W1jA671RzC"
+        crossorigin="anonymous"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
 
+        /* === DESIGN TOKENS === */
+        :root {
+            /* Colors - Primary */
+            --color-primary: #0055FF;
+            --color-primary-dark: #0040CC;
+            --color-primary-light: #e0e5ff;
+
+            /* Colors - Semantic */
+            --color-success: #00c853;
+            --color-success-light: #e8f5e9;
+            --color-warning: #FFA726;
+            --color-warning-light: #fff8e1;
+            --color-error: #DD3333;
+            --color-error-light: #ffebee;
+
+            /* Colors - Neutral */
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f8f9fa;
+            --color-bg-tertiary: #f3f4f6;
+            --color-text-primary: #111111;
+            --color-text-secondary: #666666;
+            --color-text-muted: #999999;
+            --color-border-primary: #e5e7eb;
+            --color-border-secondary: #eeeeee;
+
+            /* Spacing Scale */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 2.5rem;
+            --spacing-3xl: 3.75rem;
+
+            /* Border Radius */
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+
+            /* Typography */
+            --font-family: 'Inter', sans-serif;
+            --font-size-xs: 0.75rem;
+            --font-size-sm: 0.85rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.2rem;
+            --font-size-xl: 1.4rem;
+            --font-size-2xl: 1.8rem;
+            --font-size-3xl: clamp(2rem, 5vw + 1rem, 3.5rem);
+
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.03);
+            --shadow-xl: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+            /* Transitions */
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: #f8f9fa;
+            font-family: var(--font-family);
+            background: var(--color-bg-secondary);
             margin: 0;
             padding: 40px 20px;
             color: #111;
@@ -314,6 +378,16 @@
             background: #f3f4f6;
         }
 
+        .section-header:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: -2px;
+        }
+
+        .nav-pill:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
         .toggle-icon {
             display: inline-block;
             transition: transform 0.3s ease;
@@ -452,14 +526,6 @@
                 </div>
                 <div
                     style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
-                    <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">💰 Tržní Medián</div>
-                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;">{{ hpp_median }}k Kč</div>
-                    <div style="font-size: 0.9rem; opacity: 0.85;">Všechny sektory (výroba, IT, retail atd.)</div>
-                    <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 5px;">⚠️ Zahrnuje inzerované platy
-                        na začátečnické pozice</div>
-                </div>
-                <div
-                    style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
                     <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">🔥 Nejžádanější Pozice</div>
                     <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;">{{ summary_kpis.top_role_1 }}
                     </div>
@@ -482,7 +548,6 @@
                     <div>
                         <h2 style="margin: 0; color: white; font-size: 1.6rem; font-weight: 700;">AI Analýza Trhu
                         </h2>
-                        <span style="font-size: 0.8rem; opacity: 0.7;">Poháněno Gemini 3 Pro</span>
                     </div>
                 </div>
                 {% if llm_insights.market_health_score %}
@@ -620,13 +685,19 @@
         </div>
 
         <!-- Sticky Navigation -->
-        <nav class="sticky-nav">
-            <button class="nav-pill active" onclick="jumpToSection('kpi-summary')">📊 Souhrn</button>
-            <button class="nav-pill" onclick="jumpToSection('hr-dashboard')">💼 HR Intel</button>
-            <button class="nav-pill" onclick="jumpToSection('market-trends')">📈 Trendy</button>
-            <button class="nav-pill" onclick="jumpToSection('benefits-section')">🎁 Benefity</button>
-            <button class="nav-pill" onclick="jumpToSection('work-model-section')">🏠 Model Práce</button>
-            <button class="nav-pill" onclick="jumpToSection('economic-reality')">💰 Realita</button>
+        <nav class="sticky-nav" role="navigation" aria-label="Navigace sekcí">
+            <button class="nav-pill active" onclick="jumpToSection('kpi-summary')" aria-label="Přejít na sekci Souhrn"
+                tabindex="0">📊 Souhrn</button>
+            <button class="nav-pill" onclick="jumpToSection('hr-dashboard')" aria-label="Přejít na sekci HR Intel"
+                tabindex="0">💼 HR Intel</button>
+            <button class="nav-pill" onclick="jumpToSection('market-trends')" aria-label="Přejít na sekci Trendy"
+                tabindex="0">📈 Trendy</button>
+            <button class="nav-pill" onclick="jumpToSection('benefits-section')" aria-label="Přejít na sekci Benefity"
+                tabindex="0">🎁 Benefity</button>
+            <button class="nav-pill" onclick="jumpToSection('work-model-section')"
+                aria-label="Přejít na sekci Model Práce" tabindex="0">🏠 Model Práce</button>
+            <button class="nav-pill" onclick="jumpToSection('economic-reality')"
+                aria-label="Přejít na sekci Ekonomická Realita" tabindex="0">💰 Realita</button>
         </nav>
 
         <!-- KPI Summary Section -->
@@ -702,16 +773,18 @@
         </div>
 
         <!-- v1.0 HR INTELLIGENCE SECTION -->
-        <div id="hr-dashboard" class="collapsible-section">
-            <div class="section-header" onclick="toggleSection('hr-dashboard')">
-                <span class="toggle-icon">▼</span>
-                <h2 style="margin:0;">📊 HR Intelligence Přehled</h2>
-            </div>
-            <div class="section-content">
+        <div id="hr-dashboard" class="collapsible-section" role="region" aria-labelledby="hr-dashboard-heading">
+            <button class="section-header" onclick="toggleSection('hr-dashboard')" aria-expanded="true"
+                aria-controls="hr-dashboard-content" tabindex="0">
+                <span class="toggle-icon" aria-hidden="true">▼</span>
+                <h2 id="hr-dashboard-heading" style="margin:0;">📊 HR Přehled</h2>
+            </button>
+            <div id="hr-dashboard-content" class="section-content">
 
                 <div class="chart-grid">
                     <div>
-                        <div class="section-title"><span>A</span> Plat podle Pozice <span class="badge">NOVÉ</span></div>
+                        <div class="section-title"><span>A</span> Plat podle Pozice <span class="badge">NOVÉ</span>
+                        </div>
                         <div id="chart_role"></div>
                     </div>
                     <div>
@@ -720,88 +793,118 @@
                         <div id="chart_seniority"></div>
                     </div>
                 </div>
+            </div>
 
-                {% if skill_premiums %}
-                <div style="margin-top: 40px;">
-                    <div class="section-title"><span>C</span> Žebříček Prémií za Dovednosti <span class="badge">NOVÉ</span>
+            <!-- OFFICIAL CZECH BENCHMARK CARD -->
+            <div
+                style="background: #f0f7ff; border: 1px solid #cce3ff; border-radius: 10px; padding: 25px; margin-top: 30px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                    <span style="font-size: 1.5rem;">🏛️</span>
+                    <div>
+                        <h3 style="margin: 0; color: #0055FF;">Oficiální Mzdový Benchmark (ČSÚ/ISPV)</h3>
+                        <div style="font-size: 0.8rem; opacity: 0.7;">Zdroj: Informační systém o průměrném výdělku
+                            (MPSV), 1. pololetí 2025</div>
                     </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    {% for role, salary in ispv_benchmarks.items() %}
+                    <div
+                        style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center;">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">{{ role |
+                            translate_cz('roles') }}</div>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #111;">{{
+                            "{:,}".format(salary).replace(',', ' ') }} Kč</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if skill_premiums %}
+            <div style="margin-top: 40px;">
+                <div class="section-title"><span>C</span> Žebříček Prémií za Dovednosti <span class="badge">NOVÉ</span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Dovednost</th>
+                                <th>Medián Platu</th>
+                                <th>Prémie</th>
+                                <th>Počet Pozic</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for skill in skill_premiums %}
+                            <tr>
+                                <td style="font-weight: 600;">{{ skill.Skill }}</td>
+                                <td>{{ skill.Median | int }} Kč</td>
+                                <td
+                                    class="{% if '+' in skill.Premium %}premium-positive{% else %}premium-negative{% endif %}">
+                                    {{ skill.Premium }}</td>
+                                <td>{{ skill.Jobs }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if seniority_role_matrix %}
+            <div
+                style="margin-top: 40px; background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #FFA726;">
+                <div class="section-title" style="border-left-color: #FFA726; cursor: pointer; user-select: none;"
+                    onclick="toggleSection('dataQualitySection')">
+                    <span>⚠️ Poznámka ke Kvalitě Dat: Plat podle Seniorit + Pozice</span>
+                    <span id="dataQualityToggle"
+                        style="margin-left: auto; font-size: 1.2rem; transition: transform 0.3s;">▼</span>
+                </div>
+                <div id="dataQualitySection" style="display: none;">
+                    <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
+                        <strong>Proč "Junior" někdy vydělává více než "Mid"?</strong> Tato křížová analýza
+                        odhaluje potenciální inflaci titulů, problémy s klasifikací nebo zkreslení složení rolí v
+                        datasetu.
+                    </p>
                     <div style="overflow-x: auto;">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Dovednost</th>
+                                    <th>Pozice</th>
+                                    <th>Seniorita</th>
                                     <th>Medián Platu</th>
-                                    <th>Prémie</th>
-                                    <th>Počet Pozic</th>
+                                    <th>Velikost Vzorku</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for skill in skill_premiums %}
+                                {% for item in seniority_role_matrix %}
                                 <tr>
-                                    <td style="font-weight: 600;">{{ skill.Skill }}</td>
-                                    <td>{{ skill.Median | int }} Kč</td>
+                                    <td style="font-weight: 600;">{{ item.role_type }}</td>
                                     <td
-                                        class="{% if '+' in skill.Premium %}premium-positive{% else %}premium-negative{% endif %}">
-                                        {{ skill.Premium }}</td>
-                                    <td>{{ skill.Jobs }}</td>
+                                        style="{% if item.seniority_level == 'Junior' %}color: #FF9800; font-weight: bold;{% elif item.seniority_level == 'Senior' %}color: #0055FF; font-weight: bold;{% endif %}">
+                                        {% if item.seniority_level == 'Junior' %}Junior
+                                        {% elif item.seniority_level == 'Mid' %}Mid
+                                        {% elif item.seniority_level == 'Senior' %}Senior
+                                        {% elif item.seniority_level == 'Executive' %}Executive
+                                        {% else %}{{ item.seniority_level }}{% endif %}
+                                    </td>
+                                    <td style="font-weight: bold;">{{ item.median_salary | int }} Kč</td>
+                                    <td style="color: #999;">{{ item.count }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
                 </div>
-                {% endif %}
-
-                {% if seniority_role_matrix %}
-                <div
-                    style="margin-top: 40px; background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #FFA726;">
-                    <div class="section-title" style="border-left-color: #FFA726; cursor: pointer; user-select: none;"
-                        onclick="toggleSection('dataQualitySection')">
-                        <span>⚠️ Poznámka ke Kvalitě Dat: Plat podle Seniorit + Pozice</span>
-                        <span id="dataQualityToggle"
-                            style="margin-left: auto; font-size: 1.2rem; transition: transform 0.3s;">▼</span>
-                    </div>
-                    <div id="dataQualitySection" style="display: none;">
-                        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
-                            <strong>Proč "Junior" někdy vydělává více než "Mid"?</strong> Tato křížová analýza
-                            odhaluje potenciální inflaci titulů, problémy s klasifikací nebo zkreslení složení rolí v datasetu.
-                        </p>
-                        <div style="overflow-x: auto;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Pozice</th>
-                                        <th>Seniorita</th>
-                                        <th>Medián Platu</th>
-                                        <th>Velikost Vzorku</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for item in seniority_role_matrix %}
-                                    <tr>
-                                        <td style="font-weight: 600;">{{ item.role_type }}</td>
-                                        <td
-                                            style="{% if item.seniority_level == 'Junior' %}color: #FF9800; font-weight: bold;{% elif item.seniority_level == 'Senior' %}color: #0055FF; font-weight: bold;{% endif %}">
-                                            {% if item.seniority_level == 'Junior' %}Junior
-                                            {% elif item.seniority_level == 'Mid' %}Mid
-                                            {% elif item.seniority_level == 'Senior' %}Senior
-                                            {% elif item.seniority_level == 'Executive' %}Executive
-                                            {% else %}{{ item.seniority_level }}{% endif %}
-                                        </td>
-                                        <td style="font-weight: bold;">{{ item.median_salary | int }} Kč</td>
-                                        <td style="color: #999;">{{ item.count }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
             </div>
+        </div>
+    </div>
+    </div>
+    {% endif %}
+    </div>
+    </div>
 
-        </div> <!-- End section-content -->
-    </div> <!-- End collapsible-section -->
+    <!-- OUTDATED CHARTS REMOVED (Legacy Tech, Gap, etc.) -->
 
     <!-- MARKET TRENDS & DEEP ANALYSIS -->
     <div id="market-trends" class="collapsible-section">
@@ -811,34 +914,40 @@
         </div>
         <div class="section-content">
             <p style="color: #666; margin-bottom: 10px; font-size: 0.95rem;">
-                <strong>CEO Insight:</strong> Vizuální analýza platových rozpětí, náborových objemů, poptávky po dovednostech a tržního složení.
+                <strong>CEO Insight:</strong> Vizuální analýza platových rozpětí, náborových objemů, poptávky po
+                dovednostech a tržního složení.
             </p>
             <p style="color: #999; margin-bottom: 30px; font-size: 0.85rem; font-style: italic;">
-                Poznámka: Dovednosti se objevují pouze v 1-5% pozic, což naznačuje specializovanou spíše než univerzální poptávku.
+                Poznámka: Dovednosti se objevují pouze v 1-5% pozic, což naznačuje specializovanou spíše než univerzální
+                poptávku.
             </p>
 
             <div style="margin-bottom: 40px;">
                 <div class="section-title">💰 Inzerovaná Platová Rozpětí (Měsíční Kč)</div>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Pozice seřazené podle mediánu inzerovaného platu. Použijte k porovnání vašich interních platových pásem.</p>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Pozice seřazené podle mediánu
+                    inzerovaného platu. Použijte k porovnání vašich interních platových pásem.</p>
                 <div id="chart_salary_percentiles"></div>
             </div>
 
             <div class="chart-grid" style="margin-bottom: 40px;">
                 <div>
                     <div class="section-title">🏢 Nejvyšší Objem Náboru (Celkově)</div>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Společnosti s nejvyšším počtem aktivních inzerátů</p>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Společnosti s nejvyšším počtem
+                        aktivních inzerátů</p>
                     <div id="chart_top_companies"></div>
                 </div>
                 <div>
                     <div class="section-title">🔥 Pozice Zmiňující Technické Dovednosti</div>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Nejčastěji zmiňované dovednosti napříč všemi inzeráty</p>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Nejčastěji zmiňované dovednosti
+                        napříč všemi inzeráty</p>
                     <div id="chart_top_skills"></div>
                 </div>
             </div>
 
             <div style="margin-top: 40px;">
                 <div class="section-title">📊 Složení Trhu Práce podle Sektoru</div>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Rozložení aktivních inzerátů podle kategorie pozice</p>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Rozložení aktivních inzerátů podle
+                    kategorie pozice</p>
                 <div id="chart_role_distribution"></div>
             </div>
         </div>
@@ -853,7 +962,7 @@
     <div id="benefits-section" class="collapsible-section">
         <div class="section-header" onclick="toggleSection('benefits-section')">
             <span class="toggle-icon">▼</span>
-            <h2 style="margin:0;">🎁 Intelligence Benefitů & Výhod</h2>
+            <h2 style="margin:0;">🎁 Přehled benefitů</h2>
         </div>
         <div class="section-content">
 
@@ -908,7 +1017,7 @@
     <div id="work-model-section" class="collapsible-section">
         <div class="section-header" onclick="toggleSection('work-model-section')">
             <span class="toggle-icon">▼</span>
-            <h2 style="margin:0;">🏠 Intelligence Pracovního Modelu</h2>
+            <h2 style="margin:0;">🏠 Přehled pracovního modelu</h2>
         </div>
         <div class="section-content">
 
@@ -929,7 +1038,8 @@
             {% if remote_premium and remote_premium.premium != 'N/A' %}
             <div
                 style="background: linear-gradient(135deg, #f0fff4 0%, #fff 100%); padding: 20px; border-radius: 8px; border: 1px solid #00FF88; margin-bottom: 40px;">
-                <div style="font-size: 1.1rem; font-weight: 600; color: #111; margin-bottom: 10px;">💰 Prémie za Remote Práci</div>
+                <div style="font-size: 1.1rem; font-weight: 600; color: #111; margin-bottom: 10px;">💰 Prémie za Remote
+                    Práci</div>
                 <div style="display: flex; gap: 30px; flex-wrap: wrap;">
                     <div>
                         <span style="color: #666;">Remote Pozice:</span>
@@ -995,7 +1105,8 @@
         </div>
         <div class="section-content">
             <p style="color: #666; margin-bottom: 30px; font-size: 0.95rem;">
-                Hloubková tržní intelligence odhalující arbitráž v kompenzacích, zdraví talentového potrubí a reálnou vs "falešnou" flexibilitu.
+                Hloubková tržní intelligence odhalující arbitráž v kompenzacích, zdraví talentového potrubí a reálnou vs
+                "falešnou" flexibilitu.
             </p>
 
             <div
@@ -1066,8 +1177,9 @@
             <!-- Remote Flexibility Analysis -->
             {% if remote_flex %}
             <div style="margin-top: 30px;">
-                <div class="section-title">🏠 Kontrola Reality Remote/Hybrid Flexibility</div>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Znamená "Hybrid" flexibilní svobodu nebo rigidní fixní dny?</p>
+                <div class="section-title">🏠 Pohled na realitu Remote/Hybrid Flexibility</div>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Znamená "Hybrid" flexibilní svobodu
+                    nebo rigidní fixní dny?</p>
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                     {% for flex in remote_flex %}
                     <div
@@ -1083,34 +1195,6 @@
             </div>
             {% endif %}
 
-            <!-- Legacy Rot by Role -->
-            {% if legacy_rot %}
-            <div style="margin-top: 30px;">
-                <div class="section-title">⚙️ Legacy Tech Dluh podle Pozice</div>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Pozice</th>
-                                <th>Legacy %</th>
-                                <th>Moderní %</th>
-                                <th>Celkem Pozic</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for role in legacy_rot %}
-                            <tr>
-                                <td style="font-weight: 600;">{{ role.Role }}</td>
-                                <td style="color: #d32f2f; font-weight: bold;">{{ role['Legacy %'] }}</td>
-                                <td style="color: #00c853; font-weight: bold;">{{ role['Modern %'] }}</td>
-                                <td>{{ role['Total Jobs'] }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
 
             <!-- Ghost Jobs -->
             {% if ghost_jobs %}
@@ -1131,7 +1215,8 @@
                     </p>
                     <div
                         style="background: #fff3e0; padding: 12px; border-radius: 6px; font-size: 0.8rem; color: #e65100; margin-bottom: 15px;">
-                        <strong>⚠️ Není definitivním důkazem "falešných" pozic</strong> - Výrobní a logistické společnosti
+                        <strong>⚠️ Není definitivním důkazem "falešných" pozic</strong> - Výrobní a logistické
+                        společnosti
                         legitimně najímají desítky identických rolí.
                         Použijte jako podnět k diskuzi, ne jako blacklist.
                     </div>
@@ -1175,14 +1260,10 @@
                     <div class="section-title"><span>01</span> Typy Smluv</div>
                     <div id="chart_contract"></div>
                 </div>
-                <div>
-                    <div class="section-title"><span>02</span> Technologická Propast</div>
-                    <div id="chart_tech"></div>
-                </div>
             </div>
 
             <div style="margin-top: 60px;">
-                <div class="section-title"><span>03</span> Top Inovátoři (Objem Náboru v Moderním Stacku)</div>
+                <div class="section-title"><span>02</span> Top Inovátoři (Objem Náboru v Moderním Stacku)</div>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -1213,7 +1294,7 @@
 
             {% if top_roles %}
             <div style="margin-top: 40px;">
-                <div class="section-title"><span>04</span> Distribuce Pozic (Top 5)</div>
+                <div class="section-title"><span>03</span> Distribuce Pozic (Top 5)</div>
                 <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
                     {% for role in top_roles %}
                     <div
@@ -1239,13 +1320,17 @@
         </div>
         <div class="section-content" style="background: #fff1f2; padding: 20px; border-radius: 0 0 8px 8px;">
             <p style="color: #881337; margin-bottom: 10px; font-size: 0.95rem;">Tato analýza měří <strong>SIGNÁLY
-                    POPTÁVKY</strong> (co zaměstnavatelé zveřejňují), NE TRŽNÍ REALITU (co se skutečně nabírá/platí).</p>
+                    POPTÁVKY</strong> (co zaměstnavatelé zveřejňují), NE TRŽNÍ REALITU (co se skutečně nabírá/platí).
+            </p>
             <ul style="color: #9f1239; margin-bottom: 0; font-size: 0.9rem; line-height: 1.6;">
-                <li><strong>Ghost Jobs:</strong> Odhadovaných 10-30% pozic nemusí být nikdy obsazeno.</li>
-                <li><strong>Zkreslení Platů:</strong> Inzerovaná rozpětí se často liší od finálních nabídek; horní hranice rozpětí
+                <li><strong>Ghost Jobs:</strong> Odhadem 10-30% pozic nemusí být nikdy obsazeno.</li>
+                <li><strong>Zkreslení Platů:</strong> Inzerovaná rozpětí se často liší od finálních nabídek; horní
+                    hranice rozpětí
                     se zřídka platí.</li>
-                <li><strong>Inflace:</strong> "Senior" pozice mohou najímat na "Mid" úrovně; seznamy dovedností jsou často
-                    aspirační.</li>
+                <li><strong>Inflace titulů:</strong> "Senior" pozice mohou najímat na "Mid" úrovně; seznamy dovedností
+                    jsou
+                    často
+                    nerealistické.</li>
                 <li><strong>Zdroje Dat:</strong> Jobs.cz, Prace.cz, StartupJobs, WTTJ, Cocuma (LinkedIn odstraněn kvůli
                     blokování)</li>
                 <li><strong>Metodologie:</strong> Automatizované scrapování s 5minutovými prodlevami, 14denní retence,
@@ -1264,8 +1349,6 @@
         var contract_data = {{ json_contract | safe }};
         Plotly.newPlot('chart_contract', contract_data.data, contract_data.layout);
 
-        var tech_data = {{ json_tech | safe }};
-        Plotly.newPlot('chart_tech', tech_data.data, tech_data.layout);
 
         var role_data = {{ json_role | safe }};
         Plotly.newPlot('chart_role', role_data.data, role_data.layout);
@@ -1325,25 +1408,30 @@
             }
         }
 
-        // Highlight active section on scroll
+        // Highlight active section on scroll (PERFORMANCE OPTIMIZED)
+        // Cache queries outside listener to avoid recomputation on every scroll
+        const cachedSections = Array.from(
+            document.querySelectorAll('[id$="-summary"], [id$="-dashboard"], [id$="-trends"], [id$="-section"], [id$="-reality"], [id$="-overview"]')
+        );
+        const cachedNavPills = Array.from(document.querySelectorAll('.nav-pill'));
+
         let scrollTimeout;
         window.addEventListener('scroll', () => {
             clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => {
                 const navOffset = 150;
-                const sections = document.querySelectorAll('[id$="-summary"], [id$="-dashboard"], [id$="-trends"], [id$="-section"], [id$="-reality"], [id$="-overview"]');
-
-                sections.forEach(section => {
+                for (const section of cachedSections) {
                     const rect = section.getBoundingClientRect();
                     if (rect.top <= navOffset && rect.bottom >= navOffset) {
-                        document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+                        cachedNavPills.forEach(p => p.classList.remove('active'));
                         const sectionId = section.id;
                         const activePill = document.querySelector(`[onclick="jumpToSection('${sectionId}')"]`);
                         if (activePill) activePill.classList.add('active');
+                        break; // Early exit once found
                     }
-                });
+                }
             }, 100);
-        });
+        }, { passive: true }); // Passive flag for scroll performance
 
     </script>
 </body>
