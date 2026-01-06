@@ -7,33 +7,98 @@
     <title>HR Intelligence Report - Český Trh Práce 2026</title>
     <meta name="description"
         content="Týdenní tržní intelligence report pro HR profesionály a zaměstnavatele. Platové benchmarky, analýza rolí, distribuce seniorit.">
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"
+        integrity="sha384-Hl48Kq2HifOWdXEjMsKo6qxqvRLTYqIGbvlENBmkHAxZKIGCXv43H6W1jA671RzC"
+        crossorigin="anonymous"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
 
+        /* === DESIGN TOKENS === */
+        :root {
+            /* Colors - Primary */
+            --color-primary: #0055FF;
+            --color-primary-dark: #0040CC;
+            --color-primary-light: #e0e5ff;
+
+            /* Colors - Semantic */
+            --color-success: #00c853;
+            --color-success-light: #e8f5e9;
+            --color-warning: #FFA726;
+            --color-warning-light: #fff8e1;
+            --color-error: #DD3333;
+            --color-error-light: #ffebee;
+
+            /* Colors - Neutral */
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f8f9fa;
+            --color-bg-tertiary: #f3f4f6;
+            --color-text-primary: #111111;
+            --color-text-secondary: #666666;
+            --color-text-muted: #999999;
+            --color-border-primary: #e5e7eb;
+            --color-border-secondary: #eeeeee;
+
+            /* Spacing Scale */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 2.5rem;
+            --spacing-3xl: 3.75rem;
+
+            /* Border Radius */
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+
+            /* Typography */
+            --font-family: 'Inter', sans-serif;
+            --font-size-xs: 0.75rem;
+            --font-size-sm: 0.85rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.2rem;
+            --font-size-xl: 1.4rem;
+            --font-size-2xl: 1.8rem;
+            --font-size-3xl: clamp(2rem, 5vw + 1rem, 3.5rem);
+
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.03);
+            --shadow-xl: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+            /* Transitions */
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: #f8f9fa;
+            font-family: var(--font-family);
+            background: var(--color-bg-secondary);
             margin: 0;
             padding: 40px 20px;
-            color: #111;
+            color: var(--color-text-primary);
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: #fff;
-            padding: 60px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
-            border-radius: 12px;
+            background: var(--color-bg-primary);
+            padding: var(--spacing-3xl);
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius-lg);
         }
 
         h1 {
-            font-size: 3.5rem;
+            font-size: var(--font-size-3xl);
+            /* clamp(2rem, 5vw + 1rem, 3.5rem) */
             font-weight: 800;
             letter-spacing: -2px;
             margin-bottom: 0.1em;
-            color: #111;
+            color: var(--color-text-primary);
         }
 
         h1 span {
@@ -314,6 +379,16 @@
             background: #f3f4f6;
         }
 
+        .section-header:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: -2px;
+        }
+
+        .nav-pill:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
         .toggle-icon {
             display: inline-block;
             transition: transform 0.3s ease;
@@ -434,7 +509,7 @@
         </div>
         <div class="subtitle">
             <span>Tržní Přehled - 3,160 Aktivních Inzerátů</span>
-            <span><span class="version-badge">v1.4</span> 5. ledna 2026</span>
+            <span><span class="version-badge">v1.4</span> 6. ledna 2026</span>
         </div>
 
         <!-- HERO: 3 Key Insights This Week -->
@@ -452,14 +527,6 @@
                 </div>
                 <div
                     style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
-                    <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">💰 Tržní Medián</div>
-                    <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;">31k Kč</div>
-                    <div style="font-size: 0.9rem; opacity: 0.85;">Všechny sektory (výroba, IT, retail atd.)</div>
-                    <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 5px;">⚠️ Zahrnuje inzerované platy
-                        na začátečnické pozice</div>
-                </div>
-                <div
-                    style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
                     <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 8px;">🔥 Nejžádanější Pozice</div>
                     <div style="font-size: 2rem; font-weight: 700; margin-bottom: 5px;">Manufacturing
                     </div>
@@ -470,215 +537,6 @@
         </div>
 
         <!-- AI Market Analysis (Powered by Gemini) -->
-        
-        <div id="ai-insights"
-            style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 40px; border-radius: 16px; margin: 30px 0; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);">
-
-            <!-- Header with Market Health Score -->
-            <div
-                style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; margin-bottom: 25px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 2rem;">🤖</span>
-                    <div>
-                        <h2 style="margin: 0; color: white; font-size: 1.6rem; font-weight: 700;">AI Analýza Trhu
-                        </h2>
-                        <span style="font-size: 0.8rem; opacity: 0.7;">Poháněno Gemini 3 Pro</span>
-                    </div>
-                </div>
-                
-                <div
-                    style="background: rgba(255, 255, 255, 0.1); padding: 15px 25px; border-radius: 12px; text-align: center;">
-                    <div
-                        style="font-size: 2.5rem; font-weight: 800; color: #fbbf24;">
-                        6/10
-                    </div>
-                    <div style="font-size: 0.75rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">
-                        Zdraví Trhu</div>
-                    
-                    <div style="font-size: 0.8rem; margin-top: 5px; opacity: 0.7;">Ačkoliv je objem nabídek stabilní, trh je strukturálně pokřivený nedostatkem vstupních pozic pro juniory a nízkou transparentností odměňování, což brzdí efektivní alokaci talentů.</div>
-                    
-                </div>
-                
-            </div>
-
-            <!-- Executive Summary -->
-            
-            <div
-                style="background: rgba(255, 255, 255, 0.05); padding: 20px 25px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #60a5fa;">
-                <div
-                    style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 10px;">
-                    📋 Shrnutí pro Vedení</div>
-                <p style="font-size: 1.1rem; line-height: 1.7; margin: 0; opacity: 0.95;">
-                    Analyzovaný vzorek 3 160 nabídek ukazuje silnou dominanci provozních a výrobních rolí (Manufacturing, Logistics, Retail), které tvoří páteř aktuální poptávky. Trh vykazuje extrémní nerovnováhu v senioritě, kdy 74 % pozic cílí na 'Mid' a 'Executive' úroveň, zatímco příležitosti pro juniory jsou marginální (necelých 9 %). Alarmujícím zjištěním je prakticky nulová platová transparentnost (pouze 0,9 % nabídek s uvedenou mzdou), což v kombinaci s vysokým podílem brigád (33 %) naznačuje tlak na flexibilitu a nízké mzdové náklady mimo IT sektor.
-                </p>
-            </div>
-            
-
-            <!-- Key Insights Grid -->
-            
-            <div style="margin-bottom: 30px;">
-                <div
-                    style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 15px;">
-                    🔍 Klíčové Poznatky</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
-                    
-                    <div
-                        style="background: rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 10px; backdrop-filter: blur(10px);">
-                        
-                        <!-- Rich insight object format -->
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <span style="font-size: 1.5rem;">📊</span>
-                            <span style="font-weight: 700; font-size: 1rem;">Dominance provozních rolí</span>
-                            
-                            <span
-                                style="margin-left: auto; font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; background: rgba(74, 222, 128, 0.3);">
-                                high
-                            </span>
-                            
-                        </div>
-                        <p style="margin: 0 0 10px 0; font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">Sektor Manufacturing (545 nabídek) spolu s Logistikou (215) a Retailem (194) tvoří téměř třetinu celého trhu, zatímco IT role (Developer) představují jen 7,4 %.</p>
-                        
-                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.7; font-style: italic;">→ Náborové strategie se musí soustředit na blue-collar segment, kde je vysoká konkurence o kandidáty, nikoliv jen na white-collar specialisty.</p>
-                        
-                        
-                    </div>
-                    
-                    <div
-                        style="background: rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 10px; backdrop-filter: blur(10px);">
-                        
-                        <!-- Rich insight object format -->
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <span style="font-size: 1.5rem;">💰</span>
-                            <span style="font-weight: 700; font-size: 1rem;">Propastná mzdová nerovnost</span>
-                            
-                            <span
-                                style="margin-left: auto; font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; background: rgba(251, 191, 36, 0.3);">
-                                medium
-                            </span>
-                            
-                        </div>
-                        <p style="margin: 0 0 10px 0; font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">Mediánová mzda Developerů (100 625 CZK) je téměř 4,5násobkem mediánu v segmentu Hospitality (22 560 CZK) a 3násobkem celkového tržního mediánu (31 421 CZK).</p>
-                        
-                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.7; font-style: italic;">→ Firmy mimo IT musí hledat jiné benefity než finance, aby byly konkurenceschopné, zatímco v IT zůstává mzda hlavním rozlišovačem.</p>
-                        
-                        
-                    </div>
-                    
-                    <div
-                        style="background: rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 10px; backdrop-filter: blur(10px);">
-                        
-                        <!-- Rich insight object format -->
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <span style="font-size: 1.5rem;">🎯</span>
-                            <span style="font-weight: 700; font-size: 1rem;">Kritický nedostatek junior pozic</span>
-                            
-                            <span
-                                style="margin-left: auto; font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; background: rgba(74, 222, 128, 0.3);">
-                                high
-                            </span>
-                            
-                        </div>
-                        <p style="margin: 0 0 10px 0; font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">Pouze 278 nabídek (8,8 %) je určeno pro juniory, zatímco poptávka po Mid (1 477) a Executive (866) úrovních drtivě převažuje.</p>
-                        
-                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.7; font-style: italic;">→ Zaměstnavatelé kanibalizují trh zkušených pracovníků namísto výchovy vlastních talentů, což povede k mzdové inflaci u seniorních rolí.</p>
-                        
-                        
-                    </div>
-                    
-                    <div
-                        style="background: rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 10px; backdrop-filter: blur(10px);">
-                        
-                        <!-- Rich insight object format -->
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <span style="font-size: 1.5rem;">💡</span>
-                            <span style="font-weight: 700; font-size: 1rem;">Vzestup flexibilních úvazků</span>
-                            
-                            <span
-                                style="margin-left: auto; font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; background: rgba(74, 222, 128, 0.3);">
-                                high
-                            </span>
-                            
-                        </div>
-                        <p style="margin: 0 0 10px 0; font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">Více než třetina inzerátů (1 047, tj. 33 %) spadá do kategorie 'Brigáda', což je nezvykle vysoký poměr oproti standardnímu HPP (1 851).</p>
-                        
-                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.7; font-style: italic;">→ Firmy se snaží vykrývat výkyvy poptávky levnější a flexibilnější pracovní silou namísto vázání se na trvalé pracovní poměry.</p>
-                        
-                        
-                    </div>
-                    
-                    <div
-                        style="background: rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 10px; backdrop-filter: blur(10px);">
-                        
-                        <!-- Rich insight object format -->
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                            <span style="font-size: 1.5rem;">⚠️</span>
-                            <span style="font-weight: 700; font-size: 1rem;">Anomálie v 'Management' platech</span>
-                            
-                            <span
-                                style="margin-left: auto; font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; background: rgba(251, 191, 36, 0.3);">
-                                medium
-                            </span>
-                            
-                        </div>
-                        <p style="margin: 0 0 10px 0; font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">Medián mzdy u role 'Management' vychází na podezřele nízkých 25 523 CZK, což je méně než celkový tržní medián.</p>
-                        
-                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.7; font-style: italic;">→ Indikuje to inflaci názvů pozic, kde jsou jako 'manažeři' označováni řadoví vedoucí směn či prodejen s nízkou kvalifikací.</p>
-                        
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-
-            <!-- Strategic Recommendations -->
-            
-            <div
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
-                
-                <div
-                    style="background: rgba(59, 130, 246, 0.15); padding: 20px; border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                    <div style="font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                        <span>🏢</span> Pro zaměstnavatele
-                    </div>
-                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6; opacity: 0.9;">
-                        
-                        <li style="margin-bottom: 8px;">Zvýšit transparentnost mezd: Uvedení platu u inzerátu vás okamžitě odliší od 99 % konkurence a zvýší relevanci uchazečů.</li>
-                        
-                        <li style="margin-bottom: 8px;">Investovat do Junior programů: Vzhledem k přesycenosti poptávky po seniorech je ekonomicky výhodnější nabírat juniory (kde je malá konkurence) a interně je vyškolit.</li>
-                        
-                    </ul>
-                </div>
-                
-                
-                <div
-                    style="background: rgba(16, 185, 129, 0.15); padding: 20px; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.3);">
-                    <div style="font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                        <span>👤</span> Pro uchazeče
-                    </div>
-                    <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.6; opacity: 0.9;">
-                        
-                        <li style="margin-bottom: 8px;">Pro juniory: Trh je tvrdý, zaměřte se na získání praxe formou stáží nebo brigád (kterých je dostatek), i za cenu nižšího výdělku pro start kariéry.</li>
-                        
-                        <li style="margin-bottom: 8px;">Pro IT specialisty: S mediánem přes 100k CZK máte stále silnou vyjednávací pozici, preferujte firmy s 'Modern' tech stackem (React, K8s), kterých je 36 %.</li>
-                        
-                    </ul>
-                </div>
-                
-            </div>
-            
-
-            <!-- Data Quality Note -->
-            
-            <div
-                style="font-size: 0.8rem; opacity: 0.6; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-                ⚠️ Kritickým limitem analýzy je extrémně nízké pokrytí daty o mzdách (0,9 %). Uváděné mediány je nutné brát jako orientační, pravděpodobně zkreslené směrem dolů kvůli vyššímu podílu inzerce z Prace.cz (blue-collar) oproti specializovaným portálům.
-            </div>
-            
-
-            <!-- Legacy trend_alert support -->
-            
-        </div>
         
 
         <!-- Data Quality Badge -->
@@ -693,13 +551,19 @@
         </div>
 
         <!-- Sticky Navigation -->
-        <nav class="sticky-nav">
-            <button class="nav-pill active" onclick="jumpToSection('kpi-summary')">📊 Souhrn</button>
-            <button class="nav-pill" onclick="jumpToSection('hr-dashboard')">💼 HR Intel</button>
-            <button class="nav-pill" onclick="jumpToSection('market-trends')">📈 Trendy</button>
-            <button class="nav-pill" onclick="jumpToSection('benefits-section')">🎁 Benefity</button>
-            <button class="nav-pill" onclick="jumpToSection('work-model-section')">🏠 Model Práce</button>
-            <button class="nav-pill" onclick="jumpToSection('economic-reality')">💰 Realita</button>
+        <nav class="sticky-nav" role="navigation" aria-label="Navigace sekcí">
+            <button class="nav-pill active" onclick="jumpToSection('kpi-summary')" aria-label="Přejít na sekci Souhrn"
+                tabindex="0">📊 Souhrn</button>
+            <button class="nav-pill" onclick="jumpToSection('hr-dashboard')" aria-label="Přejít na sekci HR Intel"
+                tabindex="0">💼 HR Intel</button>
+            <button class="nav-pill" onclick="jumpToSection('market-trends')" aria-label="Přejít na sekci Trendy"
+                tabindex="0">📈 Trendy</button>
+            <button class="nav-pill" onclick="jumpToSection('benefits-section')" aria-label="Přejít na sekci Benefity"
+                tabindex="0">🎁 Benefity</button>
+            <button class="nav-pill" onclick="jumpToSection('work-model-section')"
+                aria-label="Přejít na sekci Model Práce" tabindex="0">🏠 Model Práce</button>
+            <button class="nav-pill" onclick="jumpToSection('economic-reality')"
+                aria-label="Přejít na sekci Ekonomická Realita" tabindex="0">💰 Realita</button>
         </nav>
 
         <!-- KPI Summary Section -->
@@ -707,7 +571,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>📊 Shrnutí pro Vedení</h2>
                 <div class="summary-meta">
-                    <span><strong>Aktualizováno:</strong> 2026-01-05 17:01</span>
+                    <span><strong>Aktualizováno:</strong> 2026-01-06 09:11</span>
                     <span><strong>Celkem Pozic:</strong> 3160</span>
                 </div>
             </div>
@@ -775,16 +639,18 @@
         </div>
 
         <!-- v1.0 HR INTELLIGENCE SECTION -->
-        <div id="hr-dashboard" class="collapsible-section">
-            <div class="section-header" onclick="toggleSection('hr-dashboard')">
-                <span class="toggle-icon">▼</span>
-                <h2 style="margin:0;">📊 HR Intelligence Přehled</h2>
-            </div>
-            <div class="section-content">
+        <div id="hr-dashboard" class="collapsible-section" role="region" aria-labelledby="hr-dashboard-heading">
+            <button class="section-header" onclick="toggleSection('hr-dashboard')" aria-expanded="true"
+                aria-controls="hr-dashboard-content" tabindex="0">
+                <span class="toggle-icon" aria-hidden="true">▼</span>
+                <h2 id="hr-dashboard-heading" style="margin:0;">📊 HR Přehled</h2>
+            </button>
+            <div id="hr-dashboard-content" class="section-content">
 
                 <div class="chart-grid">
                     <div>
-                        <div class="section-title"><span>A</span> Plat podle Pozice <span class="badge">NOVÉ</span></div>
+                        <div class="section-title"><span>A</span> Plat podle Pozice <span class="badge">NOVÉ</span>
+                        </div>
                         <div id="chart_role"></div>
                     </div>
                     <div>
@@ -793,78 +659,86 @@
                         <div id="chart_seniority"></div>
                     </div>
                 </div>
-
-                
-
-                
-                <div
-                    style="margin-top: 40px; background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #FFA726;">
-                    <div class="section-title" style="border-left-color: #FFA726; cursor: pointer; user-select: none;"
-                        onclick="toggleSection('dataQualitySection')">
-                        <span>⚠️ Poznámka ke Kvalitě Dat: Plat podle Seniorit + Pozice</span>
-                        <span id="dataQualityToggle"
-                            style="margin-left: auto; font-size: 1.2rem; transition: transform 0.3s;">▼</span>
-                    </div>
-                    <div id="dataQualitySection" style="display: none;">
-                        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
-                            <strong>Proč "Junior" někdy vydělává více než "Mid"?</strong> Tato křížová analýza
-                            odhaluje potenciální inflaci titulů, problémy s klasifikací nebo zkreslení složení rolí v datasetu.
-                        </p>
-                        <div style="overflow-x: auto;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Pozice</th>
-                                        <th>Seniorita</th>
-                                        <th>Medián Platu</th>
-                                        <th>Velikost Vzorku</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    
-                                    <tr>
-                                        <td style="font-weight: 600;">Manufacturing</td>
-                                        <td
-                                            style="">
-                                            Executive
-                                            
-                                        </td>
-                                        <td style="font-weight: bold;">32320 Kč</td>
-                                        <td style="color: #999;">9</td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td style="font-weight: 600;">Other</td>
-                                        <td
-                                            style="">
-                                            Mid
-                                            
-                                        </td>
-                                        <td style="font-weight: bold;">24400 Kč</td>
-                                        <td style="color: #999;">3</td>
-                                    </tr>
-                                    
-                                    <tr>
-                                        <td style="font-weight: 600;">Service</td>
-                                        <td
-                                            style="">
-                                            Mid
-                                            
-                                        </td>
-                                        <td style="font-weight: bold;">20000 Kč</td>
-                                        <td style="color: #999;">3</td>
-                                    </tr>
-                                    
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
             </div>
 
-        </div> <!-- End section-content -->
-    </div> <!-- End collapsible-section -->
+            <!-- OFFICIAL CZECH BENCHMARK CARD -->
+            
+
+            
+
+            
+            <div
+                style="margin-top: 40px; background: #fff8e1; padding: 20px; border-radius: 8px; border-left: 4px solid #FFA726;">
+                <div class="section-title" style="border-left-color: #FFA726; cursor: pointer; user-select: none;"
+                    onclick="toggleSection('dataQualitySection')">
+                    <span>⚠️ Poznámka ke Kvalitě Dat: Plat podle Seniorit + Pozice</span>
+                    <span id="dataQualityToggle"
+                        style="margin-left: auto; font-size: 1.2rem; transition: transform 0.3s;">▼</span>
+                </div>
+                <div id="dataQualitySection" style="display: none;">
+                    <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">
+                        <strong>Proč "Junior" někdy vydělává více než "Mid"?</strong> Tato křížová analýza
+                        odhaluje potenciální inflaci titulů, problémy s klasifikací nebo zkreslení složení rolí v
+                        datasetu.
+                    </p>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Pozice</th>
+                                    <th>Seniorita</th>
+                                    <th>Medián Platu</th>
+                                    <th>Velikost Vzorku</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                <tr>
+                                    <td style="font-weight: 600;">Manufacturing</td>
+                                    <td
+                                        style="">
+                                        Executive
+                                        
+                                    </td>
+                                    <td style="font-weight: bold;">32320 Kč</td>
+                                    <td style="color: #999;">9</td>
+                                </tr>
+                                
+                                <tr>
+                                    <td style="font-weight: 600;">Other</td>
+                                    <td
+                                        style="">
+                                        Mid
+                                        
+                                    </td>
+                                    <td style="font-weight: bold;">24400 Kč</td>
+                                    <td style="color: #999;">3</td>
+                                </tr>
+                                
+                                <tr>
+                                    <td style="font-weight: 600;">Service</td>
+                                    <td
+                                        style="">
+                                        Mid
+                                        
+                                    </td>
+                                    <td style="font-weight: bold;">20000 Kč</td>
+                                    <td style="color: #999;">3</td>
+                                </tr>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    
+    </div>
+    </div>
+
+    <!-- OUTDATED CHARTS REMOVED (Legacy Tech, Gap, etc.) -->
 
     <!-- MARKET TRENDS & DEEP ANALYSIS -->
     <div id="market-trends" class="collapsible-section">
@@ -874,34 +748,40 @@
         </div>
         <div class="section-content">
             <p style="color: #666; margin-bottom: 10px; font-size: 0.95rem;">
-                <strong>CEO Insight:</strong> Vizuální analýza platových rozpětí, náborových objemů, poptávky po dovednostech a tržního složení.
+                <strong>CEO Insight:</strong> Vizuální analýza platových rozpětí, náborových objemů, poptávky po
+                dovednostech a tržního složení.
             </p>
             <p style="color: #999; margin-bottom: 30px; font-size: 0.85rem; font-style: italic;">
-                Poznámka: Dovednosti se objevují pouze v 1-5% pozic, což naznačuje specializovanou spíše než univerzální poptávku.
+                Poznámka: Dovednosti se objevují pouze v 1-5% pozic, což naznačuje specializovanou spíše než univerzální
+                poptávku.
             </p>
 
             <div style="margin-bottom: 40px;">
                 <div class="section-title">💰 Inzerovaná Platová Rozpětí (Měsíční Kč)</div>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Pozice seřazené podle mediánu inzerovaného platu. Použijte k porovnání vašich interních platových pásem.</p>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Pozice seřazené podle mediánu
+                    inzerovaného platu. Použijte k porovnání vašich interních platových pásem.</p>
                 <div id="chart_salary_percentiles"></div>
             </div>
 
             <div class="chart-grid" style="margin-bottom: 40px;">
                 <div>
                     <div class="section-title">🏢 Nejvyšší Objem Náboru (Celkově)</div>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Společnosti s nejvyšším počtem aktivních inzerátů</p>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Společnosti s nejvyšším počtem
+                        aktivních inzerátů</p>
                     <div id="chart_top_companies"></div>
                 </div>
                 <div>
                     <div class="section-title">🔥 Pozice Zmiňující Technické Dovednosti</div>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Nejčastěji zmiňované dovednosti napříč všemi inzeráty</p>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Nejčastěji zmiňované dovednosti
+                        napříč všemi inzeráty</p>
                     <div id="chart_top_skills"></div>
                 </div>
             </div>
 
             <div style="margin-top: 40px;">
                 <div class="section-title">📊 Složení Trhu Práce podle Sektoru</div>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Rozložení aktivních inzerátů podle kategorie pozice</p>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Rozložení aktivních inzerátů podle
+                    kategorie pozice</p>
                 <div id="chart_role_distribution"></div>
             </div>
         </div>
@@ -916,7 +796,7 @@
     <div id="benefits-section" class="collapsible-section">
         <div class="section-header" onclick="toggleSection('benefits-section')">
             <span class="toggle-icon">▼</span>
-            <h2 style="margin:0;">🎁 Intelligence Benefitů & Výhod</h2>
+            <h2 style="margin:0;">🎁 Přehled benefitů</h2>
         </div>
         <div class="section-content">
 
@@ -1075,7 +955,7 @@
     <div id="work-model-section" class="collapsible-section">
         <div class="section-header" onclick="toggleSection('work-model-section')">
             <span class="toggle-icon">▼</span>
-            <h2 style="margin:0;">🏠 Intelligence Pracovního Modelu</h2>
+            <h2 style="margin:0;">🏠 Přehled pracovního modelu</h2>
         </div>
         <div class="section-content">
 
@@ -1181,7 +1061,8 @@
         </div>
         <div class="section-content">
             <p style="color: #666; margin-bottom: 30px; font-size: 0.95rem;">
-                Hloubková tržní intelligence odhalující arbitráž v kompenzacích, zdraví talentového potrubí a reálnou vs "falešnou" flexibilitu.
+                Hloubková tržní intelligence odhalující arbitráž v kompenzacích, zdraví talentového potrubí a reálnou vs
+                "falešnou" flexibilitu.
             </p>
 
             <div
@@ -1226,8 +1107,9 @@
             <!-- Remote Flexibility Analysis -->
             
             <div style="margin-top: 30px;">
-                <div class="section-title">🏠 Kontrola Reality Remote/Hybrid Flexibility</div>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Znamená "Hybrid" flexibilní svobodu nebo rigidní fixní dny?</p>
+                <div class="section-title">🏠 Pohled na realitu Remote/Hybrid Flexibility</div>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Znamená "Hybrid" flexibilní svobodu
+                    nebo rigidní fixní dny?</p>
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                     
                     <div
@@ -1261,83 +1143,6 @@
             </div>
             
 
-            <!-- Legacy Rot by Role -->
-            
-            <div style="margin-top: 30px;">
-                <div class="section-title">⚙️ Legacy Tech Dluh podle Pozice</div>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Pozice</th>
-                                <th>Legacy %</th>
-                                <th>Moderní %</th>
-                                <th>Celkem Pozic</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            
-                            <tr>
-                                <td style="font-weight: 600;">Manufacturing</td>
-                                <td style="color: #d32f2f; font-weight: bold;">0.4%</td>
-                                <td style="color: #00c853; font-weight: bold;">31.2%</td>
-                                <td>545</td>
-                            </tr>
-                            
-                            <tr>
-                                <td style="font-weight: 600;">Management</td>
-                                <td style="color: #d32f2f; font-weight: bold;">0.0%</td>
-                                <td style="color: #00c853; font-weight: bold;">24.4%</td>
-                                <td>246</td>
-                            </tr>
-                            
-                            <tr>
-                                <td style="font-weight: 600;">Developer</td>
-                                <td style="color: #d32f2f; font-weight: bold;">0.0%</td>
-                                <td style="color: #00c853; font-weight: bold;">62.8%</td>
-                                <td>234</td>
-                            </tr>
-                            
-                            <tr>
-                                <td style="font-weight: 600;">Logistics</td>
-                                <td style="color: #d32f2f; font-weight: bold;">0.0%</td>
-                                <td style="color: #00c853; font-weight: bold;">44.2%</td>
-                                <td>215</td>
-                            </tr>
-                            
-                            <tr>
-                                <td style="font-weight: 600;">Other</td>
-                                <td style="color: #d32f2f; font-weight: bold;">0.0%</td>
-                                <td style="color: #00c853; font-weight: bold;">2.4%</td>
-                                <td>205</td>
-                            </tr>
-                            
-                            <tr>
-                                <td style="font-weight: 600;">Retail</td>
-                                <td style="color: #d32f2f; font-weight: bold;">0.0%</td>
-                                <td style="color: #00c853; font-weight: bold;">30.4%</td>
-                                <td>194</td>
-                            </tr>
-                            
-                            <tr>
-                                <td style="font-weight: 600;">Healthcare</td>
-                                <td style="color: #d32f2f; font-weight: bold;">0.0%</td>
-                                <td style="color: #00c853; font-weight: bold;">50.5%</td>
-                                <td>188</td>
-                            </tr>
-                            
-                            <tr>
-                                <td style="font-weight: 600;">Service</td>
-                                <td style="color: #d32f2f; font-weight: bold;">0.0%</td>
-                                <td style="color: #00c853; font-weight: bold;">49.4%</td>
-                                <td>162</td>
-                            </tr>
-                            
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
 
             <!-- Ghost Jobs -->
             
@@ -1358,7 +1163,8 @@
                     </p>
                     <div
                         style="background: #fff3e0; padding: 12px; border-radius: 6px; font-size: 0.8rem; color: #e65100; margin-bottom: 15px;">
-                        <strong>⚠️ Není definitivním důkazem "falešných" pozic</strong> - Výrobní a logistické společnosti
+                        <strong>⚠️ Není definitivním důkazem "falešných" pozic</strong> - Výrobní a logistické
+                        společnosti
                         legitimně najímají desítky identických rolí.
                         Použijte jako podnět k diskuzi, ne jako blacklist.
                     </div>
@@ -1456,14 +1262,10 @@
                     <div class="section-title"><span>01</span> Typy Smluv</div>
                     <div id="chart_contract"></div>
                 </div>
-                <div>
-                    <div class="section-title"><span>02</span> Technologická Propast</div>
-                    <div id="chart_tech"></div>
-                </div>
             </div>
 
             <div style="margin-top: 60px;">
-                <div class="section-title"><span>03</span> Top Inovátoři (Objem Náboru v Moderním Stacku)</div>
+                <div class="section-title"><span>02</span> Top Inovátoři (Objem Náboru v Moderním Stacku)</div>
                 <div style="overflow-x: auto;">
                     <table>
                         <thead>
@@ -1552,7 +1354,7 @@
 
             
             <div style="margin-top: 40px;">
-                <div class="section-title"><span>04</span> Distribuce Pozic (Top 5)</div>
+                <div class="section-title"><span>03</span> Distribuce Pozic (Top 5)</div>
                 <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
                     
                     <div
@@ -1602,13 +1404,17 @@
         </div>
         <div class="section-content" style="background: #fff1f2; padding: 20px; border-radius: 0 0 8px 8px;">
             <p style="color: #881337; margin-bottom: 10px; font-size: 0.95rem;">Tato analýza měří <strong>SIGNÁLY
-                    POPTÁVKY</strong> (co zaměstnavatelé zveřejňují), NE TRŽNÍ REALITU (co se skutečně nabírá/platí).</p>
+                    POPTÁVKY</strong> (co zaměstnavatelé zveřejňují), NE TRŽNÍ REALITU (co se skutečně nabírá/platí).
+            </p>
             <ul style="color: #9f1239; margin-bottom: 0; font-size: 0.9rem; line-height: 1.6;">
-                <li><strong>Ghost Jobs:</strong> Odhadovaných 10-30% pozic nemusí být nikdy obsazeno.</li>
-                <li><strong>Zkreslení Platů:</strong> Inzerovaná rozpětí se často liší od finálních nabídek; horní hranice rozpětí
+                <li><strong>Ghost Jobs:</strong> Odhadem 10-30% pozic nemusí být nikdy obsazeno.</li>
+                <li><strong>Zkreslení Platů:</strong> Inzerovaná rozpětí se často liší od finálních nabídek; horní
+                    hranice rozpětí
                     se zřídka platí.</li>
-                <li><strong>Inflace:</strong> "Senior" pozice mohou najímat na "Mid" úrovně; seznamy dovedností jsou často
-                    aspirační.</li>
+                <li><strong>Inflace titulů:</strong> "Senior" pozice mohou najímat na "Mid" úrovně; seznamy dovedností
+                    jsou
+                    často
+                    nerealistické.</li>
                 <li><strong>Zdroje Dat:</strong> Jobs.cz, Prace.cz, StartupJobs, WTTJ, Cocuma (LinkedIn odstraněn kvůli
                     blokování)</li>
                 <li><strong>Metodologie:</strong> Automatizované scrapování s 5minutovými prodlevami, 14denní retence,
@@ -1624,17 +1430,49 @@
     </div>
 
     <script>
-        var contract_data = {"data": [{"hole": 0.6, "labels": ["HPP", "I\u010cO", "Brig\u00e1da"], "textinfo": "percent+label", "textposition": "inside", "values": [1851, 262, 1047], "type": "pie"}], "layout": {"template": {"data": {"histogram2dcontour": [{"type": "histogram2dcontour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "choropleth": [{"type": "choropleth", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "histogram2d": [{"type": "histogram2d", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "heatmap": [{"type": "heatmap", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "contourcarpet": [{"type": "contourcarpet", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "contour": [{"type": "contour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "surface": [{"type": "surface", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "mesh3d": [{"type": "mesh3d", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "scatter": [{"fillpattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}, "type": "scatter"}], "parcoords": [{"type": "parcoords", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolargl": [{"type": "scatterpolargl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "bar": [{"error_x": {"color": "#2a3f5f"}, "error_y": {"color": "#2a3f5f"}, "marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "scattergeo": [{"type": "scattergeo", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolar": [{"type": "scatterpolar", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "scattergl": [{"type": "scattergl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatter3d": [{"type": "scatter3d", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermap": [{"type": "scattermap", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermapbox": [{"type": "scattermapbox", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterternary": [{"type": "scatterternary", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattercarpet": [{"type": "scattercarpet", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "carpet": [{"aaxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "baxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "type": "carpet"}], "table": [{"cells": {"fill": {"color": "#EBF0F8"}, "line": {"color": "white"}}, "header": {"fill": {"color": "#C8D4E3"}, "line": {"color": "white"}}, "type": "table"}], "barpolar": [{"marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "pie": [{"automargin": true, "type": "pie"}]}, "layout": {"autotypenumbers": "strict", "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#2a3f5f"}, "hovermode": "closest", "hoverlabel": {"align": "left"}, "paper_bgcolor": "white", "plot_bgcolor": "#E5ECF6", "polar": {"bgcolor": "#E5ECF6", "angularaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "radialaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "ternary": {"bgcolor": "#E5ECF6", "aaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "baxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "caxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]]}, "xaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "yaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "scene": {"xaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "yaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "zaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}}, "shapedefaults": {"line": {"color": "#2a3f5f"}}, "annotationdefaults": {"arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1}, "geo": {"bgcolor": "white", "landcolor": "#E5ECF6", "subunitcolor": "white", "showland": true, "showlakes": true, "lakecolor": "white"}, "title": {"x": 0.05}, "mapbox": {"style": "light"}}}, "margin": {"l": 20, "r": 20, "t": 30, "b": 20}, "xaxis": {"automargin": true}, "yaxis": {"automargin": true}, "font": {"family": "Inter, sans-serif", "color": "#111"}, "height": 300, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "showlegend": true}};
-        Plotly.newPlot('chart_contract', contract_data.data, contract_data.layout);
+        // Chart rendering with error handling
+        function safeRenderChart(containerId, chartData, chartName) {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error(`Chart container not found: ${containerId}`);
+                return;
+            }
 
-        var tech_data = {"data": [{"marker": {"color": ["#999999", "#0055FF", "#333333"]}, "orientation": "h", "x": [1997, 1155, 8], "y": ["Stabiln\u00ed", "Modern\u00ed", "Zastaral\u00e9"], "type": "bar"}], "layout": {"template": {"data": {"histogram2dcontour": [{"type": "histogram2dcontour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "choropleth": [{"type": "choropleth", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "histogram2d": [{"type": "histogram2d", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "heatmap": [{"type": "heatmap", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "contourcarpet": [{"type": "contourcarpet", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "contour": [{"type": "contour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "surface": [{"type": "surface", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "mesh3d": [{"type": "mesh3d", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "scatter": [{"fillpattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}, "type": "scatter"}], "parcoords": [{"type": "parcoords", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolargl": [{"type": "scatterpolargl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "bar": [{"error_x": {"color": "#2a3f5f"}, "error_y": {"color": "#2a3f5f"}, "marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "scattergeo": [{"type": "scattergeo", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolar": [{"type": "scatterpolar", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "scattergl": [{"type": "scattergl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatter3d": [{"type": "scatter3d", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermap": [{"type": "scattermap", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermapbox": [{"type": "scattermapbox", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterternary": [{"type": "scatterternary", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattercarpet": [{"type": "scattercarpet", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "carpet": [{"aaxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "baxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "type": "carpet"}], "table": [{"cells": {"fill": {"color": "#EBF0F8"}, "line": {"color": "white"}}, "header": {"fill": {"color": "#C8D4E3"}, "line": {"color": "white"}}, "type": "table"}], "barpolar": [{"marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "pie": [{"automargin": true, "type": "pie"}]}, "layout": {"autotypenumbers": "strict", "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#2a3f5f"}, "hovermode": "closest", "hoverlabel": {"align": "left"}, "paper_bgcolor": "white", "plot_bgcolor": "#E5ECF6", "polar": {"bgcolor": "#E5ECF6", "angularaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "radialaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "ternary": {"bgcolor": "#E5ECF6", "aaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "baxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "caxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]]}, "xaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "yaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "scene": {"xaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "yaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "zaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}}, "shapedefaults": {"line": {"color": "#2a3f5f"}}, "annotationdefaults": {"arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1}, "geo": {"bgcolor": "white", "landcolor": "#E5ECF6", "subunitcolor": "white", "showland": true, "showlakes": true, "lakecolor": "white"}, "title": {"x": 0.05}, "mapbox": {"style": "light"}}}, "margin": {"l": 20, "r": 20, "t": 30, "b": 20}, "xaxis": {"automargin": true, "title": {"text": "Po\u010det"}}, "yaxis": {"automargin": true, "categoryorder": "array", "categoryarray": ["Zastaral\u00e9", "Stabiln\u00ed", "Modern\u00ed"], "title": {"text": "Status"}}, "font": {"family": "Inter, sans-serif", "color": "#111"}, "height": 300, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)"}};
-        Plotly.newPlot('chart_tech', tech_data.data, tech_data.layout);
+            // Check for empty or invalid data
+            if (!chartData || !chartData.data || chartData.data.length === 0) {
+                container.innerHTML = `
+                    <div class="chart-empty" style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-bg-tertiary, #f3f4f6); border-radius: 8px; color: var(--color-text-secondary, #666);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; opacity: 0.5;">📊</div>
+                            <div style="margin-top: 10px;">Data nejsou dostupná</div>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            try {
+                Plotly.newPlot(containerId, chartData.data, chartData.layout);
+            } catch (error) {
+                console.error(`Chart rendering failed for ${chartName}:`, error);
+                container.innerHTML = `
+                    <div class="chart-error" style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-error-light, #ffebee); border-radius: 8px; color: var(--color-error, #DD3333); border: 1px solid var(--color-error, #DD3333);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem;">⚠️</div>
+                            <div style="margin-top: 10px;">Graf se nepodařilo načíst</div>
+                        </div>
+                    </div>`;
+            }
+        }
+
+        // Render charts with error handling
+        var contract_data = {"data": [{"hole": 0.6, "labels": ["HPP", "I\u010cO", "Brig\u00e1da"], "textinfo": "percent+label", "textposition": "inside", "values": [1851, 262, 1047], "type": "pie"}], "layout": {"template": {"data": {"histogram2dcontour": [{"type": "histogram2dcontour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "choropleth": [{"type": "choropleth", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "histogram2d": [{"type": "histogram2d", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "heatmap": [{"type": "heatmap", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "contourcarpet": [{"type": "contourcarpet", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "contour": [{"type": "contour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "surface": [{"type": "surface", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "mesh3d": [{"type": "mesh3d", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "scatter": [{"fillpattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}, "type": "scatter"}], "parcoords": [{"type": "parcoords", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolargl": [{"type": "scatterpolargl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "bar": [{"error_x": {"color": "#2a3f5f"}, "error_y": {"color": "#2a3f5f"}, "marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "scattergeo": [{"type": "scattergeo", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolar": [{"type": "scatterpolar", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "scattergl": [{"type": "scattergl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatter3d": [{"type": "scatter3d", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermap": [{"type": "scattermap", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermapbox": [{"type": "scattermapbox", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterternary": [{"type": "scatterternary", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattercarpet": [{"type": "scattercarpet", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "carpet": [{"aaxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "baxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "type": "carpet"}], "table": [{"cells": {"fill": {"color": "#EBF0F8"}, "line": {"color": "white"}}, "header": {"fill": {"color": "#C8D4E3"}, "line": {"color": "white"}}, "type": "table"}], "barpolar": [{"marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "pie": [{"automargin": true, "type": "pie"}]}, "layout": {"autotypenumbers": "strict", "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#2a3f5f"}, "hovermode": "closest", "hoverlabel": {"align": "left"}, "paper_bgcolor": "white", "plot_bgcolor": "#E5ECF6", "polar": {"bgcolor": "#E5ECF6", "angularaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "radialaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "ternary": {"bgcolor": "#E5ECF6", "aaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "baxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "caxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]]}, "xaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "yaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "scene": {"xaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "yaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "zaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}}, "shapedefaults": {"line": {"color": "#2a3f5f"}}, "annotationdefaults": {"arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1}, "geo": {"bgcolor": "white", "landcolor": "#E5ECF6", "subunitcolor": "white", "showland": true, "showlakes": true, "lakecolor": "white"}, "title": {"x": 0.05}, "mapbox": {"style": "light"}}}, "margin": {"l": 20, "r": 20, "t": 30, "b": 20}, "xaxis": {"automargin": true}, "yaxis": {"automargin": true}, "font": {"family": "Inter, sans-serif", "color": "#111"}, "height": 300, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "showlegend": true}};
+        safeRenderChart('chart_contract', contract_data, 'Typ Smlouvy');
 
         var role_data = {"data": [{"marker": {"color": "#0055FF"}, "orientation": "h", "x": [100625.0, 34400.0, 32320.0, 31421.5, 25523.5, 24400.0, 23887.5, 22560.0, 20000.0, 2250.0], "y": ["Developer (n=2)", "Support (n=1)", "Manufacturing (n=9)", "Logistics (n=4)", "Management (n=1)", "Other (n=3)", "Retail (n=2)", "Hospitality (n=1)", "Service (n=3)", "Healthcare (n=1)"], "type": "bar"}], "layout": {"template": {"data": {"histogram2dcontour": [{"type": "histogram2dcontour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "choropleth": [{"type": "choropleth", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "histogram2d": [{"type": "histogram2d", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "heatmap": [{"type": "heatmap", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "contourcarpet": [{"type": "contourcarpet", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "contour": [{"type": "contour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "surface": [{"type": "surface", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "mesh3d": [{"type": "mesh3d", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "scatter": [{"fillpattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}, "type": "scatter"}], "parcoords": [{"type": "parcoords", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolargl": [{"type": "scatterpolargl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "bar": [{"error_x": {"color": "#2a3f5f"}, "error_y": {"color": "#2a3f5f"}, "marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "scattergeo": [{"type": "scattergeo", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolar": [{"type": "scatterpolar", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "scattergl": [{"type": "scattergl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatter3d": [{"type": "scatter3d", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermap": [{"type": "scattermap", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermapbox": [{"type": "scattermapbox", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterternary": [{"type": "scatterternary", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattercarpet": [{"type": "scattercarpet", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "carpet": [{"aaxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "baxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "type": "carpet"}], "table": [{"cells": {"fill": {"color": "#EBF0F8"}, "line": {"color": "white"}}, "header": {"fill": {"color": "#C8D4E3"}, "line": {"color": "white"}}, "type": "table"}], "barpolar": [{"marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "pie": [{"automargin": true, "type": "pie"}]}, "layout": {"autotypenumbers": "strict", "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#2a3f5f"}, "hovermode": "closest", "hoverlabel": {"align": "left"}, "paper_bgcolor": "white", "plot_bgcolor": "#E5ECF6", "polar": {"bgcolor": "#E5ECF6", "angularaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "radialaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "ternary": {"bgcolor": "#E5ECF6", "aaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "baxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "caxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]]}, "xaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "yaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "scene": {"xaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "yaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "zaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}}, "shapedefaults": {"line": {"color": "#2a3f5f"}}, "annotationdefaults": {"arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1}, "geo": {"bgcolor": "white", "landcolor": "#E5ECF6", "subunitcolor": "white", "showland": true, "showlakes": true, "lakecolor": "white"}, "title": {"x": 0.05}, "mapbox": {"style": "light"}}}, "margin": {"l": 20, "r": 20, "t": 30, "b": 20}, "xaxis": {"automargin": true, "title": {"text": "Medi\u00e1n Platu (K\u010d)"}}, "yaxis": {"automargin": true, "title": {"text": ""}}, "font": {"family": "Inter, sans-serif", "color": "#111"}, "height": 280, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)"}};
-        Plotly.newPlot('chart_role', role_data.data, role_data.layout);
+        safeRenderChart('chart_role', role_data, 'Plat podle Pozice');
 
         var seniority_data = {"data": [{"marker": {"color": ["#66B2FF", "#0055FF", "#003399", "#000033"]}, "x": ["Junior", "Mid", "Senior", "Executive"], "y": [31421.5, 24800.0, 77200.0, 31840.0], "type": "bar"}], "layout": {"template": {"data": {"histogram2dcontour": [{"type": "histogram2dcontour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "choropleth": [{"type": "choropleth", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "histogram2d": [{"type": "histogram2d", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "heatmap": [{"type": "heatmap", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "contourcarpet": [{"type": "contourcarpet", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "contour": [{"type": "contour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "surface": [{"type": "surface", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "mesh3d": [{"type": "mesh3d", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "scatter": [{"fillpattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}, "type": "scatter"}], "parcoords": [{"type": "parcoords", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolargl": [{"type": "scatterpolargl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "bar": [{"error_x": {"color": "#2a3f5f"}, "error_y": {"color": "#2a3f5f"}, "marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "scattergeo": [{"type": "scattergeo", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolar": [{"type": "scatterpolar", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "scattergl": [{"type": "scattergl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatter3d": [{"type": "scatter3d", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermap": [{"type": "scattermap", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermapbox": [{"type": "scattermapbox", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterternary": [{"type": "scatterternary", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattercarpet": [{"type": "scattercarpet", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "carpet": [{"aaxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "baxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "type": "carpet"}], "table": [{"cells": {"fill": {"color": "#EBF0F8"}, "line": {"color": "white"}}, "header": {"fill": {"color": "#C8D4E3"}, "line": {"color": "white"}}, "type": "table"}], "barpolar": [{"marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "pie": [{"automargin": true, "type": "pie"}]}, "layout": {"autotypenumbers": "strict", "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#2a3f5f"}, "hovermode": "closest", "hoverlabel": {"align": "left"}, "paper_bgcolor": "white", "plot_bgcolor": "#E5ECF6", "polar": {"bgcolor": "#E5ECF6", "angularaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "radialaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "ternary": {"bgcolor": "#E5ECF6", "aaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "baxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "caxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]]}, "xaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "yaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "scene": {"xaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "yaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "zaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}}, "shapedefaults": {"line": {"color": "#2a3f5f"}}, "annotationdefaults": {"arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1}, "geo": {"bgcolor": "white", "landcolor": "#E5ECF6", "subunitcolor": "white", "showland": true, "showlakes": true, "lakecolor": "white"}, "title": {"x": 0.05}, "mapbox": {"style": "light"}}}, "margin": {"l": 20, "r": 20, "t": 30, "b": 20}, "xaxis": {"automargin": true, "title": {"text": ""}}, "yaxis": {"automargin": true, "title": {"text": "Medi\u00e1n Platu (K\u010d)"}}, "font": {"family": "Inter, sans-serif", "color": "#111"}, "height": 280, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "showlegend": false}};
-        Plotly.newPlot('chart_seniority', seniority_data.data, seniority_data.layout);
+        safeRenderChart('chart_seniority', seniority_data, 'Plat podle Seniority');
 
         // Toggle function for collapsible sections
         function toggleSection(sectionId) {
@@ -1656,16 +1494,16 @@
 
         // Market Trends & Deep Analysis Charts
         var salary_percentiles_data = {"data": [{"marker": {"color": "#FFCE56"}, "name": "25. percentil (Konzervativn\u00ed)", "orientation": "h", "x": [90937.5, 34400.0, 31360.0, 31421.5, 25523.5, 24400.0, 23231.25, 22560.0, 20000.0, 2250.0], "y": ["Developer (n=2)", "Support (n=1)", "Manufacturing (n=9)", "Logistics (n=4)", "Management (n=1)", "Other (n=3)", "Retail (n=2)", "Hospitality (n=1)", "Service (n=3)", "Healthcare (n=1)"], "type": "bar"}, {"marker": {"color": "#36A2EB"}, "name": "Medi\u00e1n inzerovan\u00e9ho platu", "orientation": "h", "x": [100625.0, 34400.0, 32320.0, 31421.5, 25523.5, 24400.0, 23887.5, 22560.0, 20000.0, 2250.0], "y": ["Developer (n=2)", "Support (n=1)", "Manufacturing (n=9)", "Logistics (n=4)", "Management (n=1)", "Other (n=3)", "Retail (n=2)", "Hospitality (n=1)", "Service (n=3)", "Healthcare (n=1)"], "type": "bar"}, {"marker": {"color": "#FF6384"}, "name": "75. percentil (Aspira\u010dn\u00ed)", "orientation": "h", "x": [110312.5, 34400.0, 32800.0, 31421.5, 25523.5, 52200.0, 24543.75, 22560.0, 26200.0, 2250.0], "y": ["Developer (n=2)", "Support (n=1)", "Manufacturing (n=9)", "Logistics (n=4)", "Management (n=1)", "Other (n=3)", "Retail (n=2)", "Hospitality (n=1)", "Service (n=3)", "Healthcare (n=1)"], "type": "bar"}], "layout": {"template": {"data": {"histogram2dcontour": [{"type": "histogram2dcontour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "choropleth": [{"type": "choropleth", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "histogram2d": [{"type": "histogram2d", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "heatmap": [{"type": "heatmap", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "contourcarpet": [{"type": "contourcarpet", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "contour": [{"type": "contour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "surface": [{"type": "surface", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "mesh3d": [{"type": "mesh3d", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "scatter": [{"fillpattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}, "type": "scatter"}], "parcoords": [{"type": "parcoords", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolargl": [{"type": "scatterpolargl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "bar": [{"error_x": {"color": "#2a3f5f"}, "error_y": {"color": "#2a3f5f"}, "marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "scattergeo": [{"type": "scattergeo", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolar": [{"type": "scatterpolar", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "scattergl": [{"type": "scattergl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatter3d": [{"type": "scatter3d", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermap": [{"type": "scattermap", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermapbox": [{"type": "scattermapbox", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterternary": [{"type": "scatterternary", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattercarpet": [{"type": "scattercarpet", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "carpet": [{"aaxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "baxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "type": "carpet"}], "table": [{"cells": {"fill": {"color": "#EBF0F8"}, "line": {"color": "white"}}, "header": {"fill": {"color": "#C8D4E3"}, "line": {"color": "white"}}, "type": "table"}], "barpolar": [{"marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "pie": [{"automargin": true, "type": "pie"}]}, "layout": {"autotypenumbers": "strict", "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#2a3f5f"}, "hovermode": "closest", "hoverlabel": {"align": "left"}, "paper_bgcolor": "white", "plot_bgcolor": "#E5ECF6", "polar": {"bgcolor": "#E5ECF6", "angularaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "radialaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "ternary": {"bgcolor": "#E5ECF6", "aaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "baxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "caxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]]}, "xaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "yaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "scene": {"xaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "yaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "zaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}}, "shapedefaults": {"line": {"color": "#2a3f5f"}}, "annotationdefaults": {"arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1}, "geo": {"bgcolor": "white", "landcolor": "#E5ECF6", "subunitcolor": "white", "showland": true, "showlakes": true, "lakecolor": "white"}, "title": {"x": 0.05}, "mapbox": {"style": "light"}}}, "margin": {"l": 20, "r": 20, "t": 30, "b": 20}, "xaxis": {"automargin": true, "title": {"text": "M\u011bs\u00ed\u010dn\u00ed K\u010d"}}, "yaxis": {"automargin": true, "title": {"text": ""}}, "font": {"family": "Inter, sans-serif", "color": "#111"}, "height": 400, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "barmode": "group"}};
-        Plotly.newPlot('chart_salary_percentiles', salary_percentiles_data.data, salary_percentiles_data.layout);
+        safeRenderChart('chart_salary_percentiles', salary_percentiles_data, 'Rozsah Platů');
 
         var top_companies_data = {"data": [{"marker": {"color": "#10b981"}, "orientation": "h", "x": [13, 13, 13, 13, 13, 13, 14, 14, 17, 17, 18, 20, 25, 29, 50], "y": ["Storyous | Teya", "NAVIGO Praha z.s.", "Direct auto s.r.o.", "EQUANS \u010cesk\u00e1 republika", "FAST \u010cR, a.s.", "ManpowerGroup s.r.o.", "Pt\u00e1\u010dek - velkoobchod, a.s.", "Bright HR, s.r.o.", "Deklarace odpov\u011bdn\u00e9ho podnik\u00e1n\u00ed z. s.", "Penny Market s.r.o.", "Skupina \u010cEZ", "AXXOS HOTELS & RESORTS, s.r.o.", "Spr\u00e1va \u017eeleznic, st\u00e1tn\u00ed organizace", "Senevida", "P\u0158EDV\u00ddB\u011aR.CZ a.s."], "type": "bar"}], "layout": {"template": {"data": {"histogram2dcontour": [{"type": "histogram2dcontour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "choropleth": [{"type": "choropleth", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "histogram2d": [{"type": "histogram2d", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "heatmap": [{"type": "heatmap", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "contourcarpet": [{"type": "contourcarpet", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "contour": [{"type": "contour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "surface": [{"type": "surface", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "mesh3d": [{"type": "mesh3d", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "scatter": [{"fillpattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}, "type": "scatter"}], "parcoords": [{"type": "parcoords", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolargl": [{"type": "scatterpolargl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "bar": [{"error_x": {"color": "#2a3f5f"}, "error_y": {"color": "#2a3f5f"}, "marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "scattergeo": [{"type": "scattergeo", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolar": [{"type": "scatterpolar", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "scattergl": [{"type": "scattergl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatter3d": [{"type": "scatter3d", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermap": [{"type": "scattermap", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermapbox": [{"type": "scattermapbox", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterternary": [{"type": "scatterternary", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattercarpet": [{"type": "scattercarpet", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "carpet": [{"aaxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "baxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "type": "carpet"}], "table": [{"cells": {"fill": {"color": "#EBF0F8"}, "line": {"color": "white"}}, "header": {"fill": {"color": "#C8D4E3"}, "line": {"color": "white"}}, "type": "table"}], "barpolar": [{"marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "pie": [{"automargin": true, "type": "pie"}]}, "layout": {"autotypenumbers": "strict", "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#2a3f5f"}, "hovermode": "closest", "hoverlabel": {"align": "left"}, "paper_bgcolor": "white", "plot_bgcolor": "#E5ECF6", "polar": {"bgcolor": "#E5ECF6", "angularaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "radialaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "ternary": {"bgcolor": "#E5ECF6", "aaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "baxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "caxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]]}, "xaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "yaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "scene": {"xaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "yaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "zaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}}, "shapedefaults": {"line": {"color": "#2a3f5f"}}, "annotationdefaults": {"arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1}, "geo": {"bgcolor": "white", "landcolor": "#E5ECF6", "subunitcolor": "white", "showland": true, "showlakes": true, "lakecolor": "white"}, "title": {"x": 0.05}, "mapbox": {"style": "light"}}}, "margin": {"l": 20, "r": 20, "t": 30, "b": 20}, "xaxis": {"automargin": true, "title": {"text": "Aktivn\u00ed Inzer\u00e1ty"}}, "yaxis": {"automargin": true, "title": {"text": ""}}, "font": {"family": "Inter, sans-serif", "color": "#111"}, "height": 400, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)"}};
-        Plotly.newPlot('chart_top_companies', top_companies_data.data, top_companies_data.layout);
+        safeRenderChart('chart_top_companies', top_companies_data, 'Nejvíce Nabízející Firmy');
 
         var top_skills_data = {"data": [{"marker": {"color": "#f59e0b"}, "x": ["Teamwork", "English", "\u0158idi\u010dsk\u00fd pr\u016fkaz B", "Excel", "Communication", "AI/ML", "SQL", "VZV", "Python", "German", "JavaScript", "CI/CD", "TypeScript", "AWS", "Docker"], "y": [535, 511, 265, 184, 161, 118, 96, 76, 60, 57, 50, 48, 46, 43, 38], "type": "bar"}], "layout": {"template": {"data": {"histogram2dcontour": [{"type": "histogram2dcontour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "choropleth": [{"type": "choropleth", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "histogram2d": [{"type": "histogram2d", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "heatmap": [{"type": "heatmap", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "contourcarpet": [{"type": "contourcarpet", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "contour": [{"type": "contour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "surface": [{"type": "surface", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "mesh3d": [{"type": "mesh3d", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "scatter": [{"fillpattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}, "type": "scatter"}], "parcoords": [{"type": "parcoords", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolargl": [{"type": "scatterpolargl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "bar": [{"error_x": {"color": "#2a3f5f"}, "error_y": {"color": "#2a3f5f"}, "marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "scattergeo": [{"type": "scattergeo", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolar": [{"type": "scatterpolar", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "scattergl": [{"type": "scattergl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatter3d": [{"type": "scatter3d", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermap": [{"type": "scattermap", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermapbox": [{"type": "scattermapbox", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterternary": [{"type": "scatterternary", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattercarpet": [{"type": "scattercarpet", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "carpet": [{"aaxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "baxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "type": "carpet"}], "table": [{"cells": {"fill": {"color": "#EBF0F8"}, "line": {"color": "white"}}, "header": {"fill": {"color": "#C8D4E3"}, "line": {"color": "white"}}, "type": "table"}], "barpolar": [{"marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "pie": [{"automargin": true, "type": "pie"}]}, "layout": {"autotypenumbers": "strict", "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#2a3f5f"}, "hovermode": "closest", "hoverlabel": {"align": "left"}, "paper_bgcolor": "white", "plot_bgcolor": "#E5ECF6", "polar": {"bgcolor": "#E5ECF6", "angularaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "radialaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "ternary": {"bgcolor": "#E5ECF6", "aaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "baxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "caxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]]}, "xaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "yaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "scene": {"xaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "yaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "zaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}}, "shapedefaults": {"line": {"color": "#2a3f5f"}}, "annotationdefaults": {"arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1}, "geo": {"bgcolor": "white", "landcolor": "#E5ECF6", "subunitcolor": "white", "showland": true, "showlakes": true, "lakecolor": "white"}, "title": {"x": 0.05}, "mapbox": {"style": "light"}}}, "margin": {"l": 20, "r": 20, "t": 30, "b": 20}, "xaxis": {"automargin": true, "title": {"text": ""}, "tickangle": -45}, "yaxis": {"automargin": true, "title": {"text": "Po\u010det Zm\u00ednek"}}, "font": {"family": "Inter, sans-serif", "color": "#111"}, "height": 350, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)"}};
-        Plotly.newPlot('chart_top_skills', top_skills_data.data, top_skills_data.layout);
+        safeRenderChart('chart_top_skills', top_skills_data, 'Nejžádanější Dovednosti');
 
         var role_distribution_data = {"data": [{"marker": {"color": "#6366f1"}, "orientation": "h", "x": [86, 96, 97, 99, 115, 143, 153, 162, 188, 194, 205, 215, 234, 246, 545], "y": ["Marketing", "Finance", "Social Services", "Designer", "Support", "Operations", "Sales", "Service", "Healthcare", "Retail", "Other", "Logistics", "Developer", "Management", "Manufacturing"], "type": "bar"}], "layout": {"template": {"data": {"histogram2dcontour": [{"type": "histogram2dcontour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "choropleth": [{"type": "choropleth", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "histogram2d": [{"type": "histogram2d", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "heatmap": [{"type": "heatmap", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "contourcarpet": [{"type": "contourcarpet", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "contour": [{"type": "contour", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "surface": [{"type": "surface", "colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}], "mesh3d": [{"type": "mesh3d", "colorbar": {"outlinewidth": 0, "ticks": ""}}], "scatter": [{"fillpattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}, "type": "scatter"}], "parcoords": [{"type": "parcoords", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolargl": [{"type": "scatterpolargl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "bar": [{"error_x": {"color": "#2a3f5f"}, "error_y": {"color": "#2a3f5f"}, "marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "scattergeo": [{"type": "scattergeo", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterpolar": [{"type": "scatterpolar", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "scattergl": [{"type": "scattergl", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatter3d": [{"type": "scatter3d", "line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermap": [{"type": "scattermap", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattermapbox": [{"type": "scattermapbox", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scatterternary": [{"type": "scatterternary", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "scattercarpet": [{"type": "scattercarpet", "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}}], "carpet": [{"aaxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "baxis": {"endlinecolor": "#2a3f5f", "gridcolor": "white", "linecolor": "white", "minorgridcolor": "white", "startlinecolor": "#2a3f5f"}, "type": "carpet"}], "table": [{"cells": {"fill": {"color": "#EBF0F8"}, "line": {"color": "white"}}, "header": {"fill": {"color": "#C8D4E3"}, "line": {"color": "white"}}, "type": "table"}], "barpolar": [{"marker": {"line": {"color": "#E5ECF6", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "pie": [{"automargin": true, "type": "pie"}]}, "layout": {"autotypenumbers": "strict", "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#2a3f5f"}, "hovermode": "closest", "hoverlabel": {"align": "left"}, "paper_bgcolor": "white", "plot_bgcolor": "#E5ECF6", "polar": {"bgcolor": "#E5ECF6", "angularaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "radialaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "ternary": {"bgcolor": "#E5ECF6", "aaxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "baxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}, "caxis": {"gridcolor": "white", "linecolor": "white", "ticks": ""}}, "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]]}, "xaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "yaxis": {"gridcolor": "white", "linecolor": "white", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "white", "automargin": true, "zerolinewidth": 2}, "scene": {"xaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "yaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}, "zaxis": {"backgroundcolor": "#E5ECF6", "gridcolor": "white", "linecolor": "white", "showbackground": true, "ticks": "", "zerolinecolor": "white", "gridwidth": 2}}, "shapedefaults": {"line": {"color": "#2a3f5f"}}, "annotationdefaults": {"arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1}, "geo": {"bgcolor": "white", "landcolor": "#E5ECF6", "subunitcolor": "white", "showland": true, "showlakes": true, "lakecolor": "white"}, "title": {"x": 0.05}, "mapbox": {"style": "light"}}}, "margin": {"l": 20, "r": 20, "t": 30, "b": 20}, "xaxis": {"automargin": true, "title": {"text": "Aktivn\u00ed Inzer\u00e1ty"}}, "yaxis": {"automargin": true, "title": {"text": ""}}, "font": {"family": "Inter, sans-serif", "color": "#111"}, "height": 400, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)"}};
-        Plotly.newPlot('chart_role_distribution', role_distribution_data.data, role_distribution_data.layout);
+        safeRenderChart('chart_role_distribution', role_distribution_data, 'Rozložení Rolí');
 
         // === HYBRID NAVIGATION UX ===
 
@@ -1688,25 +1526,30 @@
             }
         }
 
-        // Highlight active section on scroll
+        // Highlight active section on scroll (PERFORMANCE OPTIMIZED)
+        // Cache queries outside listener to avoid recomputation on every scroll
+        const cachedSections = Array.from(
+            document.querySelectorAll('[id$="-summary"], [id$="-dashboard"], [id$="-trends"], [id$="-section"], [id$="-reality"], [id$="-overview"]')
+        );
+        const cachedNavPills = Array.from(document.querySelectorAll('.nav-pill'));
+
         let scrollTimeout;
         window.addEventListener('scroll', () => {
             clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => {
                 const navOffset = 150;
-                const sections = document.querySelectorAll('[id$="-summary"], [id$="-dashboard"], [id$="-trends"], [id$="-section"], [id$="-reality"], [id$="-overview"]');
-
-                sections.forEach(section => {
+                for (const section of cachedSections) {
                     const rect = section.getBoundingClientRect();
                     if (rect.top <= navOffset && rect.bottom >= navOffset) {
-                        document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+                        cachedNavPills.forEach(p => p.classList.remove('active'));
                         const sectionId = section.id;
                         const activePill = document.querySelector(`[onclick="jumpToSection('${sectionId}')"]`);
                         if (activePill) activePill.classList.add('active');
+                        break; // Early exit once found
                     }
-                });
+                }
             }, 100);
-        });
+        }, { passive: true }); // Passive flag for scroll performance
 
     </script>
 </body>
