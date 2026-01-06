@@ -357,7 +357,8 @@
 
         /* Collapsible Sections */
         .collapsible-section {
-            margin-bottom: 30px;
+            margin-bottom: 50px;
+            /* Increased from 30px for better visual breathing room */
             border: 1px solid #e5e7eb;
             border-left: 4px solid #0055FF;
             background: white;
@@ -809,25 +810,73 @@
         }
 
         /* Spacing Utilities */
-        .mb-xs { margin-bottom: var(--spacing-xs); }
-        .mb-sm { margin-bottom: var(--spacing-sm); }
-        .mb-md { margin-bottom: var(--spacing-md); }
-        .mb-lg { margin-bottom: var(--spacing-lg); }
-        .mb-xl { margin-bottom: var(--spacing-xl); }
-        .mb-2xl { margin-bottom: var(--spacing-2xl); }
-        .mb-3xl { margin-bottom: var(--spacing-3xl); }
+        .mb-xs {
+            margin-bottom: var(--spacing-xs);
+        }
 
-        .mt-xs { margin-top: var(--spacing-xs); }
-        .mt-sm { margin-top: var(--spacing-sm); }
-        .mt-md { margin-top: var(--spacing-md); }
-        .mt-lg { margin-top: var(--spacing-lg); }
-        .mt-xl { margin-top: var(--spacing-xl); }
-        .mt-2xl { margin-top: var(--spacing-2xl); }
-        .mt-3xl { margin-top: var(--spacing-3xl); }
+        .mb-sm {
+            margin-bottom: var(--spacing-sm);
+        }
 
-        .m-0 { margin: 0; }
-        .p-0 { padding: 0; }
-        .ml-auto { margin-left: auto; }
+        .mb-md {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .mb-lg {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .mb-xl {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .mb-2xl {
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .mb-3xl {
+            margin-bottom: var(--spacing-3xl);
+        }
+
+        .mt-xs {
+            margin-top: var(--spacing-xs);
+        }
+
+        .mt-sm {
+            margin-top: var(--spacing-sm);
+        }
+
+        .mt-md {
+            margin-top: var(--spacing-md);
+        }
+
+        .mt-lg {
+            margin-top: var(--spacing-lg);
+        }
+
+        .mt-xl {
+            margin-top: var(--spacing-xl);
+        }
+
+        .mt-2xl {
+            margin-top: var(--spacing-2xl);
+        }
+
+        .mt-3xl {
+            margin-top: var(--spacing-3xl);
+        }
+
+        .m-0 {
+            margin: 0;
+        }
+
+        .p-0 {
+            padding: 0;
+        }
+
+        .ml-auto {
+            margin-left: auto;
+        }
 
         /* Header Utilities */
         .page-header {
@@ -977,11 +1026,25 @@
         }
 
         /* Opacity Utilities */
-        .opacity-60 { opacity: 0.6; }
-        .opacity-70 { opacity: 0.7; }
-        .opacity-80 { opacity: 0.8; }
-        .opacity-90 { opacity: 0.9; }
-        .opacity-95 { opacity: 0.95; }
+        .opacity-60 {
+            opacity: 0.6;
+        }
+
+        .opacity-70 {
+            opacity: 0.7;
+        }
+
+        .opacity-80 {
+            opacity: 0.8;
+        }
+
+        .opacity-90 {
+            opacity: 0.9;
+        }
+
+        .opacity-95 {
+            opacity: 0.95;
+        }
     </style>
 </head>
 
@@ -1070,7 +1133,8 @@
                         </div>
                         <p class="insight-card-text mb-sm">{{ insight.insight }}</p>
                         {% if insight.implication %}
-                        <p class="insight-card-text opacity-70" style="font-style: italic;">→ {{ insight.implication }}</p>
+                        <p class="insight-card-text opacity-70" style="font-style: italic;">→ {{ insight.implication }}
+                        </p>
                         {% endif %}
                         {% else %}
                         <!-- Simple string format (backwards compatibility) -->
@@ -1114,7 +1178,8 @@
 
             <!-- Data Quality Note -->
             {% if llm_insights.data_quality_notes %}
-            <div class="text-secondary opacity-60" style="font-size: 0.8rem; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div class="text-secondary opacity-60"
+                style="font-size: 0.8rem; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
                 ⚠️ {{ llm_insights.data_quality_notes }}
             </div>
             {% endif %}
@@ -1363,7 +1428,7 @@
     <!-- OUTDATED CHARTS REMOVED (Legacy Tech, Gap, etc.) -->
 
     <!-- MARKET TRENDS & DEEP ANALYSIS -->
-    <div id="market-trends" class="collapsible-section">
+    <div id="market-trends" class="collapsible-section collapsed">
         <div class="section-header" onclick="toggleSection('market-trends')">
             <span class="toggle-icon">▼</span>
             <h2 style="margin:0;">📈 Tržní Trendy & Hloubková Analýza</h2>
@@ -1415,7 +1480,7 @@
 
     <!-- Benefits Intelligence -->
     {% if benefits_data %}
-    <div id="benefits-section" class="collapsible-section">
+    <div id="benefits-section" class="collapsible-section collapsed">
         <div class="section-header" onclick="toggleSection('benefits-section')">
             <span class="toggle-icon">▼</span>
             <h2 style="margin:0;">🎁 Přehled benefitů</h2>
@@ -1470,7 +1535,7 @@
 
     <!-- Work Model Intelligence -->
     {% if work_model_dist %}
-    <div id="work-model-section" class="collapsible-section">
+    <div id="work-model-section" class="collapsible-section collapsed">
         <div class="section-header" onclick="toggleSection('work-model-section')">
             <span class="toggle-icon">▼</span>
             <h2 style="margin:0;">🏠 Přehled pracovního modelu</h2>
@@ -1554,7 +1619,7 @@
     <!-- v1.2 section removed - content consolidated into "Market Trends & Deep Analysis" -->
 
     <!-- v1.3 Economic Reality & Talent Dynamics -->
-    <div id="economic-reality" class="collapsible-section">
+    <div id="economic-reality" class="collapsible-section collapsed">
         <div class="section-header" onclick="toggleSection('economic-reality')">
             <span class="toggle-icon">▼</span>
             <h2 style="margin:0;">💰 Ekonomická Realita & Dynamika Talentů</h2>
@@ -1705,7 +1770,7 @@
     </div> <!-- End collapsible-section -->
 
     <!-- MARKET OVERVIEW SECTION -->
-    <div id="market-overview" class="collapsible-section">
+    <div id="market-overview" class="collapsible-section collapsed">
         <div class="section-header" onclick="toggleSection('market-overview')">
             <span class="toggle-icon">▼</span>
             <h2 style="margin:0;">📊 Tržní Statistiky & Přehled</h2>
@@ -1965,7 +2030,7 @@
 
         // Update aria-expanded on section toggle
         const originalToggleSection = toggleSection;
-        toggleSection = function(sectionId) {
+        toggleSection = function (sectionId) {
             const section = document.getElementById(sectionId);
             if (section && section.classList.contains('collapsible-section')) {
                 const header = section.querySelector('.section-header');
