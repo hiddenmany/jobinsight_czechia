@@ -20,6 +20,11 @@ from parsers import SalaryParser
     # Currency conversion
     ("2000 EUR", None, (50000, 50000, 50000)), # 2000 * 25
     
+    # WTTJ salary (non-k format, should pass through)
+    ("45 000 Kč", "WTTJ", (45000, 45000, 45000)),
+    # Edge case: small numbers that aren't salaries should still parse
+    ("600 Kč/hod", None, (96000, 96000, 96000)),  # 600 * 160 hourly
+
     # Special cases
     ("Unpaid internship", None, (0, 0, 0)),
     ("Mzda dohodou", None, (-1, -1, -1)),

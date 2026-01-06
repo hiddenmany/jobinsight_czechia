@@ -25,17 +25,17 @@ The latest market intelligence is automatically updated every Monday:
 <!-- END_STATS -->
 
 ### ⚠️ Current System Status & Root Cause Analysis (2026-01-06)
-**Status:** DATA QUALITY ALERT - High-quality tech data is currently underrepresented.
+**Status:** ✅ RESOLVED - All data quality issues have been fixed.
 
 **Technical Findings for Correction:**
-- **Salary Parsing Bug (`parsers.py`):** The parser contains a hardcoded filter `nums = [n for n in nums_raw if n > 1000]` in the default branch. This erroneously discards "k-suffix" salaries (e.g., "40k") for all sources except StartupJobs. It needs to be replaced with a source-agnostic shorthand handler.
-- **Scraper Contention (`scraper.py`):** The `main()` function uses `asyncio.gather` for all sources simultaneously. High-traffic portals (Jobs.cz/Prace.cz) saturate the connection, causing brittle React-based scrapers (StartupJobs/WTTJ) to hit `SELECTOR_TIMEOUT` or `net::ERR_ABORTED`.
-- **Classification Bias (`classifiers.py`):** "Tech Lead" and "Team Lead" are prioritized into `Management` rather than `Developer`, further diluting the developer salary sample.
+- ✅ **Salary Parsing Bug (`parsers.py`):** Fixed. Global k-suffix handling on line 32.
+- ✅ **Scraper Contention (`scraper.py`):** Fixed. Tech scrapers run sequentially in Batch 2.
+- ✅ **Classification Bias (`classifiers.py`):** Fixed. Tech leads now classified as Developer.
 
 **Resolution Roadmap:**
 1. ✅ **Reproduced:** Verified failures in `test_scraper_fixes.py` (Salary coverage: StartupJobs 51% vs WTTJ 0%).
-2. 🛠 **Action Needed:** Refactor `SalaryParser.parse` to detect and multiply shorthand values (n < 1000) for all tech sources.
-3. 🛠 **Action Needed:** Update `scraper.py:main()` to run tech-focused scrapers sequentially before high-volume ones.
+2. ✅ **Action Taken:** Refactored `SalaryParser.parse` to detect and multiply shorthand values (n < 1000) for all tech sources.
+3. ✅ **Action Taken:** Updated `scraper.py:main()` to run tech-focused scrapers sequentially before high-volume ones.
 
 ---
 

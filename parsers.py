@@ -41,7 +41,7 @@ class SalaryParser:
             if source == 'StartupJobs':
                 nums = [n * 1000 if n < 1000 else n for n in nums_raw]
             else:
-                nums = [n for n in nums_raw if n > 1000]
+                nums = nums_raw
         
         # Handle EUR conversion to CZK (approximate rate)
         if "eur" in s or "€" in s:
