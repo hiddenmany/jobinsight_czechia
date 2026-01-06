@@ -1346,15 +1346,49 @@
     </div>
 
     <script>
-        var contract_data = {{ json_contract | safe }};
-        Plotly.newPlot('chart_contract', contract_data.data, contract_data.layout);
+        // Chart rendering with error handling
+        function safeRenderChart(containerId, chartData, chartName) {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error(`Chart container not found: ${containerId}`);
+                return;
+            }
 
+            // Check for empty or invalid data
+            if (!chartData || !chartData.data || chartData.data.length === 0) {
+                container.innerHTML = `
+                    <div class="chart-empty" style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-bg-tertiary, #f3f4f6); border-radius: 8px; color: var(--color-text-secondary, #666);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; opacity: 0.5;">📊</div>
+                            <div style="margin-top: 10px;">Data nejsou dostupná</div>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            try {
+                Plotly.newPlot(containerId, chartData.data, chartData.layout);
+            } catch (error) {
+                console.error(`Chart rendering failed for ${chartName}:`, error);
+                container.innerHTML = `
+                    <div class="chart-error" style="display: flex; align-items: center; justify-content: center; height: 200px; background: var(--color-error-light, #ffebee); border-radius: 8px; color: var(--color-error, #DD3333); border: 1px solid var(--color-error, #DD3333);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem;">⚠️</div>
+                            <div style="margin-top: 10px;">Graf se nepodařilo načíst</div>
+                        </div>
+                    </div>`;
+            }
+        }
+
+        // Render charts with error handling
+        var contract_data = {{ json_contract | safe }};
+        safeRenderChart('chart_contract', contract_data, 'Typ Smlouvy');
 
         var role_data = {{ json_role | safe }};
-        Plotly.newPlot('chart_role', role_data.data, role_data.layout);
+        safeRenderChart('chart_role', role_data, 'Plat podle Pozice');
 
         var seniority_data = {{ json_seniority | safe }};
-        Plotly.newPlot('chart_seniority', seniority_data.data, seniority_data.layout);
+        safeRenderChart('chart_seniority', seniority_data, 'Plat podle Seniority');
 
         // Toggle function for collapsible sections
         function toggleSection(sectionId) {
@@ -1376,16 +1410,16 @@
 
         // Market Trends & Deep Analysis Charts
         var salary_percentiles_data = {{ json_salary_percentiles | safe }};
-        Plotly.newPlot('chart_salary_percentiles', salary_percentiles_data.data, salary_percentiles_data.layout);
+        safeRenderChart('chart_salary_percentiles', salary_percentiles_data, 'Rozsah Platů');
 
         var top_companies_data = {{ json_top_companies | safe }};
-        Plotly.newPlot('chart_top_companies', top_companies_data.data, top_companies_data.layout);
+        safeRenderChart('chart_top_companies', top_companies_data, 'Nejvíce Nabízející Firmy');
 
         var top_skills_data = {{ json_top_skills | safe }};
-        Plotly.newPlot('chart_top_skills', top_skills_data.data, top_skills_data.layout);
+        safeRenderChart('chart_top_skills', top_skills_data, 'Nejžádanější Dovednosti');
 
         var role_distribution_data = {{ json_role_distribution | safe }};
-        Plotly.newPlot('chart_role_distribution', role_distribution_data.data, role_distribution_data.layout);
+        safeRenderChart('chart_role_distribution', role_distribution_data, 'Rozložení Rolí');
 
         // === HYBRID NAVIGATION UX ===
 
