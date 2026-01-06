@@ -80,24 +80,25 @@
             background: var(--color-bg-secondary);
             margin: 0;
             padding: 40px 20px;
-            color: #111;
+            color: var(--color-text-primary);
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: #fff;
-            padding: 60px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
-            border-radius: 12px;
+            background: var(--color-bg-primary);
+            padding: var(--spacing-3xl);
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius-lg);
         }
 
         h1 {
-            font-size: 3.5rem;
+            font-size: var(--font-size-3xl);
+            /* clamp(2rem, 5vw + 1rem, 3.5rem) */
             font-weight: 800;
             letter-spacing: -2px;
             margin-bottom: 0.1em;
-            color: #111;
+            color: var(--color-text-primary);
         }
 
         h1 span {
