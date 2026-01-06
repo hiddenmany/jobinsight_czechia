@@ -1,0 +1,151 @@
+"""
+L-2 FIX: Comprehensive tests for SalaryParser edge cases.
+Tests k-notation, hourly-to-monthly conversion, currency conversion,
+negotiable salaries, and validation bounds.
+"""
+import pytest
+from parsers import SalaryParser, CURRENCY_RATES, MIN_VALID_SALARY, MAX_VALID_SALARY
+
+
+class TestSalaryParserBasic:
+    """Basic parsing tests."""
+    
+    def test_parse_simple_range(self):
+        """Parse simple CZK salary range."""
+        min_s, max_s, avg_s = SalaryParser.parse("40000 - 60000 Kč")
+        assert min_s == 40000
+        assert max_s == 60000
+        assert avg_s == 50000
+    
+    def test_parse_empty_string(self):
+        """Empty string returns None tuple."""
+        assert SalaryParser.parse("") == (None, None, None)
+        assert SalaryParser.parse(None) == (None, None, None)
+    
+    def test_parse_single_value(self):
+        """Single value should work."""
+        min_s, max_s, avg_s = SalaryParser.parse("50000 Kč")
+        assert min_s == 50000
+        assert max_s == 50000
+
+
+class TestKNotation:
+    """Test k-notation handling (e.g., 80k, 50K)."""
+    
+    def test_k_notation_lowercase(self):
+        """80k should become 80000."""
+        min_s, max_s, avg_s = SalaryParser.parse("80k-100k CZK")
+        assert min_s == 80000
+        assert max_s == 100000
+    
+    def test_k_notation_uppercase(self):
+        """50K should become 50000."""
+        min_s, max_s, avg_s = SalaryParser.parse("50K Kč")
+        assert min_s == 50000
+    
+    def test_k_notation_range(self):
+        """45-80k should become 45000-80000 (k applies to whole range)."""
+        min_s, max_s, avg_s = SalaryParser.parse("45-80k")
+        assert min_s == 45000
+        assert max_s == 80000
+        assert avg_s == 62500
+    
+    def test_k_notation_not_double_expanded(self):
+        """50000kč should NOT become 50000000."""
+        min_s, max_s, avg_s = SalaryParser.parse("50000kč")
+        assert avg_s == 50000
+
+
+class TestHourlyConversion:
+    """Test hourly-to-monthly conversion (160 hours/month)."""
+    
+    def test_hourly_czech(self):
+        """200 Kč/hod should become 32000 monthly."""
+        min_s, max_s, avg_s = SalaryParser.parse("200 Kč/hod")
+        assert avg_s == 200 * 160  # 32000
+    
+    def test_hourly_english(self):
+        """250 CZK/h = 40000 monthly which is valid."""
+        min_s, max_s, avg_s = SalaryParser.parse("250 CZK/h")
+        assert avg_s == 250 * 160  # 40000, within valid range
+
+
+class TestCurrencyConversion:
+    """Test EUR and USD conversion to CZK."""
+    
+    def test_eur_conversion(self):
+        """2000 EUR should be converted using CURRENCY_RATES."""
+        min_s, max_s, avg_s = SalaryParser.parse("2000 EUR")
+        expected = 2000 * CURRENCY_RATES['EUR']
+        assert avg_s == expected
+    
+    def test_usd_conversion(self):
+        """3000 USD should be converted using CURRENCY_RATES."""
+        min_s, max_s, avg_s = SalaryParser.parse("3000 USD")
+        expected = 3000 * CURRENCY_RATES['USD']
+        assert avg_s == expected
+    
+    def test_euro_symbol(self):
+        """€2000 should be recognized as EUR."""
+        min_s, max_s, avg_s = SalaryParser.parse("€2000")
+        expected = 2000 * CURRENCY_RATES['EUR']
+        assert avg_s == expected
+
+
+class TestSpecialCases:
+    """Test special salary cases."""
+    
+    def test_unpaid_internship(self):
+        """Unpaid returns (0, 0, 0)."""
+        assert SalaryParser.parse("unpaid internship") == (0, 0, 0)
+        assert SalaryParser.parse("0 Kč") == (0, 0, 0)
+    
+    def test_negotiable_salary(self):
+        """Negotiable returns (-1, -1, -1)."""
+        assert SalaryParser.parse("dohodou") == (-1, -1, -1)
+        assert SalaryParser.parse("negotiable") == (-1, -1, -1)
+        assert SalaryParser.parse("TBD") == (-1, -1, -1)
+
+
+class TestValidation:
+    """Test salary validation bounds (H-2 FIX)."""
+    
+    def test_below_minimum_rejected(self):
+        """Salary below MIN_VALID_SALARY is rejected."""
+        result = SalaryParser.parse("5000 Kč")
+        assert result == (None, None, None)
+    
+    def test_above_maximum_rejected(self):
+        """Salary above MAX_VALID_SALARY is rejected."""
+        result = SalaryParser.parse("1000000 Kč")
+        assert result == (None, None, None)
+    
+    def test_valid_salary_accepted(self):
+        """Valid salary within bounds is accepted."""
+        min_s, max_s, avg_s = SalaryParser.parse("50000 Kč")
+        assert avg_s == 50000
+
+
+class TestStartupJobsSource:
+    """Test StartupJobs-specific parsing."""
+    
+    def test_startupjobs_low_numbers(self):
+        """StartupJobs low numbers should be multiplied by 1000."""
+        min_s, max_s, avg_s = SalaryParser.parse("60-80 Kč", source="StartupJobs")
+        assert min_s == 60000
+        assert max_s == 80000
+
+
+class TestThousandSeparators:
+    """Test thousand separator handling."""
+    
+    def test_dot_separator(self):
+        """50.000 Kč should be 50000."""
+        min_s, max_s, avg_s = SalaryParser.parse("50.000 Kč")
+        assert avg_s == 50000
+    
+    def test_space_separator(self):
+        """50 000 Kč should be 50000."""
+        min_s, max_s, avg_s = SalaryParser.parse("50 000 Kč")
+        # After space removal and joining, this becomes 50000
+        assert avg_s == 50000
