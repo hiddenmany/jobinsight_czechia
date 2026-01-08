@@ -27,7 +27,7 @@ Focus on data safety and ensuring that partial progress is never lost.
 ## Phase 3: Final Verification
 Focus on proving the 100% completion goal in the target environment.
 
-- [ ] **Task: End-to-End Scrape Test**
-  - [ ] Write Tests: Run a limited, high-speed scrape of StartupJobs to verify heartbeats and persistence logic.
-  - [ ] Implement Feature: Execute a full StartupJobs scrape and monitor for the previously observed 60% bottleneck.
+- [x] **Task: End-to-End Scrape Test** 8059219
+  - [x] Write Tests: Run a limited, high-speed scrape of StartupJobs to verify heartbeats and persistence logic.
+  - [x] Implement Feature: Execute a full StartupJobs scrape and monitor for the previously observed 60% bottleneck.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Final Verification' (Protocol in workflow.md)
