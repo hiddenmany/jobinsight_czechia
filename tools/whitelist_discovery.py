@@ -82,7 +82,7 @@ def extract_candidates_from_db(min_count: int = 5) -> Dict[str, int]:
         query = """
         SELECT title, description 
         FROM signals 
-        WHERE role_category = 'Other' 
+        WHERE role_type = 'Other' 
         AND description IS NOT NULL
         """
         
@@ -325,3 +325,58 @@ def generate_report(results: Dict[str, str], added_terms: List[str]) -> None:
         f.write(content)
         
     print(f"Report saved to {report_path}")
+
+def run_discovery(min_count: int = 5, dry_run: bool = True) -> Dict[str, int]:
+    """
+    Main orchestration function.
+    """
+    print(f"Starting whitelist discovery (min_count={min_count}, dry_run={dry_run})...")
+    
+    # 1. Extract
+    print("Extracting candidates from DB...")
+    candidates_count = extract_candidates_from_db(min_count=min_count)
+    if not candidates_count:
+        print("No candidates found matching criteria.")
+        return {'processed': 0, 'added': 0}
+        
+    candidates = list(candidates_count.keys())
+    print(f"Found {len(candidates)} candidates.")
+    
+    # 2. Validate
+    print("Validating with LLM...")
+    validation_results = validate_candidates_with_llm(candidates)
+    
+    # 3. Filter for High Confidence (Tech)
+    tech_candidates = [term for term, cat in validation_results.items() if cat == 'Tech']
+    print(f"Identified {len(tech_candidates)} Tech candidates.")
+    
+    # 4. Update (if not dry run)
+    added_count = 0
+    if not dry_run and tech_candidates:
+        print("Updating classifiers.py...")
+        if update_classifiers_file(tech_candidates):
+            added_count = len(tech_candidates)
+            print("Update successful.")
+        else:
+            print("Update failed.")
+    elif dry_run and tech_candidates:
+        print("Dry run: Skipping file update.")
+        
+    # 5. Report
+    print("Generating report...")
+    generate_report(validation_results, tech_candidates if not dry_run else [])
+    
+    return {
+        'processed': len(candidates),
+        'added': added_count
+    }
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Discover and auto-update tech whitelist.")
+    parser.add_argument("--min-count", type=int, default=5, help="Minimum frequency count")
+    parser.add_argument("--live", action="store_true", help="Execute actual update (disable dry-run)")
+    
+    args = parser.parse_args()
+    
+    run_discovery(min_count=args.min_count, dry_run=not args.live)
