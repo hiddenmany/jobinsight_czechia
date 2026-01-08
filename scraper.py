@@ -20,7 +20,8 @@ from scraper_utils import (
     retry,
     CircuitBreaker,
     validate_scraper_config,
-    shutdown_handler
+    shutdown_handler,
+    Heartbeat
 )
 
 # --- CONFIGURATION ---
@@ -832,19 +833,23 @@ async def main():
         try:
             # Batch 1: High-volume standard boards (Concurrent)
             logger.info("Batch 1: Standard Job Boards")
-            await asyncio.gather(
-                jobs_cz.run(limit=100),
-                prace_cz.run(limit=50)
-            )
+            with Heartbeat(interval=30.0, message="Scraping Batch 1: Jobs.cz, Prace.cz..."):
+                await asyncio.gather(
+                    jobs_cz.run(limit=100),
+                    prace_cz.run(limit=50)
+                )
 
             # Batch 2: Tech-focused & sensitive sites (Sequential for reliability)
             logger.info("Batch 2: Tech-focused Sites")
-            await startup.run(limit=600)
-            await wttj.run(limit=600)
+            with Heartbeat(interval=30.0, message="Scraping Batch 2: StartupJobs..."):
+                await startup.run(limit=600)
+            with Heartbeat(interval=30.0, message="Scraping Batch 2: WTTJ..."):
+                await wttj.run(limit=600)
 
             # Batch 3: Niche / Others
             logger.info("Batch 3: Niche Channels")
-            await cocuma.run(limit=30)
+            with Heartbeat(interval=30.0, message="Scraping Batch 3: Cocuma..."):
+                await cocuma.run(limit=30)
             
         except KeyboardInterrupt:
             logger.warning("Received interrupt signal, initiating graceful shutdown...")
