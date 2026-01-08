@@ -170,8 +170,11 @@ class ScrapeEngine:
                 
             except (PlaywrightTimeout, PlaywrightError) as e:
                 logger.warning(f"Failed to fetch details for {signal.link}: {e}")
+                # Re-raise to trigger @retry decorator
+                raise e
             except Exception as e:
                 logger.error(f"Unexpected error fetching details for {signal.link}: {e}")
+                raise e
             finally:
                 # Proper cleanup to prevent memory leaks
                 if page:
@@ -624,7 +627,7 @@ class WttjScraper(BaseScraper):
                 page_url = f"{base_url}&page={page_num}"
                 
                 try:
-                    await rate_limit(1.0, 2.0)  # Rate limiting between pages
+                    await rate_limit(3.0, 7.0)  # Enhanced rate limiting for WTTJ
                     await page.goto(page_url, timeout=PAGE_TIMEOUT_MS, wait_until="domcontentloaded")
                     await page.wait_for_selector(card_sel, timeout=SELECTOR_TIMEOUT_MS * 2)
                 except Exception as e:
