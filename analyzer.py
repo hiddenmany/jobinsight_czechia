@@ -17,6 +17,7 @@ from typing import Optional
 from parsers import SalaryParser, THOUSAND_SEP_PATTERN
 from classifiers import JobClassifier
 from settings import settings
+from tools.location_normalizer import LocationNormalizer
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('HR-Intel-Analyzer')
@@ -159,6 +160,7 @@ class IntelligenceCore:
     def __init__(self, read_only=False):
         settings.ensure_dirs()  # Create data/config/public dirs if needed
         self.con = duckdb.connect(DB_PATH, read_only=read_only)
+        self.normalizer = LocationNormalizer()
         self._init_db()
         self._df_cache = None  # Lazy loading cache
         self._cache_timestamp = None
@@ -340,9 +342,8 @@ class IntelligenceCore:
 
         now = datetime.now()
         try:
-            # v1.1 Regional Analysis: Default region to location for now
-            # Proper normalization will be implemented in the next task
-            region = signal.location if signal.location else "Unknown"
+            # v1.1 Regional Analysis: Normalize location
+            region, city = self.normalizer.normalize(signal.location)
             
             self.con.execute(
                 """
@@ -359,7 +360,7 @@ class IntelligenceCore:
                     signal.benefits,
                     signal.link,
                     signal.source,
-                    signal.location,
+                    city,
                     region,
                     now,
                     tox,
