@@ -13,19 +13,19 @@ Focus on identifying the exact causes of failures through better logging and sel
   - [x] Implement Feature: Update `config/selectors.yaml` with resilient selectors for WTTJ.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Diagnostics & Selector Audit' (Protocol in workflow.md) 11a3a12
 
-## Phase 2: Logic Fixes & Site Resilience
+## Phase 2: Logic Fixes & Site Resilience [checkpoint: d2e4921]
 Focus on fixing pagination and handling specific network exceptions.
 
-- [ ] **Task: Cocuma Pagination & Fallback Selectors**
-  - [ ] Write Tests: Verify the scraper can detect and click the Cocuma "Load More" button beyond page 10.
-  - [ ] Implement Feature: Refactor Cocuma logic to handle layout shifts on older pages and fix infinite scroll stalling.
-- [ ] **Task: StartupJobs Connection Resilience**
-  - [ ] Write Tests: Simulate `net::ERR_CONNECTION_CLOSED` and verify that specific retry logic triggers.
-  - [ ] Implement Feature: Add a targeted retry handler for connection resets in the `ScrapeEngine.scrape_detail` method.
-- [ ] **Task: WTTJ Rate Limit Tuning**
+- [x] **Task: Cocuma Pagination & Fallback Selectors**
+  - [x] Write Tests: Verify the scraper can detect and click the Cocuma "Load More" button beyond page 10.
+  - [x] Implement Feature: Refactor Cocuma logic to handle layout shifts on older pages and fix infinite scroll stalling.
+- [x] **Task: StartupJobs Connection Resilience**
+  - [x] Write Tests: Simulate `net::ERR_CONNECTION_CLOSED` and verify that specific retry logic triggers.
+  - [x] Implement Feature: Add a targeted retry handler for connection resets in the `ScrapeEngine.scrape_detail` method.
+- [~] **Task: WTTJ Rate Limit Tuning**
   - [ ] Write Tests: Verify that WTTJ requests maintain a randomized delay within the 3-7s window.
   - [ ] Implement Feature: Implement site-specific rate limiting overrides in `scraper.py`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Logic Fixes & Site Resilience' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Logic Fixes & Site Resilience' (Protocol in workflow.md) d2e4921
 
 ## Phase 3: Final Verification
 Focus on confirming the yield increase and system stability.
