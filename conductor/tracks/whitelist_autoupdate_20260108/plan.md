@@ -19,7 +19,7 @@
 - [x] Task: Generate Markdown Report
     - [x] Sub-task: Write Tests: Verify the report generator produces valid Markdown structure from a list of result objects.
     - [x] Sub-task: Implement Feature: Implement `generate_report()` to output `report/whitelist_candidates.md`.
-- [ ] Task: Conductor - User Manual Verification 'Reporting & Code Patching' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Reporting & Code Patching' (Protocol in workflow.md) [checkpoint: 2cbc776]
 - [ ] Task: Conductor - User Manual Verification 'Reporting & Code Patching' (Protocol in workflow.md)
 
 ## Phase 3: Integration & Final Polish
