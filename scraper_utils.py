@@ -14,6 +14,8 @@ from datetime import datetime
 logger = logging.getLogger("OmniScrape")
 
 # Fix 1.1: User-Agent Rotation Pool
+# NOTE: These are real browser user-agents for anti-bot evasion.
+# For transparent bot identification, use get_bot_headers() instead.
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -27,9 +29,28 @@ USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0",
 ]
 
+# Stage 6: Bot Attribution for Responsible Scraping
+BOT_NAME = "JobsCzInsight/18.0"
+BOT_CONTACT = "https://github.com/matyasjanda/JobsCzInsight"
+
 def get_random_user_agent() -> str:
     """Returns a random user agent from the pool to avoid bot detection."""
     return random.choice(USER_AGENTS)
+
+
+def get_bot_headers() -> dict:
+    """
+    Returns headers identifying this bot per robots.txt best practices.
+    
+    Use case: For sites that allow identified bots (e.g., Google, Bing).
+    The From header provides contact info per RFC 9110.
+    """
+    return {
+        "User-Agent": f"{BOT_NAME} (+{BOT_CONTACT})",
+        "From": BOT_CONTACT,
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "cs-CZ,cs;q=0.9,en;q=0.8",
+    }
 
 
 # Fix 1.3: Text Sanitization
@@ -338,3 +359,46 @@ def validate_job_data(title: str, company: str, link: str) -> bool:
         return False
     
     return True
+
+
+# Fix 8.4: Heartbeat Utility for CLI Environments
+import threading
+import time
+
+class Heartbeat:
+    """
+    Prints a heartbeat message periodically to keep CLI/CI environments alive.
+    Runs in a separate thread to work even during blocking operations.
+    """
+    def __init__(self, interval: float = 30.0, message: str = "Heartbeat: Process is still active..."):
+        self.interval = interval
+        self.message = message
+        self.stop_event = threading.Event()
+        self.thread = None
+
+    def _run(self):
+        while not self.stop_event.is_set():
+            logger.info(self.message)
+            # Use wait instead of sleep to respond to stop event immediately
+            if self.stop_event.wait(self.interval):
+                break
+
+    def start(self):
+        if self.thread is not None and self.thread.is_alive():
+            return
+        self.stop_event.clear()
+        self.thread = threading.Thread(target=self._run, daemon=True)
+        self.thread.start()
+
+    def stop(self):
+        if self.thread:
+            self.stop_event.set()
+            self.thread.join(timeout=1.0)
+            self.thread = None
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
