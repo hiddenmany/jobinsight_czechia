@@ -30,7 +30,7 @@ Focus on calculating the metrics for each region.
 ## Phase 3: Dashboard & Reporting
 Focus on presenting the data to the user.
 
-- [ ] **Task: Regional Comparison Charts**
+- [x] **Task: Regional Comparison Charts** aa4acd1
   - [ ] Write Tests: Verify data format for Streamlit/Plotly charts.
   - [ ] Implement Feature: Add interactive regional comparison charts to `app.py`.
 - [ ] **Task: AI-Powered Regional Insights**
