@@ -212,6 +212,8 @@ class BaseScraper:
                 txt = ' '.join(txt.split())
                 if txt and len(txt) > 1:
                     return sanitize_text(txt)
+            else:
+                logger.debug(f"{self.site_name}: Company selector '{sel}' returned no element")
         return "Unknown Employer"
     
     async def extract_city(self, card):
@@ -227,7 +229,10 @@ class BaseScraper:
                     txt = txt.replace(',', '').split('-')[0].split('(')[0].strip()
                     if txt and len(txt) > 1 and len(txt) < 50:  # Reasonable city name length
                         return txt
-            except Exception:
+                else:
+                    logger.debug(f"{self.site_name}: City selector '{sel}' returned no element")
+            except Exception as e:
+                logger.debug(f"{self.site_name}: City extraction error for selector '{sel}': {e}")
                 continue
         
         # Fallback to text-based city detection using config with word boundaries
