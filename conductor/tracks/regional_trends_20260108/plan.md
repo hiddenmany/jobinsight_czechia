@@ -11,7 +11,7 @@ Focus on ensuring location data is correctly captured and normalized.
 - [x] **Task: Implement Location Normalizer** 9245dba
   - [ ] Write Tests: Verify various city names map to correct regions (Prague, Brno, Ostrava).
   - [ ] Implement Feature: Create `tools/location_normalizer.py` to normalize scraped location strings.
-- [ ] **Task: Update Scraper Integration**
+- [x] **Task: Update Scraper Integration** c86b66f
   - [ ] Write Tests: Verify scraper passes location data to the normalizer.
   - [ ] Implement Feature: Update `parsers.py` and `scraper.py` to process location data during extraction.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Normalization & Schema' (Protocol in workflow.md)
