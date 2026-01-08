@@ -27,10 +27,10 @@ Focus on fixing pagination and handling specific network exceptions.
   - [ ] Implement Feature: Implement site-specific rate limiting overrides in `scraper.py`.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Logic Fixes & Site Resilience' (Protocol in workflow.md) d2e4921
 
-## Phase 3: Final Verification
+## Phase 3: Final Verification [checkpoint: f3c1bc8]
 Focus on confirming the yield increase and system stability.
 
-- [ ] **Task: Yield & Stability Benchmark**
-  - [ ] Write Tests: Run a full scrape targeting 100+ jobs for WTTJ and full traversal for Cocuma.
-  - [ ] Implement Feature: Execute end-to-end verification and confirm zero circuit-breaker triggers.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Final Verification' (Protocol in workflow.md)
+- [x] **Task: Yield & Stability Benchmark** f3c1bc8
+  - [x] Write Tests: Run a full scrape targeting 100+ jobs for WTTJ and full traversal for Cocuma.
+  - [x] Implement Feature: Execute end-to-end verification and confirm zero circuit-breaker triggers.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Final Verification' (Protocol in workflow.md) f3c1bc8
