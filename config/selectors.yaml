@@ -1,3 +1,6 @@
+# JobsCzInsight v18.0 Scraper Configuration
+# ROBOTS.TXT COMPLIANCE: This scraper respects rate limits and Crawl-delay directives.
+# All sites are scraped at 1-2 second intervals minimum (see performance section).
 common:
   read_more_buttons:
   - button:has-text('Zobrazit více')
@@ -85,11 +88,13 @@ scrapers:
     title: h2
     link: a[href*='/jobs/']
     company_selectors:
+    - h2 ~ div span
+    - h2 + div span
     - span.sc-688y7f-0
-    - header span
     city_selectors:
     - '[data-testid=''job-location'']'
     - span:has-text('Prague')
+    - h2 ~ div div span
   Cocuma:
     base_url: https://www.cocuma.cz/jobs/page/
     domain: https://www.cocuma.cz
