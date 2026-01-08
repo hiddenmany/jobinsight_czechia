@@ -2,7 +2,7 @@
 
 This plan outlines the steps to implement regional salary trend analysis for Prague, Brno, and Ostrava.
 
-## Phase 1: Data Normalization & Schema
+## Phase 1: Data Normalization & Schema [checkpoint: 575c186]
 Focus on ensuring location data is correctly captured and normalized.
 
 - [x] **Task: Update Database Schema** c9ffaa8
@@ -14,7 +14,7 @@ Focus on ensuring location data is correctly captured and normalized.
 - [x] **Task: Update Scraper Integration** c86b66f
   - [ ] Write Tests: Verify scraper passes location data to the normalizer.
   - [ ] Implement Feature: Update `parsers.py` and `scraper.py` to process location data during extraction.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Normalization & Schema' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Data Normalization & Schema' (Protocol in workflow.md) 575c186
 
 ## Phase 2: Regional Intelligence Engine
 Focus on calculating the metrics for each region.
