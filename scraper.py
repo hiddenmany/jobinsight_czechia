@@ -435,33 +435,76 @@ class StartupJobsScraper(BaseScraper):
             target_cards = limit * 2  # Account for duplicates
             click_count = 0
             max_clicks = 50  # Safety limit
+            seen_links = set()
+            total_saved = 0
             
-            while click_count < max_clicks:
+            while click_count < max_clicks and total_saved < limit:
                 if shutdown_handler.is_shutdown_requested():
                     logger.info(f"{self.site_name}: Shutdown requested, stopping gracefully")
                     break
                 
-                # Check current card count
+                # Check current card count and process batch if enough new ones found
                 cards = await page.query_selector_all(card_sel)
                 current_count = len(cards)
                 
-                # Update progress bar
-                unique_count = current_count // 2
-                if unique_count > pbar.n:
-                    pbar.update(min(unique_count - pbar.n, limit - pbar.n))
-                
+                # Incremental processing every 5 clicks or when we reach target
+                if click_count > 0 and (click_count % 5 == 0 or current_count >= target_cards):
+                    new_batch = []
+                    for card in cards:
+                        try:
+                            href = await card.get_attribute("href")
+                            if not href: continue
+                            link = href if href.startswith("http") else f"{self.config.get('domain', 'https://www.startupjobs.cz')}{href}"
+                            
+                            if link in seen_links: continue
+                            seen_links.add(link)
+                            
+                            if CORE.is_known(link):
+                                self.extraction_stats['duplicates'] = self.extraction_stats.get('duplicates', 0) + 1
+                                continue
+                            
+                            company_name = await self.extract_company(card)
+                            city = await self.extract_city(card)
+                            
+                            txt = await card.inner_text()
+                            match = SALARY_PATTERN.search(txt)
+                            salary = match.group(0) if match else None
+                            
+                            title_sel = self.config.get('title', 'h2')
+                            title_el = await card.query_selector(title_sel)
+                            title = (await title_el.inner_text()).split('\n')[0] if title_el else txt.split('\n')[0]
+                            
+                            sig = JobSignal(
+                                title=sanitize_text(title),
+                                company=company_name,
+                                link=link,
+                                source=self.site_name,
+                                salary=salary,
+                                location=city
+                            )
+                            new_batch.append(sig)
+                        except Exception as e:
+                            logger.error(f"StartupJobs: Error processing card: {e}")
+                            continue
+
+                    if new_batch:
+                        logger.info(f"StartupJobs: Processing incremental batch of {len(new_batch)} jobs...")
+                        await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in new_batch))
+                        for s in new_batch: CORE.add_signal(s)
+                        total_saved += len(new_batch)
+                        self.extraction_stats['success'] = self.extraction_stats.get('success', 0) + len(new_batch)
+                        pbar.update(len(new_batch))
+
                 # Check if we have enough
-                if current_count >= target_cards:
-                    logger.debug(f"StartupJobs: Reached target ({current_count} elements, {unique_count} unique)")
+                if current_count >= target_cards or total_saved >= limit:
                     break
                 
                 # Scroll to bottom and look for button
                 await page.keyboard.press("End")
                 await asyncio.sleep(1.5)
                 
-                # Try to find and click the button using JavaScript (more reliable in headless)
+                # Try to find and click the button using JavaScript
                 try:
-                    # Use JS to find and click button - this worked in browser inspection
                     clicked = await page.evaluate("""() => {
                         const buttons = Array.from(document.querySelectorAll('button'));
                         const loadMore = buttons.find(b => b.innerText.includes('Načíst další stránku'));
@@ -475,86 +518,56 @@ class StartupJobsScraper(BaseScraper):
                     
                     if clicked:
                         click_count += 1
-                        logger.debug(f"StartupJobs: JS button click #{click_count}, current cards: {current_count}")
-                        await asyncio.sleep(3)  # Wait for content to load after click
+                        logger.debug(f"StartupJobs: JS button click #{click_count}")
+                        await asyncio.sleep(3)
                     else:
-                        # Button not found - we've reached the end
-                        logger.debug(f"StartupJobs: 'Load more' button not found after {click_count} clicks, ending")
                         break
                 except Exception as e:
                     logger.debug(f"StartupJobs: JS button click failed: {e}")
-                    if click_count == 0:
-                        continue  # Retry if we haven't clicked yet
-                    break  # Exit if we've already made progress
+                    break
             
-            logger.debug(f"StartupJobs: Pagination complete after {click_count} button clicks")
-            
+            # Final batch for any remaining cards
             cards = await page.query_selector_all(card_sel)
-            batch = []
-            seen_links = set()  # FIX: Deduplicate mobile/desktop card variants
-            for card in cards[:limit * 2]:  # Process more cards since ~50% are duplicates
+            final_batch = []
+            for card in cards:
                 try:
                     href = await card.get_attribute("href")
-                    if not href:
-                        continue
+                    if not href: continue
+                    link = href if href.startswith("http") else f"{self.config.get('domain', 'https://www.startupjobs.cz')}{href}"
                     
-                    if href.startswith("http"):
-                        link = href
-                    else:
-                        domain = self.config.get('domain', 'https://www.startupjobs.cz')
-                        link = domain + href
-
-                    # FIX: Skip duplicates (mobile/desktop versions of same card)
-                    if link in seen_links:
-                        continue
+                    if link in seen_links: continue
                     seen_links.add(link)
-
-                    if CORE.is_known(link):
-                        self.extraction_stats['duplicates'] = self.extraction_stats.get('duplicates', 0) + 1
-                        continue
+                    
+                    if CORE.is_known(link): continue
                     
                     company_name = await self.extract_company(card)
                     city = await self.extract_city(card)
-
-                    salary = None
-                    # StartupJobs specific salary extraction attempt (using compiled regex)
                     txt = await card.inner_text()
                     match = SALARY_PATTERN.search(txt)
-                    if match:
-                        salary = match.group(0)
-
+                    salary = match.group(0) if match else None
                     title_sel = self.config.get('title', 'h2')
                     title_el = await card.query_selector(title_sel)
-                    if title_el:
-                        title = (await title_el.inner_text()).split('\n')[0]
-                    else:
-                        title = (await card.inner_text()).split("\n")[0]
-
-                    sig = JobSignal(
+                    title = (await title_el.inner_text()).split('\n')[0] if title_el else txt.split('\n')[0]
+                    
+                    final_batch.append(JobSignal(
                         title=sanitize_text(title),
                         company=company_name,
                         link=link,
                         source=self.site_name,
                         salary=salary,
                         location=city
-                    )
-                    batch.append(sig)
-                    self.extraction_stats['success'] += 1
-                    
-                    # Stop if we've reached the limit
-                    if len(batch) >= limit:
-                        break
-                except Exception as e:
-                    logger.debug(f"Failed to process StartupJobs card: {e}")
-                    continue
+                    ))
+                except Exception: continue
             
-            if batch:
-                await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in batch))
-                for s in batch:
-                    CORE.add_signal(s)
+            if final_batch:
+                logger.info(f"StartupJobs: Processing final batch of {len(final_batch)} jobs...")
+                await asyncio.gather(*(self.engine.scrape_detail(context, s) for s in final_batch))
+                for s in final_batch: CORE.add_signal(s)
+                self.extraction_stats['success'] = self.extraction_stats.get('success', 0) + len(final_batch)
+                pbar.update(len(final_batch))
             
             CIRCUIT_BREAKER.record_success(self.site_name)
-            logger.info(f"StartupJobs completed: {len(batch)} jobs collected")
+            logger.info(f"StartupJobs completed: total success count {self.extraction_stats.get('success', 0)}")
                 
         except Exception as e:
             logger.error(f"StartupJobs failed: {e}")
