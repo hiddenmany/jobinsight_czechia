@@ -1,6 +1,7 @@
 import re
 import duckdb
 import os
+import datetime
 from collections import Counter
 from typing import List, Dict
 from settings import settings
@@ -220,3 +221,107 @@ def validate_candidates_with_llm(candidates: List[str]) -> Dict[str, str]:
             results[c] = 'Unrelated' # Default fallback
             
     return results
+
+def update_classifiers_file(new_terms: List[str], file_path: str = None) -> bool:
+    """
+    Update the tech_protection list in classifiers.py with new terms.
+    """
+    if not file_path:
+        # Default path
+        file_path = os.path.join(settings.BASE_DIR, 'classifiers.py')
+        
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Regex to find tech_protection list assignment
+        # Look for: tech_protection = ['software', ...]
+        pattern = r"(tech_protection\s*=\s*\[)(.*?)(\])"
+        match = re.search(pattern, content, re.DOTALL)
+        
+        if not match:
+            print(f"Could not find tech_protection list in {file_path}")
+            return False
+            
+        current_list_str = match.group(2)
+        # Parse current items
+        # Simple split by comma and strip quotes
+        current_items = [
+            item.strip().strip("'").strip('"') 
+            for item in current_list_str.split(',') 
+            if item.strip()
+        ]
+        
+        # Add new terms if not present
+        updated = False
+        for term in new_terms:
+            if term not in current_items:
+                current_items.append(term)
+                updated = True
+                
+        if not updated:
+            return True # Nothing to do, but success
+            
+        # Reconstruct list string
+        # Maintain single quotes for consistency
+        new_list_str = ", ".join([f"'{item}'" for item in current_items])
+        
+        # Replace in content
+        new_content = content[:match.start(2)] + new_list_str + content[match.end(2):]
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+            
+        return True
+        
+    except Exception as e:
+        print(f"Failed to update classifiers file: {e}")
+        return False
+
+def format_report(results: Dict[str, str], added_terms: List[str]) -> str:
+    """Format the whitelist analysis results as Markdown."""
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    report = [f"# Whitelist Auto-update Report ({timestamp})\n"]
+    
+    report.append("## Automatically Added Terms")
+    if added_terms:
+        for term in sorted(added_terms):
+            report.append(f"- {term}")
+    else:
+        report.append("_No terms added automatically._")
+        
+    report.append("\n## Review Candidates")
+    
+    # Sort results
+    # Group by classification
+    grouped = {}
+    for term, classification in results.items():
+        if term in added_terms: continue # Skip added
+        if classification not in grouped:
+            grouped[classification] = []
+        grouped[classification].append(term)
+        
+    if grouped:
+        for classification, terms in grouped.items():
+            report.append(f"\n### {classification}")
+            for term in sorted(terms):
+                report.append(f"- {term}")
+    else:
+        report.append("_No other candidates found._")
+        
+    return "\n".join(report)
+
+def generate_report(results: Dict[str, str], added_terms: List[str]) -> None:
+    """Generate and save the report."""
+    content = format_report(results, added_terms)
+    
+    report_dir = os.path.join(settings.BASE_DIR, 'report')
+    os.makedirs(report_dir, exist_ok=True)
+    
+    report_path = os.path.join(report_dir, 'whitelist_candidates.md')
+    
+    with open(report_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+        
+    print(f"Report saved to {report_path}")

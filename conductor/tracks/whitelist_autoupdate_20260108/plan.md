@@ -13,12 +13,13 @@
 - [x] Task: Conductor - User Manual Verification 'Candidate Discovery Logic' (Protocol in workflow.md) [checkpoint: ee4f541]
 
 ## Phase 2: Reporting & Code Patching
-- [ ] Task: Implement Code Patcher
-    - [ ] Sub-task: Write Tests: Create `tests/test_code_patcher.py` ensuring `classifiers.py` is read and updated correctly without syntax errors.
-    - [ ] Sub-task: Implement Feature: Implement `update_classifiers_file()` using robust regex replacement for the `tech_protection` list.
-- [ ] Task: Generate Markdown Report
-    - [ ] Sub-task: Write Tests: Verify the report generator produces valid Markdown structure from a list of result objects.
-    - [ ] Sub-task: Implement Feature: Implement `generate_report()` to output `report/whitelist_candidates.md`.
+- [x] Task: Implement Code Patcher
+    - [x] Sub-task: Write Tests: Create `tests/test_code_patcher.py` ensuring `classifiers.py` is read and updated correctly without syntax errors.
+    - [x] Sub-task: Implement Feature: Implement `update_classifiers_file()` using robust regex replacement for the `tech_protection` list.
+- [x] Task: Generate Markdown Report
+    - [x] Sub-task: Write Tests: Verify the report generator produces valid Markdown structure from a list of result objects.
+    - [x] Sub-task: Implement Feature: Implement `generate_report()` to output `report/whitelist_candidates.md`.
+- [ ] Task: Conductor - User Manual Verification 'Reporting & Code Patching' (Protocol in workflow.md)
 - [ ] Task: Conductor - User Manual Verification 'Reporting & Code Patching' (Protocol in workflow.md)
 
 ## Phase 3: Integration & Final Polish
