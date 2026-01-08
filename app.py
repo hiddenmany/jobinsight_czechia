@@ -123,6 +123,20 @@ with c1:
     ).properties(height=300)
     st.altair_chart(chart, use_container_width=True)
 
+    st.markdown("### // HUB BENCHMARKING")
+    reg_stats = intel.get_regional_stats()
+    reg_chart = alt.Chart(reg_stats).mark_bar(color='#0055FF').encode(
+        x=alt.X('Median Salary:Q', title="Median Salary (CZK)"),
+        y=alt.Y('Region:N', sort='-x', title=None),
+        tooltip=['Region', 'Median Salary', 'Job Count']
+    ).properties(height=200)
+    st.altair_chart(reg_chart, use_container_width=True)
+    
+    reg_trends = intel.get_regional_trends()
+    if not reg_trends.empty:
+        st.markdown("**Regional Salary Movement**")
+        st.dataframe(reg_trends, hide_index=True, use_container_width=True)
+
     st.markdown("### // BENEFIT SATURATION")
     benefits = ['multisport', 'sick day', 'flexibil', 'home office', 'akademie', 'stravenk']
     # Vectorized approach: O(n*m) instead of O(n²)

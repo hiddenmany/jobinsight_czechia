@@ -489,6 +489,7 @@ class MarketIntelligence:
         from analysis.benefits_analysis import BenefitsAnalysis
         from analysis.location_analysis import LocationAnalysis
         from analysis.trends_analysis import TrendsAnalysis
+        from analysis.regional_analysis import RegionalAnalysis
         
         self.core = IntelligenceCore(read_only=True)
         self.df = self.core.df
@@ -499,6 +500,7 @@ class MarketIntelligence:
         self._benefits = BenefitsAnalysis(self.df, TAXONOMY)
         self._location = LocationAnalysis(self.df, TAXONOMY)
         self._trends = TrendsAnalysis(self.df, TAXONOMY)
+        self._regional = RegionalAnalysis(self.df)
 
     def _enrich_contract_type(self) -> None:
         """Enrich DataFrame with contract_type column."""
@@ -1068,6 +1070,16 @@ class MarketIntelligence:
         ghosts['Company'] = ghosts['Company'].apply(lambda x: ' '.join(x.lstrip('â€˘\u2022\u2023\u25E6\u25AA\u25AB').strip().split()))
 
         return ghosts
+
+    # --- v1.1 REGIONAL INTELLIGENCE ---
+
+    def get_regional_stats(self) -> pd.DataFrame:
+        """Get median salary and job count for major hubs."""
+        return self._regional.get_regional_stats()
+
+    def get_regional_trends(self) -> pd.DataFrame:
+        """Get salary movements for major hubs."""
+        return self._regional.get_regional_trends()
 
 
 
