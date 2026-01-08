@@ -26,5 +26,5 @@
 - [x] Task: CLI Orchestration
     - [x] Sub-task: Write Tests: Test the main execution flow (mocking DB and LLM) to ensure arguments and modes (auto-update vs report-only) work.
     - [x] Sub-task: Implement Feature: Finalize `tools/whitelist_discovery.py` main block to chain Extraction -> Validation -> Reporting -> Patcher.
-- [ ] Task: Conductor - User Manual Verification 'Integration & Final Polish' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Integration & Final Polish' (Protocol in workflow.md) [checkpoint: 4e4e5a9]
 - [ ] Task: Conductor - User Manual Verification 'Integration & Final Polish' (Protocol in workflow.md)
