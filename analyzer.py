@@ -181,13 +181,14 @@ class IntelligenceCore:
                     link TEXT,
                     source TEXT,
                     city TEXT,
-                    region TEXT DEFAULT 'Unknown',
                     scraped_at TIMESTAMP,
                     toxicity_score INTEGER,
                     tech_status TEXT,
                     last_seen_at TIMESTAMP,
                     role_type TEXT DEFAULT 'Unknown',
-                    seniority_level TEXT DEFAULT 'Unknown'
+                    seniority_level TEXT DEFAULT 'Unknown',
+                    ghost_score INTEGER DEFAULT 0,
+                    region TEXT DEFAULT 'Unknown'
                 )
             """
             )
@@ -361,7 +362,6 @@ class IntelligenceCore:
                     signal.link,
                     signal.source,
                     city,
-                    region,
                     now,
                     tox,
                     tech,
@@ -369,6 +369,7 @@ class IntelligenceCore:
                     role,
                     seniority,
                     ghost_score,
+                    region,
                 ],
             )
         except Exception as e:
