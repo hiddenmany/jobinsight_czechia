@@ -33,7 +33,7 @@ Focus on presenting the data to the user.
 - [x] **Task: Regional Comparison Charts** aa4acd1
   - [ ] Write Tests: Verify data format for Streamlit/Plotly charts.
   - [ ] Implement Feature: Add interactive regional comparison charts to `app.py`.
-- [ ] **Task: AI-Powered Regional Insights**
+- [x] **Task: AI-Powered Regional Insights** 765d7ea
   - [ ] Write Tests: Verify Gemini prompt includes regional data context.
   - [ ] Implement Feature: Update `llm_analyzer.py` to include regional trend summaries in weekly reports.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Dashboard & Reporting' (Protocol in workflow.md)
