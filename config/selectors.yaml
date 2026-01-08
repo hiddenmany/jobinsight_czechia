@@ -96,6 +96,7 @@ scrapers:
     - i[name="location"] ~ span
     - '[data-testid=''job-location'']'
     - span:has-text('Prague')
+    timeout_ms: 30000
   Cocuma:
     base_url: https://www.cocuma.cz/jobs/page/
     domain: https://www.cocuma.cz

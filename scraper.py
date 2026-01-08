@@ -315,7 +315,17 @@ class PagedScraper(BaseScraper):
                     await rate_limit(1.0, 2.0)  # Add rate limiting
                     
                     await page.goto(url, timeout=PAGE_TIMEOUT_MS)
-                    await page.wait_for_selector(card_sel, timeout=SELECTOR_TIMEOUT_MS)
+                    
+                    # Check for "no results" message to end gracefully
+                    no_results_patterns = ["žádné pracovní nabídky", "no job offers", "není k dispozici"]
+                    body_text = await page.evaluate("document.body.innerText.toLowerCase()")
+                    if any(p in body_text for p in no_results_patterns):
+                        logger.info(f"{self.site_name}: End of results detected on page {page_num}")
+                        break
+                    
+                    # Use site-specific selector timeout if provided
+                    current_timeout = self.config.get('timeout_ms', SELECTOR_TIMEOUT_MS)
+                    await page.wait_for_selector(card_sel, timeout=current_timeout)
                     cards = await page.query_selector_all(card_sel)
                     if not cards: break
 
