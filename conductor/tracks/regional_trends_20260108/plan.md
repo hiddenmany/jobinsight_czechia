@@ -22,7 +22,7 @@ Focus on calculating the metrics for each region.
 - [x] **Task: Regional Stats Module** ed99b38
   - [ ] Write Tests: Verify median calculation logic for specific regions.
   - [ ] Implement Feature: Create `analyzer/regional_stats.py` to compute regional medians and volumes.
-- [ ] **Task: Trend Analysis Logic**
+- [x] **Task: Trend Analysis Logic** de2a0da
   - [ ] Write Tests: Verify trend calculation over multiple scrape dates.
   - [ ] Implement Feature: Develop logic to compare current regional stats with historical data in DuckDB.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Regional Intelligence Engine' (Protocol in workflow.md)
