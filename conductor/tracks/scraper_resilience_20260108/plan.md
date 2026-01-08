@@ -24,10 +24,10 @@ Focus on data safety and ensuring that partial progress is never lost.
   - [ ] Implement Feature: Wrap StartupJobs-specific logic in a specialized try/except block with detailed logging of the failure point.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Incremental Persistence & Error Handling' (Protocol in workflow.md) 3e74418
 
-## Phase 3: Final Verification
+## Phase 3: Final Verification [checkpoint: 302554f]
 Focus on proving the 100% completion goal in the target environment.
 
-- [x] **Task: End-to-End Scrape Test** 8059219
+- [x] **Task: End-to-End Scrape Test** 302554f
   - [x] Write Tests: Run a limited, high-speed scrape of StartupJobs to verify heartbeats and persistence logic.
   - [x] Implement Feature: Execute a full StartupJobs scrape and monitor for the previously observed 60% bottleneck.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Final Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Final Verification' (Protocol in workflow.md) 302554f

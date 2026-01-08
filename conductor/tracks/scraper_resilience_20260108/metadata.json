@@ -1,0 +1,8 @@
+{
+  "track_id": "scraper_resilience_20260108",
+  "type": "bug",
+  "status": "new",
+  "created_at": "2026-01-08T11:58:00Z",
+  "updated_at": "2026-01-08T11:58:00Z",
+  "description": "Deal with startupjobs being only at 60 % of scraping before finishing through graceful end"
+}
