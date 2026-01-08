@@ -55,6 +55,12 @@ def get_market_stats(df) -> Dict:
     # Top cities
     city_dist = df['city'].value_counts().head(5).to_dict() if 'city' in df.columns else {}
     
+    # Regional Intelligence
+    from analysis.regional_analysis import RegionalAnalysis
+    regional_analyzer = RegionalAnalysis(df)
+    regional_stats = regional_analyzer.get_regional_stats().to_dict(orient='records')
+    regional_trends = regional_analyzer.get_regional_trends().to_dict(orient='records')
+    
     return {
         'total_jobs': total_jobs,
         'role_distribution': role_dist,
@@ -63,7 +69,9 @@ def get_market_stats(df) -> Dict:
         'source_distribution': source_dist,
         'tech_status': tech_status,
         'contract_distribution': contract_dist,
-        'top_cities': city_dist
+        'top_cities': city_dist,
+        'regional_stats': regional_stats,
+        'regional_trends': regional_trends
     }
 
 
@@ -79,7 +87,7 @@ def generate_weekly_insights(stats: Dict, api_key: str) -> Dict:
         from google.genai import types
         
         client = genai.Client(api_key=api_key)
-        model_id = 'gemini-2.0-flash'  # Faster, cheaper, and high quality
+        model_id = 'gemini-3-pro-preview'  # Attempting high-tier analysis with new key
         
         prompt = f"""# ROLE & EXPERTISE
 
@@ -121,6 +129,8 @@ Jsi seniorní analytik trhu práce a HR stratég s 15+ lety zkušeností v česk
 
 ## 5. Geografické rozložení
 - **Top lokality:** {json.dumps(stats.get('top_cities', {}), ensure_ascii=False)}
+- **Huby a Regionální Benchmarking:** {json.dumps(stats.get('regional_stats', []), ensure_ascii=False, indent=2)}
+- **Regionální Trendy (Mezitýdenní změny):** {json.dumps(stats.get('regional_trends', []), ensure_ascii=False, indent=2)}
 
 ## 6. Datové zdroje
 - **Distribuce podle portálu:** {json.dumps(stats.get('source_distribution', {}), ensure_ascii=False)}
@@ -132,6 +142,7 @@ Proveď následující analytické kroky:
 ## Krok 1: Kvantitativní analýza
 - Identifikuj statisticky významné vzorce v datech
 - Porovnej proporce (např. % junior vs senior pozic, % remote, % s uvedeným platem)
+- Analyzuj regionální rozdíly v platech a objemu mezi Prahou, Brnem a Ostravou
 - Vypočítej implikované metriky (např. průměrný počet nabídek na roli)
 
 ## Krok 2: Kvalitativní interpretace
@@ -162,10 +173,13 @@ Vytvoř JSON objekt s touto strukturou:
     "key_insights": [
         {{
             "emoji": "📊",
-            "title": "Krátký titulek (max 5 slov)",
-            "insight": "Detailní poznatek s konkrétními čísly (1-2 věty)",
-            "implication": "Co to znamená pro HR/zaměstnavatele",
-            "confidence": "high/medium/low"
+            "title": "Krátký titulek",
+            "insight": "Detailní poznatek",
+            "implication": "Implikace",
+            "confidence": "high/medium/low",
+            "metric_name": "Název metriky (např. Poptávka, Saturace)",
+            "metric_value": 75, // 0-100
+            "trend_direction": "up" // up/down/flat
         }},
         {{
             "emoji": "💰",
@@ -236,12 +250,21 @@ Vytvoř JSON objekt s touto strukturou:
         if not insights:
             # Fallback for manual parsing if .parsed is not populated
             response_text = response.text.strip()
-            # Clean up potential markdown code blocks
-            if response_text.startswith('```'):
-                response_text = response_text.split('```')[1]
-                if response_text.startswith('json'):
-                    response_text = response_text[4:]
+            # Robust extraction of JSON from potential markdown blocks or conversational noise
+            if '```' in response_text:
+                import re
+                json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+                if json_match:
+                    response_text = json_match.group(1)
+            
+            # Clean trailing noise (extra data error fix)
             response_text = response_text.strip()
+            # If there's content after the last closing brace, trim it
+            # Scan from the end to find the last '}'
+            last_brace_idx = response_text.rfind('}')
+            if last_brace_idx != -1:
+                response_text = response_text[:last_brace_idx+1]
+                
             insights = json.loads(response_text)
         
         # Validate structure (support both old 'summary' and new 'executive_summary')
