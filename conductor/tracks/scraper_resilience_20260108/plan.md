@@ -2,7 +2,7 @@
 
 This plan outlines the steps to fix early termination in the StartupJobs scraper and implement heartbeat logging to prevent environment timeouts.
 
-## Phase 1: Heartbeat & Logging Infrastructure
+## Phase 1: Heartbeat & Logging Infrastructure [checkpoint: 2e35507]
 Focus on preventing environment timeouts by maintaining an active signal.
 
 - [x] **Task: Implement Heartbeat Utility** 1117027
@@ -11,7 +11,7 @@ Focus on preventing environment timeouts by maintaining an active signal.
 - [x] **Task: Integrate Heartbeat into Scraper Loop** 2e35507
   - [ ] Write Tests: Verify that calling the heartbeat during a long-running mock loop produces the expected logs.
   - [ ] Implement Feature: Update the main loop in `scraper.py` to trigger the heartbeat during page navigation and item processing.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Heartbeat & Logging Infrastructure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Heartbeat & Logging Infrastructure' (Protocol in workflow.md) 2e35507
 
 ## Phase 2: Incremental Persistence & Error Handling
 Focus on data safety and ensuring that partial progress is never lost.
