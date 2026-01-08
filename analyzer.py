@@ -1,4 +1,4 @@
-import pandas as pd
+﻿import pandas as pd
 import numpy as np
 import json
 import logging
@@ -16,13 +16,14 @@ from typing import Optional
 # New module imports
 from parsers import SalaryParser, THOUSAND_SEP_PATTERN
 from classifiers import JobClassifier
+from settings import settings
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('HR-Intel-Analyzer')
 
-# --- ARCHITECTURAL CONSTANTS ---
-DB_PATH = os.path.join(os.path.dirname(__file__), "data", "intelligence.db")
-TAXONOMY_PATH = os.path.join(os.path.dirname(__file__), "config", "taxonomy.yaml")
+# --- ARCHITECTURAL CONSTANTS (now using centralized Settings) ---
+DB_PATH = str(settings.get_db_path())  # Keep as string for duckdb compatibility
+TAXONOMY_PATH = str(settings.TAXONOMY_PATH)
 
 def load_taxonomy():
     with open(TAXONOMY_PATH, 'r', encoding='utf-8') as f:
@@ -85,9 +86,28 @@ def normalize_text(text: str) -> str:
     return text.strip()
 
 
-def get_content_hash(title: str, company: str, description: str) -> str:
-    """Generate a unique hash for content deduplication using SHA256."""
-    raw = f"{title}{company}{str(description)[:500]}".lower()
+def get_content_hash(title: str, company: str, description: str, city: str = "", link: str = "") -> str:
+    """Generate a unique hash for content deduplication using SHA256.
+    
+    Enhanced to handle "Remote" location collisions by:
+    1. Using more description content for Remote jobs
+    2. Including link as fallback differentiator
+    3. Normalizing generic location values
+    """
+    # Normalize city - treat generic values as needing more differentiation
+    city_normalized = (city or "").lower().strip()
+    generic_locations = ['remote', 'cz', 'czechia', 'česká republika', 'anywhere', 'home office', '']
+    
+    # For generic/remote locations, use more content to differentiate
+    if city_normalized in generic_locations:
+        # Use more of the description (750 chars) and include link suffix
+        desc_content = str(description)[:750]
+        link_suffix = link[-50:] if link else ""  # Last 50 chars of URL often contain unique ID
+        raw = f"{title}{company}{desc_content}{link_suffix}".lower()
+    else:
+        # Standard hash for jobs with specific locations
+        raw = f"{title}{company}{city}{str(description)[:500]}".lower()
+    
     clean = re.sub(r"\W+", "", raw)
     return hashlib.sha256(clean.encode()).hexdigest()
 
@@ -137,7 +157,7 @@ class IntelligenceCore:
     """The central stateful data brain using DuckDB."""
 
     def __init__(self, read_only=False):
-        os.makedirs("data", exist_ok=True)
+        settings.ensure_dirs()  # Create data/config/public dirs if needed
         self.con = duckdb.connect(DB_PATH, read_only=read_only)
         self._init_db()
         self._df_cache = None  # Lazy loading cache
@@ -159,6 +179,7 @@ class IntelligenceCore:
                     link TEXT,
                     source TEXT,
                     city TEXT,
+                    region TEXT DEFAULT 'Unknown',
                     scraped_at TIMESTAMP,
                     toxicity_score INTEGER,
                     tech_status TEXT,
@@ -179,6 +200,12 @@ class IntelligenceCore:
                 self.con.execute("ALTER TABLE signals ADD COLUMN seniority_level TEXT DEFAULT 'Unknown'")
             except Exception:
                 pass  # Column already exists
+
+            # Regional Analysis Migration
+            try:
+                self.con.execute("ALTER TABLE signals ADD COLUMN region TEXT DEFAULT 'Unknown'")
+            except Exception:
+                pass  # Column already exists
             
             # v1.5 Ghost Job Detection
             try:
@@ -196,6 +223,7 @@ class IntelligenceCore:
                 "CREATE INDEX IF NOT EXISTS idx_scraped_at ON signals(scraped_at)",
                 "CREATE INDEX IF NOT EXISTS idx_last_seen_at ON signals(last_seen_at)",
                 "CREATE INDEX IF NOT EXISTS idx_city ON signals(city)",
+                "CREATE INDEX IF NOT EXISTS idx_region ON signals(region)",
                 "CREATE INDEX IF NOT EXISTS idx_role_type ON signals(role_type)",
                 "CREATE INDEX IF NOT EXISTS idx_seniority_level ON signals(seniority_level)"
             ]
@@ -227,6 +255,11 @@ class IntelligenceCore:
         self._df_cache = self.con.execute("SELECT * FROM signals").df()
         self._cache_timestamp = datetime.now()
         return self._df_cache
+
+    def close(self):
+        """Explicitly close the DuckDB connection."""
+        if hasattr(self, 'con') and self.con:
+            self.con.close()
 
     def is_known(self, url: str) -> bool:
         """O(1) lookup for existing signals and updates last_seen timestamp atomically."""
@@ -266,7 +299,7 @@ class IntelligenceCore:
         vague_phrases = [
             "ideal candidate", "rockstar", "ninja", "superhero",
             "we are always looking", "join our talent pool",
-            "proaktivní přístup", "tah na branku"
+            "proaktivnĂ­ pĹ™Ă­stup", "tah na branku"
         ]
         if any(p in desc for p in vague_phrases):
             score += 15
@@ -287,9 +320,8 @@ class IntelligenceCore:
         # Calculate semantic metrics
         tox = SemanticEngine.analyze_toxicity(signal.description)
         tech = SemanticEngine.analyze_tech_lag(signal.description)
-        h = get_content_hash(
-            signal.title, signal.company, signal.description
-        )
+        # Enhanced hash: pass link for better Remote job differentiation
+        h = get_content_hash(signal.title, signal.company, signal.description, signal.location, signal.link)
 
         # v1.0 HR Intelligence: Role and Seniority classification
         role = JobClassifier.classify_role(signal.title, signal.description)
@@ -308,10 +340,14 @@ class IntelligenceCore:
 
         now = datetime.now()
         try:
+            # v1.1 Regional Analysis: Default region to location for now
+            # Proper normalization will be implemented in the next task
+            region = signal.location if signal.location else "Unknown"
+            
             self.con.execute(
                 """
                 INSERT OR IGNORE INTO signals 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 [
                     h,
@@ -324,6 +360,7 @@ class IntelligenceCore:
                     signal.link,
                     signal.source,
                     signal.location,
+                    region,
                     now,
                     tox,
                     tech,
@@ -475,7 +512,7 @@ class MarketIntelligence:
             desc.str.contains(ico_pat, na=False),
             desc.str.contains(brig_pat, na=False)
         ]
-        choices = ['IČO', 'Brigáda']
+        choices = ['IÄŚO', 'BrigĂˇda']
         self.df['contract_type'] = np.select(conds, choices, default='HPP')
 
     def load_ispv_benchmarks(self):
@@ -507,7 +544,7 @@ class MarketIntelligence:
         # Generic words to explicitly ignore if they appear in simple extraction
         ignore_words = {
             'communication', 'teamwork', 'english', 'czech', 'german', 'leadership', 
-            'management', 'driving license', 'řidičský průkaz', 'komunikace', 'týmová práce'
+            'management', 'driving license', 'Ĺ™idiÄŤskĂ˝ prĹŻkaz', 'komunikace', 'tĂ˝movĂˇ prĂˇce'
         }
         
         found_skills = []
@@ -538,25 +575,28 @@ class MarketIntelligence:
         return {"English Friendly": en_count, "Czech Only": len(self.df) - en_count}
 
     def get_remote_truth(self):
-        # Using remote keywords from taxonomy
-        remote_pattern = "|".join(TAXONOMY.get('remote_keywords', []))
-        is_remote = (
-            self.df["description"]
-            .str.contains(remote_pattern, case=False, na=False, regex=True)
-            .sum()
-        )
-        return {"True Remote": is_remote}
+        """Calculates jobs that are likely remote, with negative context handling."""
+        remote_pattern = "|".join(TAXONOMY.get("remote_keywords", []))
+        # Negative signals: "no remote", "office only", etc.
+        rigid_pattern = r"no remote|not remote|office only|nenĂ­ remote|pouze v kancelĂˇĹ™i"
+        
+        desc = self.df["description"].fillna("").str.lower()
+        is_remote_candidate = desc.str.contains(remote_pattern, case=False, na=False, regex=True)
+        is_rigid = desc.str.contains(rigid_pattern, case=False, na=False, regex=True)
+        
+        true_remote_count = (is_remote_candidate & ~is_rigid).sum()
+        return {"True Remote": int(true_remote_count)}
 
     def get_contract_split(self):
         """Get distribution of contract types."""
         if 'contract_type' not in self.df.columns:
-            return {"HPP": 0, "IČO": 0, "Brigáda": 0}
+            return {"HPP": 0, "IÄŚO": 0, "BrigĂˇda": 0}
             
         counts = self.df['contract_type'].value_counts()
         return {
             "HPP": int(counts.get('HPP', 0)),
-            "IČO": int(counts.get('IČO', 0)),
-            "Brigáda": int(counts.get('Brigáda', 0))
+            "IÄŚO": int(counts.get('IÄŚO', 0)),
+            "BrigĂˇda": int(counts.get('BrigĂˇda', 0))
         }
 
     def get_tech_stack_lag(self):
@@ -585,7 +625,7 @@ class MarketIntelligence:
         return self._salary.get_salary_by_seniority()
 
     def get_salary_by_contract_type(self) -> dict:
-        """Get median salary for HPP vs Brigáda. Delegates to SalaryAnalysis."""
+        """Get median salary for HPP vs BrigĂˇda. Delegates to SalaryAnalysis."""
         return self._salary.get_salary_by_contract_type()
 
     def get_seniority_role_matrix(self) -> pd.DataFrame:
@@ -731,7 +771,7 @@ class MarketIntelligence:
         }).sort_values('Active Jobs', ascending=False).head(10)
 
         # Clean company names
-        result['Company'] = result['Company'].apply(lambda x: ' '.join(x.lstrip('•\u2022\u2023\u25E6\u25AA\u25AB').strip().split()))
+        result['Company'] = result['Company'].apply(lambda x: ' '.join(x.lstrip('â€˘\u2022\u2023\u25E6\u25AA\u25AB').strip().split()))
 
         return result
 
@@ -796,7 +836,7 @@ class MarketIntelligence:
 
     def get_ico_hpp_arbitrage(self) -> dict:
         """
-        Calculate the IČO (contractor) vs HPP (employee) salary premium.
+        Calculate the IÄŚO (contractor) vs HPP (employee) salary premium.
         Reveals tax optimization pressure.
         """
         valid_sal = self.df[self.df['avg_salary'] > 0]
@@ -810,7 +850,7 @@ class MarketIntelligence:
         is_ico = desc.str.contains(ico_pattern, case=False, na=False, regex=True)
         is_brigada = desc.str.contains(brigada_pattern, case=False, na=False, regex=True)
 
-        # HPP is everything that's NOT IČO or Brigáda
+        # HPP is everything that's NOT IÄŚO or BrigĂˇda
         is_hpp = ~(is_ico | is_brigada)
 
         ico_median = valid_sal[is_ico]['avg_salary'].median()
@@ -923,8 +963,8 @@ class MarketIntelligence:
             return pd.DataFrame(columns=['Flexibility', 'Count', 'Percentage'])
 
         # Detect rigidity signals (non-capturing groups to avoid pandas warning)
-        rigid_signals = r'2 days?\s+(?:office|kancelář)|fixed days?|povinná přítomnost|mandatory office|3\s*days?\s*week'
-        flexible_signals = r'flexible|volně|kdykoliv|come if you want|podle potřeby|flexibilní'
+        rigid_signals = r'2 days?\s+(?:office|kancelĂˇĹ™)|fixed days?|povinnĂˇ pĹ™Ă­tomnost|mandatory office|3\s*days?\s*week'
+        flexible_signals = r'flexible|volnÄ›|kdykoliv|come if you want|podle potĹ™eby|flexibilnĂ­'
 
         hybrid_jobs['is_rigid'] = hybrid_jobs['description'].fillna('').str.lower().str.contains(rigid_signals, regex=True, case=False, na=False)
         hybrid_jobs['is_flexible'] = hybrid_jobs['description'].fillna('').str.lower().str.contains(flexible_signals, regex=True, case=False, na=False)
@@ -1023,6 +1063,9 @@ class MarketIntelligence:
         ghosts.columns = ['Company', 'Title', 'Repost Count']
 
         # Clean company names
-        ghosts['Company'] = ghosts['Company'].apply(lambda x: ' '.join(x.lstrip('•\u2022\u2023\u25E6\u25AA\u25AB').strip().split()))
+        ghosts['Company'] = ghosts['Company'].apply(lambda x: ' '.join(x.lstrip('â€˘\u2022\u2023\u25E6\u25AA\u25AB').strip().split()))
 
         return ghosts
+
+
+
