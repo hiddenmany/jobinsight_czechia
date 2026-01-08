@@ -8,7 +8,7 @@ Focus on preventing environment timeouts by maintaining an active signal.
 - [x] **Task: Implement Heartbeat Utility** 1117027
   - [ ] Write Tests: Verify a simple timer-based heartbeat prints to stdout at specified intervals.
   - [ ] Implement Feature: Create a `Heartbeat` utility in `scraper_utils.py` that handles periodic logging during long-running tasks.
-- [ ] **Task: Integrate Heartbeat into Scraper Loop**
+- [x] **Task: Integrate Heartbeat into Scraper Loop** 2e35507
   - [ ] Write Tests: Verify that calling the heartbeat during a long-running mock loop produces the expected logs.
   - [ ] Implement Feature: Update the main loop in `scraper.py` to trigger the heartbeat during page navigation and item processing.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Heartbeat & Logging Infrastructure' (Protocol in workflow.md)
