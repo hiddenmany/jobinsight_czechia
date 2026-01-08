@@ -10,7 +10,7 @@
 - [x] Task: Integrate LLM Validation
     - [x] Sub-task: Write Tests: Create `tests/test_llm_validation.py` mocking the Gemini API response to verify batching and classification logic.
     - [x] Sub-task: Implement Feature: Implement `validate_candidates_with_llm()` using `google-genai` and `gemini-1.5-flash-lite` (or similar efficient model).
-- [ ] Task: Conductor - User Manual Verification 'Candidate Discovery Logic' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Candidate Discovery Logic' (Protocol in workflow.md) [checkpoint: ee4f541]
 
 ## Phase 2: Reporting & Code Patching
 - [ ] Task: Implement Code Patcher
