@@ -2,7 +2,7 @@
 
 This plan outlines the steps to resolve scraping incidents for WTTJ, Cocuma, and StartupJobs, and improve overall diagnostic logging.
 
-## Phase 1: Diagnostics & Selector Audit
+## Phase 1: Diagnostics & Selector Audit [checkpoint: 11a3a12]
 Focus on identifying the exact causes of failures through better logging and selector verification.
 
 - [x] **Task: Enhance Diagnostic Logging** 25f334d
@@ -11,7 +11,7 @@ Focus on identifying the exact causes of failures through better logging and sel
 - [x] **Task: WTTJ Selector Audit** 4a93a42
   - [x] Write Tests: Run a live selector check against WTTJ's current DOM to identify broken patterns.
   - [x] Implement Feature: Update `config/selectors.yaml` with resilient selectors for WTTJ.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Diagnostics & Selector Audit' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Diagnostics & Selector Audit' (Protocol in workflow.md) 11a3a12
 
 ## Phase 2: Logic Fixes & Site Resilience
 Focus on fixing pagination and handling specific network exceptions.
