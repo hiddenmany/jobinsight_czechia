@@ -13,7 +13,7 @@ Focus on preventing environment timeouts by maintaining an active signal.
   - [ ] Implement Feature: Update the main loop in `scraper.py` to trigger the heartbeat during page navigation and item processing.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Heartbeat & Logging Infrastructure' (Protocol in workflow.md) 2e35507
 
-## Phase 2: Incremental Persistence & Error Handling
+## Phase 2: Incremental Persistence & Error Handling [checkpoint: 3e74418]
 Focus on data safety and ensuring that partial progress is never lost.
 
 - [x] **Task: Refactor Batch Persistence** 3e74418
@@ -22,7 +22,7 @@ Focus on data safety and ensuring that partial progress is never lost.
 - [x] **Task: Graceful StartupJobs Exception Handling** 3e74418
   - [ ] Write Tests: Verify that a simulated timeout or exception in one page doesn't kill the entire scraper process.
   - [ ] Implement Feature: Wrap StartupJobs-specific logic in a specialized try/except block with detailed logging of the failure point.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Incremental Persistence & Error Handling' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Incremental Persistence & Error Handling' (Protocol in workflow.md) 3e74418
 
 ## Phase 3: Final Verification
 Focus on proving the 100% completion goal in the target environment.
