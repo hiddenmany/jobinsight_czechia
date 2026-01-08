@@ -8,7 +8,7 @@ Focus on ensuring location data is correctly captured and normalized.
 - [x] **Task: Update Database Schema** c9ffaa8
   - [ ] Write Tests: Verify DuckDB schema can store normalized region and city data.
   - [ ] Implement Feature: Update `duckdb` schema to include `region` and `city` columns.
-- [ ] **Task: Implement Location Normalizer**
+- [x] **Task: Implement Location Normalizer** 9245dba
   - [ ] Write Tests: Verify various city names map to correct regions (Prague, Brno, Ostrava).
   - [ ] Implement Feature: Create `tools/location_normalizer.py` to normalize scraped location strings.
 - [ ] **Task: Update Scraper Integration**
