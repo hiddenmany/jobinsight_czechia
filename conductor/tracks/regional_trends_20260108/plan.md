@@ -19,7 +19,7 @@ Focus on ensuring location data is correctly captured and normalized.
 ## Phase 2: Regional Intelligence Engine
 Focus on calculating the metrics for each region.
 
-- [ ] **Task: Regional Stats Module**
+- [x] **Task: Regional Stats Module** ed99b38
   - [ ] Write Tests: Verify median calculation logic for specific regions.
   - [ ] Implement Feature: Create `analyzer/regional_stats.py` to compute regional medians and volumes.
 - [ ] **Task: Trend Analysis Logic**
