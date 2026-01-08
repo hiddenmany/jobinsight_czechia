@@ -27,7 +27,7 @@ Focus on calculating the metrics for each region.
   - [ ] Implement Feature: Develop logic to compare current regional stats with historical data in DuckDB.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Regional Intelligence Engine' (Protocol in workflow.md) de2a0da
 
-## Phase 3: Dashboard & Reporting
+## Phase 3: Dashboard & Reporting [checkpoint: 765d7ea]
 Focus on presenting the data to the user.
 
 - [x] **Task: Regional Comparison Charts** aa4acd1
@@ -36,4 +36,4 @@ Focus on presenting the data to the user.
 - [x] **Task: AI-Powered Regional Insights** 765d7ea
   - [ ] Write Tests: Verify Gemini prompt includes regional data context.
   - [ ] Implement Feature: Update `llm_analyzer.py` to include regional trend summaries in weekly reports.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Dashboard & Reporting' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Dashboard & Reporting' (Protocol in workflow.md) 765d7ea
