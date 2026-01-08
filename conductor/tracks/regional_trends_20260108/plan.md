@@ -5,7 +5,7 @@ This plan outlines the steps to implement regional salary trend analysis for Pra
 ## Phase 1: Data Normalization & Schema
 Focus on ensuring location data is correctly captured and normalized.
 
-- [ ] **Task: Update Database Schema**
+- [x] **Task: Update Database Schema** c9ffaa8
   - [ ] Write Tests: Verify DuckDB schema can store normalized region and city data.
   - [ ] Implement Feature: Update `duckdb` schema to include `region` and `city` columns.
 - [ ] **Task: Implement Location Normalizer**
