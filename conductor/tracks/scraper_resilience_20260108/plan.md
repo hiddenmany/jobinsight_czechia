@@ -16,10 +16,10 @@ Focus on preventing environment timeouts by maintaining an active signal.
 ## Phase 2: Incremental Persistence & Error Handling
 Focus on data safety and ensuring that partial progress is never lost.
 
-- [ ] **Task: Refactor Batch Persistence**
+- [x] **Task: Refactor Batch Persistence** 3e74418
   - [ ] Write Tests: Verify that data is written to DuckDB in small chunks rather than one giant transaction at the end.
   - [ ] Implement Feature: Modify `scraper.py` to call `add_signal` immediately after every page or batch of jobs is scraped.
-- [ ] **Task: Graceful StartupJobs Exception Handling**
+- [x] **Task: Graceful StartupJobs Exception Handling** 3e74418
   - [ ] Write Tests: Verify that a simulated timeout or exception in one page doesn't kill the entire scraper process.
   - [ ] Implement Feature: Wrap StartupJobs-specific logic in a specialized try/except block with detailed logging of the failure point.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Incremental Persistence & Error Handling' (Protocol in workflow.md)
