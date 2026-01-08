@@ -5,9 +5,9 @@ This plan outlines the steps to resolve scraping incidents for WTTJ, Cocuma, and
 ## Phase 1: Diagnostics & Selector Audit
 Focus on identifying the exact causes of failures through better logging and selector verification.
 
-- [ ] **Task: Enhance Diagnostic Logging**
-  - [ ] Write Tests: Verify that failed extractions log specific missing attributes (title, link, etc.) instead of generic errors.
-  - [ ] Implement Feature: Update `BaseScraper` and individual scrapers to provide high-fidelity error messages.
+- [x] **Task: Enhance Diagnostic Logging** 25f334d
+  - [x] Write Tests: Verify that failed extractions log specific missing attributes (title, link, etc.) instead of generic errors.
+  - [x] Implement Feature: Update `BaseScraper` and individual scrapers to provide high-fidelity error messages.
 - [ ] **Task: WTTJ Selector Audit**
   - [ ] Write Tests: Run a live selector check against WTTJ's current DOM to identify broken patterns.
   - [ ] Implement Feature: Update `config/selectors.yaml` with resilient selectors for WTTJ.
