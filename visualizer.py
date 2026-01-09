@@ -6,6 +6,7 @@ from datetime import datetime
 from settings import settings
 
 # Configuration - use centralized settings
+# Triggering fresh workflow run to verify LFS fix
 DB_PATH = str(settings.get_db_path())
 OUTPUT_HTML = os.path.join(settings.BASE_DIR, 'public', 'trends.html')
 TAXONOMY_PATH = str(settings.TAXONOMY_PATH)
