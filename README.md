@@ -14,19 +14,11 @@ The latest market intelligence is automatically updated every Monday:
 ### 📊 Current Market Pulse (Auto-Updated)
 | Metric | Value | Context |
 |--------|-------|---------|
-<<<<<<< HEAD
 | **Active Job Listings** | `4,018` | Across major Czech portals |
-| **Professional Median** | `56 000 CZK` | Tech, Management, & White-collar roles |
+| **Professional Median** | `55 000 CZK` | Tech, Management, & White-collar roles |
 | **National Est. Median** | `47 500 CZK` | All roles, Full-time (HPP only) |
-| **Top 3 Roles** | Manufacturing, Developer, Other | High volume demand |
-| **Last Updated** | 2026-01-06 15:45 UTC | |
-=======
-| **Active Job Listings** | `4,598` | Across major Czech portals |
-| **Professional Median** | `50 000 CZK` | Tech, Management, & White-collar roles |
-| **National Est. Median** | `45 000 CZK` | All roles, Full-time (HPP only) |
-| **Top 3 Roles** | Manufacturing, Sales, Logistics | High volume demand |
-| **Last Updated** | 2026-01-09 12:46 UTC | |
->>>>>>> cab27e6 (docs: update market report and sync latest data trends)
+| **Top 3 Roles** | Manufacturing, Retail, Developer | High volume demand |
+| **Last Updated** | 2026-01-09 12:31 UTC | |
 
 > *Note: 'National Est. Median' approximates ČSÚ methodology (HPP only), while 'Professional Median' reflects the target audience of this report.*
 
