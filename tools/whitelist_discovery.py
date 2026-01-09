@@ -166,25 +166,30 @@ def calculate_proximity_score(text: str, term: str, context_keywords: List[str],
 def group_similar_terms(candidates: List[str]) -> Dict[str, List[str]]:
     """
     Group similar terms together to save tokens and improve analysis.
-    e.g., 'react js' and 'reactjs' -> 'react js'
+    e.g., 'react js', 'reactjs', 'react.js' -> 'react.js'
     Returns {canonical_term: [original_terms]}
     """
     groups = {}
     processed = set()
     
     # Sort by length (longest first) to prefer more descriptive terms as canonical
-    sorted_candidates = sorted(candidates, key=len, reverse=True)
+    # but we also want to prefer terms WITH punctuation/spaces if they exist
+    # as they are usually more 'correct' than concatenated ones
+    sorted_candidates = sorted(candidates, key=lambda x: (len(x), '.' in x, ' ' in x), reverse=True)
     
     for term in sorted_candidates:
         if term in processed: continue
         
-        # Simple normalization: remove spaces
-        norm_term = term.replace(" ", "")
+        # Enhanced normalization: remove spaces AND punctuation
+        norm_term = re.sub(r'[^a-z0-9áčďéěíňóřšťúůýž]', '', term.lower())
+        
+        if not norm_term: continue
         
         found_group = False
         for canonical, variants in groups.items():
-            norm_canonical = canonical.replace(" ", "")
-            # If terms match when spaces are removed, they are variants
+            norm_canonical = re.sub(r'[^a-z0-9áčďéěíňóřšťúůýž]', '', canonical.lower())
+            
+            # If terms match when simplified, they are variants
             if norm_term == norm_canonical:
                 variants.append(term)
                 processed.add(term)

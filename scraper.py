@@ -9,6 +9,7 @@ from playwright.async_api import async_playwright, TimeoutError as PlaywrightTim
 from playwright_stealth import Stealth
 from tqdm.asyncio import tqdm
 
+# New module imports
 import analyzer
 from analyzer import JobSignal, IntelligenceCore
 import scraper_utils
@@ -23,9 +24,10 @@ from scraper_utils import (
     shutdown_handler,
     Heartbeat
 )
+from settings import settings
 
 # --- CONFIGURATION ---
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config", "selectors.yaml")
+CONFIG_PATH = str(settings.SELECTORS_PATH)
 
 try:
     with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
