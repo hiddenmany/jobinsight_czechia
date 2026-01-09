@@ -18,7 +18,7 @@ from parsers import SalaryParser
     ("300 Kč/hod", None, (48000, 48000, 48000)), # 300 * 160
     
     # Currency conversion
-    ("2000 EUR", None, (50000, 50000, 50000)), # 2000 * 25
+    ("2000 EUR", None, (50400, 50400, 50400)), # 2000 * 25.2
     
     # WTTJ salary (non-k format, should pass through)
     ("45 000 Kč", "WTTJ", (45000, 45000, 45000)),

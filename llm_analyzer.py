@@ -87,7 +87,7 @@ def generate_weekly_insights(stats: Dict, api_key: str) -> Dict:
         from google.genai import types
         
         client = genai.Client(api_key=api_key)
-        model_id = 'gemini-3-pro-preview'  # Attempting high-tier analysis with new key
+        model_id = 'gemini-3-pro-preview'  # High-tier analysis for market insights
         
         prompt = f"""# ROLE & EXPERTISE
 

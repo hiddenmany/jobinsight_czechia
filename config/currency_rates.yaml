@@ -1,0 +1,13 @@
+# Currency conversion rates to CZK
+# Last updated: 2026-01-08
+# Source: CNB (Czech National Bank) official rates
+
+currency_rates:
+  EUR: 25.20  # Euro
+  USD: 23.50  # US Dollar
+  GBP: 29.80  # British Pound
+  PLN: 5.90   # Polish Zloty
+  CHF: 26.50  # Swiss Franc
+
+# Update frequency: Weekly or as needed
+# To update, check https://www.cnb.cz/en/financial-markets/foreign-exchange-market/central-bank-exchange-rate-fixing/

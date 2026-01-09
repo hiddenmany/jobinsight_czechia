@@ -1,0 +1,177 @@
+class JobClassifier:
+    """
+    Hybrid job classifier using ML embeddings with keyword fallback.
+    
+    DEBUGGING:
+        from classifiers import JobClassifier
+        JobClassifier.USE_EMBEDDINGS = False  # Force keyword mode
+        
+        # Or check which mode is active:
+        print(JobClassifier.get_classification_mode())
+    """
+    
+    # Class-level flag to force keyword mode (useful for debugging/testing)
+    USE_EMBEDDINGS = _USE_EMBEDDINGS
+    
+    @staticmethod
+    def get_classification_mode() -> str:
+        """Return current classification mode for debugging."""
+        if JobClassifier.USE_EMBEDDINGS and EmbeddingClassifier and EmbeddingClassifier.is_available():
+            return "ML_EMBEDDINGS"
+        return "KEYWORD_MATCHING"
+    
+    @staticmethod
+    def classify_role(title: str, description: str = "") -> str:
+        """Classify job into role category using hybrid approach.
+        
+        HYBRID STRATEGY (PRECISION-FIRST):
+        1. Try keyword matching first (reliable explicit mapping)
+        2. Fall back to ML embeddings for fuzzy/semantic matching
+        """
+        # 1. Keyword-based matching (Primary Source of Truth)
+        keyword_result = JobClassifier._classify_role_keywords(title, description)
+        if keyword_result != "Other":
+            return keyword_result
+
+        # 2. Try embedding classification as fallback
+        if JobClassifier.USE_EMBEDDINGS and EmbeddingClassifier:
+            try:
+                ml_result = EmbeddingClassifier.classify_role(title, description)
+                if ml_result is not None and ml_result != "Other":
+                    return ml_result
+            except Exception:
+                pass
+
+        return "Other"
+
+    @staticmethod
+    def _classify_role_keywords(title: str, description: str = "") -> str:
+        """Keyword-based role classification (original implementation).
+
+        FIXED: Added compound phrase handling and negative context checks.
+        """
+        text = f"{title} {description}".lower()
+        title_lower = title.lower()
+
+        # Pre-checks for compound phrases that could match multiple categories
+        # FIXED: Handle QA/Test Engineer before 'engineer' matches Developer
+        if 'qa' in title_lower or 'quality assurance' in title_lower:
+            # But exclude non-tech quality roles
+            non_tech_quality = ['food', 'manufacturing', 'iso', 'výrob', 'produk',
+                               'fabric', 'factory', 'plant', 'automotive', 'potravina']
+            if not any(kw in text for kw in non_tech_quality):
+                return 'QA'
+
+        if 'test engineer' in title_lower or 'tester' in title_lower:
+            # Software testing context
+            if 'software' in text or 'automation' in text or 'qa' in text:
+                return 'QA'
+
+        # Helper function for smart matching (avoids Czech substring false positives)
+        def smart_match(text: str, keyword: str) -> bool:
+            # For short keywords that are common substrings, use word boundaries
+            if keyword in ['hr', 'it', 'pr', 'ui', 'ux', 'grafik', 'qa']:
+                # Check if keyword appears as separate word or in compound like "hr-manager"
+                pattern = r'\b' + re.escape(keyword) + r'(?:\b|[-_])'
+                return bool(re.search(pattern, text))
+            else:
+                # For longer keywords, simple substring match is fine
+                return keyword in text
+
+        # Priority: Check title first (more accurate), then description
+        matched_role = None
+        for role, keywords in ROLE_TAXONOMY.items():
+            if any(smart_match(title_lower, kw) for kw in keywords):
+                matched_role = role
+                break
+
+        # If not matched in title, check description
+        if not matched_role:
+            for role, keywords in ROLE_TAXONOMY.items():
+                if any(smart_match(text, kw) for kw in keywords):
+                    matched_role = role
+                    break
+
+        # FIXED: Negative context checks for false positives
+        # 1. "Grafik směn" (shift schedule) should NOT be Designer
+        if matched_role == 'Designer':
+            shift_indicators = ['směn', 'rozvrh', 'schedule', 'plánování směn']
+            if any(indicator in text for indicator in shift_indicators):
+                matched_role = None  # Continue to fallback
+
+        # 2. "Quality" in non-tech context should NOT be QA
+        if matched_role == 'QA':
+            non_tech_quality = ['food', 'manufacturing', 'iso', 'výrob', 'produk',
+                               'fabric', 'factory', 'plant', 'automotive', 'potravina']
+            if any(kw in text for kw in non_tech_quality):
+                matched_role = 'Manufacturing'  # More appropriate category
+
+        # Downgrade low-level "Management" or Tech-focused leads to actual role category
+        if matched_role == 'Management':
+            # 1. Check for Tech Lead / Engineering Lead (should be Developer)
+            tech_indicators = ['tech', 'software', 'engineer', 'development', 'it ', 'vývoj', 'programátor']
+            if any(indicator in title_lower for indicator in tech_indicators):
+                return 'Developer'
+
+            # 2. Check for shift leader / store manager patterns (not true executives)
+            low_wage_indicators = [
+                'směnový', 'vedoucí směny', 'vedoucí prodejny', 'store manager',
+                'team leader výroby', 'mistr výroby', 'vedoucí skladu', 'vedoucí restaurace',
+                'shift leader', 'shift supervisor'
+            ]
+            if any(indicator in title_lower for indicator in low_wage_indicators):
+                # Reclassify based on context
+                if any(kw in text for kw in ['sklad', 'logistik', 'warehouse']):
+                    return 'Logistics'
+                elif any(kw in text for kw in ['výrob', 'provoz', 'směn', 'production', 'factory']):
+                    return 'Manufacturing'
+                elif any(kw in text for kw in ['prodej', 'obchod', 'market', 'store', 'shop']):
+                    return 'Retail'
+                elif any(kw in text for kw in ['restaurace', 'kuchyň', 'hotel', 'restaurant', 'kitchen', 'service']):
+                    return 'Service'
+
+        # Executive downgrading logic (User request) -> Mid/Junior if retail/sales without C-level keywords
+        # "Sales Executive", "Account Executive" -> Mid (standard industry title inflation)
+        if 'executive' in title_lower and not any(x in title_lower for x in ['head', 'director', 'chief', 'c-level', 'vp', 'president', 'ředitel']):
+             return 'Sales' if 'sales' in title_lower or 'account' in title_lower else 'Mid'
+
+        return matched_role if matched_role else 'Other'
+
+    @staticmethod
+    def detect_seniority(title: str, description: str = "") -> str:
+        """Detect seniority level from title and description.
+
+        FIXED: Now prioritizes title over description to avoid false positives
+        like "Developer at Senior Solutions Inc." being classified as Senior.
+        """
+        title_lower = title.lower()
+        desc_lower = description.lower() if description else ""
+
+        # Priority order: Executive > Lead > Senior > Junior > Mid (default)
+        priority_order = ['Executive', 'Lead', 'Senior', 'Junior', 'Mid']
+
+        # P2 FIX: Downgrade vedoucí/mistr from Executive to Lead (not C-level roles)
+        non_executive_mgmt = ['vedoucí', 'mistr', 'směnový', 'store manager', 'vedoucí prodejny',
+                              'vedoucí skladu', 'vedoucí směny', 'shift']
+        is_non_exec_mgmt = any(term in title_lower for term in non_executive_mgmt)
+        
+        # First pass: Check title only (most reliable)
+        for level in priority_order:
+            patterns = SENIORITY_PATTERNS[level]
+            if any(p in title_lower for p in patterns):
+                # Downgrade Executive to Lead if it's a non-C-level management role
+                if level == 'Executive' and is_non_exec_mgmt:
+                    return 'Lead'
+                return level
+
+        # Second pass: Check description only if not found in title
+        for level in priority_order:
+            # SAFETY: Never match 'Executive' from description (too many false positives)
+            if level == 'Executive':
+                continue
+                
+            patterns = SENIORITY_PATTERNS[level]
+            if any(p in desc_lower for p in patterns):
+                return level
+
+        return 'Mid'  # Default to Mid if unclear

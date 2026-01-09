@@ -1,0 +1,1094 @@
+# Whitelist Auto-update Report (2026-01-09 10:45:57)
+
+## Automatically Added Terms
+- automatizace
+- engineer
+- inženýr
+- nabídku procesní technik
+- procesní
+- procesní technik
+- procesní technik automatizace
+- sap
+- technik
+- technik automatizace
+- technik automatizace livio
+- technik automatizace poslat
+
+## Review Candidates
+
+### Non-Tech
+- bozp
+- bozp jihlava
+- brigáda
+- buyer
+- buyer process
+- buyer process risk
+- capex
+- capex buyer
+- capex buyer shape
+- consulting
+- hr
+- inspekce
+- inspekce práce
+- inspektor
+- inspektor bozp
+- inspektor bozp jihlava
+- junior
+- konzultant
+- kuchyně
+- kvality
+- management
+- management sustainability
+- management sustainability shape
+- manažer
+- manažer ka
+- můžeme nabídku inspektor
+- můžeme nabídku pracovník
+- můžeme nabídku senior
+- můžeme nabídku specialista
+- nabídku inspektor
+- nabídku inspektor bozp
+- nabídku pracovník
+- nabídku senior
+- nabídku senior buyer
+- nabídku senior capex
+- nabídku specialista
+- náborový
+- náborový příspěvek
+- nákupu
+- operátor
+- policie
+- pomocná
+- pomocná síla
+- pomocná síla kuchyně
+- pracovnice
+- pracovník
+- process
+- process risk
+- process risk management
+- příspěvek
+- risk
+- risk management
+- risk management sustainability
+- senior
+- senior buyer
+- senior buyer process
+- senior capex
+- senior capex buyer
+- specialist
+- specialista
+- specialista specialistka
+- specialistka
+- správce
+- strážník
+- sustainability
+- síla
+- síla kuchyně
+- úklid
+- úvazek
+
+### Unrelated
+- 00
+- 00 032
+- 00 032 varšava
+- 00 praha
+- 00 praha sp
+- 00 praha česko
+- 000
+- 000 kč
+- 0000988078
+- 0000988078 další
+- 0000988078 další informace
+- 032
+- 032 varšava
+- 032 varšava polsko
+- 09
+- 09 bratislava
+- 09 bratislava slovensko
+- 1054
+- 1054 poslat
+- 1054 poslat nabídku
+- 1054 státní
+- 1054 státní úřad
+- 180
+- 180 00
+- 180 00 praha
+- 19
+- 19 811
+- 19 811 09
+- 2026
+- 2026 nahlásit
+- 2026 nahlásit nezákonný
+- 2026 powered
+- 2026 powered alma
+- 2538
+- 2538 180
+- 2538 180 00
+- 2538 libeň
+- 2538 libeň 180
+- 264
+- 264 41
+- 264 41 381
+- 26441381
+- 26441381 sídlem
+- 26441381 sídlem menclova
+- 30
+- 35
+- 35 800
+- 35 800 861
+- 381
+- 381 alma
+- 381 alma career
+- 40
+- 40 000
+- 41
+- 41 381
+- 41 381 alma
+- 420
+- 800
+- 800 861
+- 800 861 alma
+- 811
+- 811 09
+- 811 09 bratislava
+- 82484
+- 82484 vedená
+- 82484 vedená městského
+- 861
+- 861 alma
+- 861 alma career
+- absolventi
+- absolventi benefity
+- absolventi benefity kontakty
+- absolventi volná
+- absolventi volná místa
+- absolventy
+- adresu
+- adresu zkuste
+- adresu zkuste znovu
+- ag
+- agc
+- all
+- all rights
+- all rights reserved
+- alma
+- alma career
+- alma career alma
+- alma career czechia
+- alma career jump
+- alma career menu
+- alma career nahlásit
+- alma career poland
+- alma career slovakia
+- alma career společným
+- alma career zpracovávat
+- alma career zásady
+- almacareer
+- almacareer com
+- almacareer com gdpr
+- anebo
+- anebo zjistíte
+- anebo zjistíte li
+- automatizace livio
+- automatizace livio consulting
+- automatizace poslat
+- automatizace poslat nabídku
+- autorských
+- autorských práv
+- autorských práv třetích
+- az
+- bank
+- benefity
+- benefity kontakty
+- benefity kontakty volné
+- benefity průběh
+- bonami
+- bonami cz
+- bozp jihlava vř
+- bratislava
+- bratislava slovensko
+- bratislava slovensko ičo
+- brno
+- brno heršpická
+- brno heršpická brno
+- brno okolí
+- brno vídeňská
+- brno vídeňská brno
+- brno škrobárenská
+- brno škrobárenská jablonec
+- budapest
+- bude
+- bude ukončeno
+- bude ukončeno neprokáže
+- budou
+- budou společnosti
+- budou společnosti ze
+- buyer poslat
+- buyer poslat nabídku
+- buyer shape
+- buyer shape corp
+- byly
+- byly shromážděny
+- byly shromážděny či
+- byly zpracovávány
+- byly zpracovávány protiprávně
+- být
+- být rovněž
+- být rovněž předmětem
+- capex buyer poslat
+- career
+- career alma
+- career alma career
+- career czechia
+- career czechia ičo
+- career czechia menclova
+- career czechia vizuální
+- career jump
+- career jump top
+- career menu
+- career menu nás
+- career nahlásit
+- career nahlásit nezákonný
+- career poland
+- career poland sp
+- career slovakia
+- career slovakia pribinova
+- career společným
+- career společným správcům
+- career zpracovávat
+- career zpracovávat vámi
+- career zásady
+- career zásady ochrany
+- com
+- com gdpr
+- com gdpr poslat
+- consulting poslat
+- consulting poslat mail
+- contact
+- contact us
+- cookies
+- cookies transparentnost
+- cookies transparentnost reklama
+- copyright
+- copyright 2026
+- corp
+- corp czech
+- corp czech republic
+- cz
+- cz menu
+- cz menu jsme
+- cz prace
+- cz prace cz
+- cz souvislosti
+- cz souvislosti zpracováním
+- czech
+- czech agc
+- czech republic
+- czech republic poslat
+- czechia
+- czechia ičo
+- czechia ičo 26441381
+- czechia menclova
+- czechia menclova 2538
+- czechia vizuální
+- czechia vizuální podoba
+- další
+- další informace
+- další informace zpracování
+- detail
+- detail pozice
+- detail pozice 2026
+- dismiss
+- dismiss vám
+- dismiss vám můžeme
+- divize
+- divize studenty
+- divize studenty volné
+- dolák
+- domů
+- domů veolii
+- domů veolii divize
+- doplnění
+- doplnění neúplných
+- doplnění neúplných osobních
+- dostupné
+- dostupné https
+- dostupné https almacareer
+- dreamjob
+- dálku
+- důvodem
+- důvodem případné
+- důvodem případné vymáhání
+- důvody
+- důvody zpracování
+- důvody zpracování jež
+- el
+- eu
+- existují
+- existují závažné
+- existují závažné oprávněné
+- facebook
+- formy
+- formát
+- formát mailupoznámka
+- formát mailupoznámka příjemce
+- gdpr
+- gdpr poslat
+- gdpr poslat mail
+- group
+- heršpická
+- heršpická brno
+- heršpická brno škrobárenská
+- hlavní
+- hlavní obsah
+- hlavní obsah domů
+- hlavní obsah powered
+- https
+- https almacareer
+- https almacareer com
+- hub
+- ii
+- ii opravu
+- ii opravu nepřesných
+- iii
+- iii výmaz
+- iii výmaz osobních
+- impact
+- informace
+- informace zpracování
+- informace zpracování údajů
+- inspekce práce poslat
+- instagram
+- iv
+- iv omezení
+- iv omezení zpracování
+- ičo
+- ičo 264
+- ičo 264 41
+- ičo 26441381
+- ičo 26441381 sídlem
+- ičo 35
+- ičo 35 800
+- jablonec
+- jablonec nad
+- jablonec nad nisou
+- ještě
+- jež
+- jež převažují
+- jež převažují nad
+- jihlava
+- jihlava vř
+- jihlava vř 1054
+- jinak
+- jinak zpracovány
+- jinak zpracovány anebo
+- již
+- již osobní
+- již osobní údaje
+- jobs
+- jobs cz
+- jobs cz prace
+- jobs cz souvislosti
+- jsme
+- jsme volné
+- jsme volné pozice
+- jump
+- jump top
+- jump top nahlásit
+- ka
+- kariéra
+- kariéra detail
+- kariéra detail pozice
+- kariérní
+- kariérní prezentaci
+- kariérní prezentaci společnosti
+- kariéru
+- kaufland
+- kaufland pracovním
+- kaufland pracovním portálu
+- klienta
+- klienta vytvořila
+- klienta vytvořila provozuje
+- kontakt
+- kontakty
+- kontakty volné
+- kontakty volné pozice
+- kraj
+- krs
+- krs 0000988078
+- krs 0000988078 další
+- které
+- které byly
+- které byly shromážděny
+- kteří
+- kč
+- li
+- li byly
+- li byly zpracovávány
+- li důvodem
+- li důvodem případné
+- li existují
+- li existují závažné
+- li již
+- li již osobní
+- li zpracování
+- li zpracování založeno
+- libeň
+- libeň 180
+- libeň 180 00
+- linkedin
+- livio
+- livio consulting
+- livio consulting poslat
+- lokality
+- lokality brno
+- lokality brno vídeňská
+- mail
+- mail dismiss
+- mail dismiss vám
+- mail příjemcezadejte
+- mail příjemcezadejte správný
+- mail zkontrolujte
+- mail zkontrolujte prosím
+- mail zobrazit
+- mail zobrazit ménězobrazit
+- mailovou
+- mailovou adresu
+- mailovou adresu zkuste
+- mailupoznámka
+- mailupoznámka příjemce
+- mailupoznámka příjemce nepovedlo
+- management sustainability poslat
+- max
+- menclova
+- menclova 2538
+- menclova 2538 180
+- menclova 2538 libeň
+- menu
+- menu jsme
+- menu jsme volné
+- menu nás
+- menu nás naše
+- mi
+- možnosti
+- máte
+- máte příslušná
+- máte příslušná práva
+- ménězobrazit
+- ménězobrazit více
+- ménězobrazit více podmínky
+- místa
+- místa nahlásit
+- místa nahlásit nezákonný
+- místa nás
+- městského
+- městského soudu
+- městského soudu praze
+- může
+- může být
+- může být rovněž
+- můžeme
+- můžeme nabídku
+- můžeme nabídku procesní
+- nabídku
+- nabídku mail
+- nabídku mail dismiss
+- nabídku procesní
+- nabídky
+- nabídky budou
+- nabídky budou společnosti
+- nabídky portálu
+- nabídky portálu jobs
+- nabídky práce
+- nad
+- nad nisou
+- nad nisou ostrava
+- nad vašimi
+- nad vašimi zájmy
+- nahlásit
+- nahlásit nezákonný
+- nahlásit nezákonný obsah
+- nastavení
+- nastavení cookies
+- nastavení cookies transparentnost
+- naše
+- naše lokality
+- naše lokality brno
+- nejsou
+- nejsou li
+- nejsou li již
+- není
+- nepovedlo
+- nepovedlo odeslat
+- nepovedlo odeslat mail
+- neprokáže
+- neprokáže li
+- neprokáže li existují
+- nepřesných
+- nepřesných doplnění
+- nepřesných doplnění neúplných
+- nezákonný
+- nezákonný obsah
+- nezákonný obsah nastavení
+- neúplných
+- neúplných osobních
+- neúplných osobních údajů
+- nisou
+- nisou ostrava
+- nisou ostrava plzeň
+- nk
+- nám
+- námitku
+- námitku po
+- námitku po níž
+- nároků
+- nároků vii
+- nároků vii obrátit
+- nás
+- nás naše
+- nás naše lokality
+- níž
+- níž zpracování
+- níž zpracování vašich
+- oblast
+- obrátit
+- obrátit úřad
+- obrátit úřad ochranu
+- obsah
+- obsah domů
+- obsah nastavení
+- obsah nastavení cookies
+- obsah powered
+- obsah powered alma
+- ochranu
+- ochranu osobních
+- ochranu osobních údajů
+- ochrany
+- ochrany soukromí
+- ochrany soukromí podmínky
+- odeslat
+- odeslat mail
+- odeslat mail zkontrolujte
+- odeslání
+- odeslání poskytujete
+- odeslání poskytujete společnostem
+- odvolat
+- odvolat souhlas
+- odvolat souhlas li
+- okolí
+- omezení
+- omezení zpracování
+- omezení zpracování osobních
+- opravu
+- opravu nepřesných
+- opravu nepřesných doplnění
+- oprávněné
+- oprávněné důvody
+- oprávněné důvody zpracování
+- osobní
+- osobní údaje
+- osobní údaje potřebné
+- osobní údaje za
+- osobních
+- osobních údajů
+- osobních údajů bude
+- osobních údajů iii
+- osobních údajů máte
+- osobních údajů nejsou
+- osobních údajů viii
+- osobních údajů zvláštních
+- osobním
+- osobním údajům
+- osobním údajům ii
+- ostrava
+- ostrava plzeň
+- ostrava plzeň praha
+- plzeň
+- plzeň praha
+- plzeň praha studenti
+- po
+- po níž
+- po níž zpracování
+- pobočky
+- podmínky
+- podmínky používání
+- podmínky používání alma
+- podmínky služby
+- podmínky služby potvrzením
+- podoba
+- podoba webové
+- podoba webové stránky
+- podpory
+- poland
+- poland sp
+- poland sp przeskok
+- polsko
+- polsko krs
+- polsko krs 0000988078
+- portálech
+- portálech alma
+- portálech alma career
+- portálu
+- portálu jobs
+- portálu jobs cz
+- poskytujete
+- poskytujete společnostem
+- poskytujete společnostem ze
+- poslat
+- poslat mail
+- poslat mail příjemcezadejte
+- poslat nabídku
+- poslat nabídku mail
+- potvrzením
+- potvrzením odeslání
+- potvrzením odeslání poskytujete
+- potřebné
+- potřebné účely
+- potřebné účely které
+- používání
+- používání alma
+- používání alma career
+- powered
+- powered alma
+- powered alma career
+- pozice
+- pozice 2026
+- pozice 2026 nahlásit
+- pozice 2026 powered
+- pozice jsme
+- pozice jsme volné
+- pozice kariéra
+- pozice kariéra detail
+- pozici
+- ppf
+- prace
+- prace cz
+- prace cz menu
+- pracovní
+- pracovní nabídky
+- pracovní nabídky budou
+- pracovní nabídky portálu
+- pracovním
+- pracovním portálu
+- pracovním portálu jobs
+- praha
+- praha sp
+- praha sp zn
+- praha studenti
+- praha studenti absolventi
+- praha česko
+- praha česko ičo
+- praze
+- prezentaci
+- prezentaci společnosti
+- prezentaci společnosti kaufland
+- pribinova
+- pribinova 19
+- pribinova 19 811
+- prostředí
+- prosím
+- prosím mailovou
+- prosím mailovou adresu
+- protiprávně
+- protiprávně iv
+- protiprávně iv omezení
+- provozuje
+- provozuje alma
+- provozuje alma career
+- proč
+- proč nám
+- proč randstad
+- proč randstad tým
+- przeskok
+- przeskok 00
+- przeskok 00 032
+- práce
+- práce poslat
+- práce poslat mail
+- práci
+- práv
+- práv třetích
+- práv třetích stran
+- práva
+- práva přístup
+- práva přístup osobním
+- právních
+- právních nároků
+- právních nároků vii
+- právy
+- právy svobodami
+- právy svobodami zejména
+- průběh
+- předmětem
+- předmětem autorských
+- předmětem autorských práv
+- přenositelnost
+- přenositelnost údajů
+- přenositelnost údajů vi
+- přeskočit
+- přeskočit hlavní
+- přeskočit hlavní obsah
+- převažují
+- převažují nad
+- převažují nad vašimi
+- příjemce
+- příjemce nepovedlo
+- příjemce nepovedlo odeslat
+- příjemcezadejte
+- příjemcezadejte správný
+- příjemcezadejte správný formát
+- příležitost
+- případech
+- případech přenositelnost
+- případech přenositelnost údajů
+- případné
+- případné vymáhání
+- případné vymáhání právních
+- příslušná
+- příslušná práva
+- příslušná práva přístup
+- přístup
+- přístup osobním
+- přístup osobním údajům
+- randstad
+- randstad tým
+- randstad tým kontakty
+- reklama
+- reklama portálech
+- reklama portálech alma
+- republic
+- republic poslat
+- republic poslat mail
+- republika
+- reserved
+- rights
+- rights reserved
+- rovněž
+- rovněž předmětem
+- rovněž předmětem autorských
+- sazka
+- shape
+- shape corp
+- shape corp czech
+- shromážděny
+- shromážděny či
+- shromážděny či jinak
+- si
+- siemens
+- skupina
+- skupiny
+- skupiny alma
+- skupiny alma career
+- sledujte
+- sledujte nás
+- slovakia
+- slovakia pribinova
+- slovakia pribinova 19
+- slovensko
+- slovensko ičo
+- slovensko ičo 35
+- služby
+- služby potvrzením
+- služby potvrzením odeslání
+- social
+- sociální
+- sociální sítě
+- sociálních
+- soudu
+- soudu praze
+- souhlas
+- souhlas li
+- souhlas li zpracování
+- souhlasu
+- souhlasu alma
+- souhlasu alma career
+- soukromí
+- soukromí podmínky
+- soukromí podmínky používání
+- souvislosti
+- souvislosti zpracováním
+- souvislosti zpracováním vašich
+- sp
+- sp przeskok
+- sp przeskok 00
+- sp zn
+- sp zn 82484
+- spol
+- spol poslat
+- spol poslat mail
+- společnostem
+- společnostem ze
+- společnostem ze skupiny
+- společnosti
+- společnosti kaufland
+- společnosti kaufland pracovním
+- společnosti ze
+- společnosti ze skupiny
+- společným
+- společným správcům
+- společným správcům své
+- správcům
+- správcům své
+- správcům své osobní
+- správný
+- správný formát
+- správný formát mailupoznámka
+- stran
+- stran webovou
+- stran webovou stránku
+- stránku
+- stránku klienta
+- stránku klienta vytvořila
+- stránku stránku
+- stránku stránku klienta
+- stránky
+- stránky může
+- stránky může být
+- student
+- studenti
+- studenti absolventi
+- studenti absolventi benefity
+- studenti absolventi volná
+- studenty
+- studenty volné
+- studenty volné pozice
+- státní
+- státní úřad
+- státní úřad inspekce
+- sustainability poslat
+- sustainability poslat nabídku
+- sustainability shape
+- sustainability shape corp
+- svobodami
+- svobodami zejména
+- svobodami zejména li
+- své
+- své osobní
+- své osobní údaje
+- sídlem
+- sídlem menclova
+- sídlem menclova 2538
+- sítě
+- top
+- top nahlásit
+- top nahlásit nezákonný
+- transparentnost
+- transparentnost reklama
+- transparentnost reklama portálech
+- trinity
+- trinity bank
+- twitter
+- twitter linkedin
+- tábor
+- této
+- tým
+- tým kontakty
+- týmu
+- třetích
+- třetích stran
+- třetích stran webovou
+- ukončeno
+- ukončeno neprokáže
+- ukončeno neprokáže li
+- us
+- varšava
+- varšava polsko
+- varšava polsko krs
+- vašich
+- vašich osobních
+- vašich osobních údajů
+- vašimi
+- vašimi zájmy
+- vašimi zájmy právy
+- vedená
+- vedená městského
+- vedená městského soudu
+- veolii
+- veolii divize
+- veolii divize studenty
+- vi
+- vi vznést
+- vi vznést námitku
+- vii
+- vii obrátit
+- vii obrátit úřad
+- viii
+- viii odvolat
+- viii odvolat souhlas
+- vizuální
+- vizuální podoba
+- vizuální podoba webové
+- volná
+- volná místa
+- volná místa nahlásit
+- volná místa nás
+- volné
+- volné pozice
+- volné pozice 2026
+- volné pozice jsme
+- volné pozice kariéra
+- vymáhání
+- vymáhání právních
+- vymáhání právních nároků
+- vytvořila
+- vytvořila provozuje
+- vytvořila provozuje alma
+- vznést
+- vznést námitku
+- vznést námitku po
+- vám
+- vám můžeme
+- vám můžeme nabídku
+- vámi
+- vámi zadaný
+- vámi zadaný mail
+- vás
+- více
+- více podmínky
+- více podmínky služby
+- vídeňská
+- vídeňská brno
+- vídeňská brno heršpická
+- vítejte
+- vítejte kariérní
+- vítejte kariérní prezentaci
+- výběrového
+- výběrového řízení
+- výmaz
+- výmaz osobních
+- výmaz osobních údajů
+- vř
+- vř 1054
+- vř 1054 poslat
+- vř 1054 státní
+- webovou
+- webovou stránku
+- webovou stránku stránku
+- webové
+- webové stránky
+- webové stránky může
+- www
+- za
+- za účelem
+- za účelem zaslání
+- zadaný
+- zadaný mail
+- zadaný mail zobrazit
+- založeno
+- založeno souhlasu
+- založeno souhlasu alma
+- zaměstnání
+- zaslání
+- zaslání pracovní
+- zaslání pracovní nabídky
+- ze
+- ze skupiny
+- ze skupiny alma
+- zejména
+- zejména li
+- zejména li důvodem
+- zf
+- zjistíte
+- zjistíte li
+- zjistíte li byly
+- zkontrolujte
+- zkontrolujte prosím
+- zkontrolujte prosím mailovou
+- zkuste
+- zkuste znovu
+- zkuste znovu za
+- zn
+- zn 82484
+- zn 82484 vedená
+- znovu
+- znovu za
+- znovu za účelem
+- zobrazit
+- zobrazit ménězobrazit
+- zobrazit ménězobrazit více
+- zpracovány
+- zpracovány anebo
+- zpracovány anebo zjistíte
+- zpracování
+- zpracování jež
+- zpracování jež převažují
+- zpracování osobních
+- zpracování osobních údajů
+- zpracování vašich
+- zpracování vašich osobních
+- zpracování založeno
+- zpracování založeno souhlasu
+- zpracování údajů
+- zpracování údajů dostupné
+- zpracováním
+- zpracováním vašich
+- zpracováním vašich osobních
+- zpracovávat
+- zpracovávat vámi
+- zpracovávat vámi zadaný
+- zpracovávány
+- zpracovávány protiprávně
+- zpracovávány protiprávně iv
+- zvláštních
+- zvláštních případech
+- zvláštních případech přenositelnost
+- zájmy
+- zájmy právy
+- zájmy právy svobodami
+- zásady
+- zásady ochrany
+- zásady ochrany soukromí
+- závažné
+- závažné oprávněné
+- závažné oprávněné důvody
+- és
+- údaje
+- údaje potřebné
+- údaje potřebné účely
+- údaje za
+- údaje za účelem
+- údajů
+- údajů bude
+- údajů bude ukončeno
+- údajů dostupné
+- údajů dostupné https
+- údajů iii
+- údajů iii výmaz
+- údajů máte
+- údajů máte příslušná
+- údajů nejsou
+- údajů nejsou li
+- údajů vi
+- údajů vi vznést
+- údajů viii
+- údajů viii odvolat
+- údajů zvláštních
+- údajů zvláštních případech
+- údajům
+- údajům ii
+- údajům ii opravu
+- úvod
+- účelem
+- účelem zaslání
+- účelem zaslání pracovní
+- účely
+- účely které
+- účely které byly
+- úřad
+- úřad inspekce
+- úřad inspekce práce
+- úřad ochranu
+- úřad ochranu osobních
+- česko
+- česko ičo
+- česko ičo 264
+- česká
+- česká republika
+- české
+- či
+- či jinak
+- či jinak zpracovány
+- řízení
+- škrobárenská
+- škrobárenská jablonec
+- škrobárenská jablonec nad

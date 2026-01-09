@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Talent Radar | 2026</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --surface-ground: #F8FAFC;
+            --surface-card: #FFFFFF;
+            --surface-hover: #F1F5F9;
+            --text-main: #0F172A;
+            --text-secondary: #64748B;
+            --text-brand: #3B82F6;
+            --border-light: #E2E8F0;
+
+            --brand-primary: #2563EB;
+            --brand-secondary: #0F172A;
+            --brand-gradient: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+
+            --sentiment-positive: #10B981;
+            --sentiment-negative: #EF4444;
+            --sentiment-neutral: #F59E0B;
+
+            --confidence-high: #10B981;
+            --confidence-medium: #F59E0B;
+            --confidence-low: #EF4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--surface-ground);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- HEADER BANNER --- */
+        .header-banner {
+            background: var(--brand-gradient);
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-banner h1 {
+            margin: 0;
+            font-size: 1.75rem;
+        }
+
+        .header-banner .subtitle {
+            opacity: 0.9;
+            margin-top: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .badge.light {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--brand-primary);
+        }
+
+        .freshness-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .freshness-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--sentiment-positive);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* --- TOOLBAR --- */
+        .toolbar {
+            background: var(--surface-card);
+            border-bottom: 1px solid var(--border-light);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 0.5rem;
+            background: var(--surface-ground);
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            min-width: 140px;
+        }
+
+        .filter-select:focus {
+            outline: 2px solid var(--brand-primary);
+        }
+
+        .filter-badge {
+            background: var(--brand-primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .filter-badge.hidden {
+            display: none;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 0.5rem;
+            background: var(--surface-card);
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--brand-primary);
+        }
+
+        .btn-primary {
+            background: var(--brand-primary);
+            color: white;
+            border-color: var(--brand-primary);
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-reset {
+            background: var(--sentiment-negative);
+            color: white;
+            border-color: var(--sentiment-negative);
+        }
+
+        .btn-reset.hidden {
+            display: none;
+        }
+
+        /* --- DASHBOARD --- */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            gap: 2rem;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .kpi-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-light);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .kpi-card .benchmark {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            background: var(--surface-ground);
+        }
+
+        .kpi-card .benchmark.up {
+            color: var(--sentiment-positive);
+        }
+
+        .kpi-card .benchmark.down {
+            color: var(--sentiment-negative);
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+
+        .kpi-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 3fr 2fr;
+            gap: 1.5rem;
+        }
+
+        .chart-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-light);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .chart-card .chart-loading {
+            position: absolute;
+            inset: 0;
+            background: var(--surface-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1rem;
+            z-index: 10;
+        }
+
+        .chart-card .chart-loading.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-light);
+            border-top-color: var(--brand-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* --- INTELLIGENCE SECTION --- */
+        .insights-section {
+            background: #FFFFFF;
+            border: 1px solid var(--border-light);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-top: 1rem;
+        }
+
+        .insight-card {
+            display: grid;
+            grid-template-columns: 60px 1fr 200px;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            border-left: 4px solid transparent;
+            align-items: start;
+            transition: background 0.2s;
+        }
+
+        .insight-card:hover {
+            background: var(--surface-hover);
+        }
+
+        .insight-card:last-child {
+            border-bottom: none;
+        }
+
+        .insight-card.confidence-high {
+            border-left-color: var(--confidence-high);
+        }
+
+        .insight-card.confidence-medium {
+            border-left-color: var(--confidence-medium);
+        }
+
+        .insight-card.confidence-low {
+            border-left-color: var(--confidence-low);
+        }
+
+        .insight-emoji {
+            font-size: 2rem;
+        }
+
+        .insight-content h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .insight-content p {
+            margin: 0;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .insight-visual {
+            background: var(--surface-ground);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #E2E8F0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--brand-primary);
+            transition: width 0.5s ease;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .trend-indicator.up {
+            color: var(--sentiment-positive);
+        }
+
+        .trend-indicator.down {
+            color: var(--sentiment-negative);
+        }
+
+        .trend-indicator.flat {
+            color: var(--text-secondary);
+        }
+
+        .trend-arrow {
+            font-size: 1rem;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 2rem;
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border-light);
+            background: var(--surface-card);
+        }
+
+        .footer-sources {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--surface-ground);
+            border-radius: 2rem;
+            font-weight: 500;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .insight-card {
+                grid-template-columns: 50px 1fr;
+            }
+
+            .insight-visual {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .toolbar {
+                flex-direction: column;
+            }
+
+            .filters {
+                width: 100%;
+            }
+
+            .filter-select {
+                flex: 1;
+            }
+
+            .dashboard-container {
+                padding: 1rem;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .kpi-value {
+                font-size: 1.5rem;
+            }
+
+            .insight-card {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .insight-emoji {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER BANNER -->
+    <header class="header-banner">
+        <div>
+            <h1>📡 Talent Market Radar</h1>
+            <div class="subtitle">Czech Republic Intelligence • Executive Dashboard</div>
+        </div>
+        <div class="header-meta">
+            <div class="freshness-indicator">
+                <span class="freshness-dot"></span>
+                <span>Updated: {{ generation_date }} {{ generation_time }}</span>
+            </div>
+            <div class="badge light" id="signal-count">{{ total_jobs }} Active Signals</div>
+        </div>
+    </header>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+        <div class="filters">
+            <select class="filter-select" id="filter-role" onchange="applyFilters()">
+                <option value="">All Roles</option>
+                {% for role in available_roles %}
+                <option value="{{ role }}">{{ role }}</option>
+                {% endfor %}
+            </select>
+            <select class="filter-select" id="filter-city" onchange="applyFilters()">
+                <option value="">All Cities</option>
+                {% for city in available_cities %}
+                <option value="{{ city }}">{{ city }}</option>
+                {% endfor %}
+            </select>
+            <select class="filter-select" id="filter-seniority" onchange="applyFilters()">
+                <option value="">All Seniority</option>
+                <option value="Junior">Junior</option>
+                <option value="Mid">Mid</option>
+                <option value="Senior">Senior</option>
+                <option value="Lead">Lead</option>
+                <option value="Executive">Executive</option>
+            </select>
+            <span class="filter-badge hidden" id="filter-count">Filtered</span>
+            <button class="btn btn-reset hidden" id="reset-btn" onclick="resetFilters()">✕ Reset</button>
+        </div>
+        <div class="export-buttons">
+            <button class="btn" onclick="downloadPNG()">📸 Screenshot</button>
+            <button class="btn btn-primary" onclick="window.print()">📄 Print / PDF</button>
+        </div>
+    </div>
+
+    <div class="dashboard-container" id="dashboard-content">
+
+        <!-- KPI GRID -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <span class="benchmark up">↑ vs EU průměr</span>
+                <div class="kpi-label">MEDIÁN TRHU (CELÝ)</div>
+                <div class="kpi-value" id="kpi-salary">{{ kpi_median_salary }}</div>
+                <div class="kpi-subtext">
+                    <span style="color: var(--sentiment-positive);" id="kpi-salary-count">✓ {{ jobs_with_salary }}
+                        bodů</span> |
+                    <span id="kpi-hpp-salary">HPP: {{ kpi_hpp_median }}</span>
+                </div>
+                <div style="font-size: 0.75rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                    ČSÚ Oficiální: <strong id="kpi-csu">{{ kpi_csu_benchmark }}</strong>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">NEJŽÁDANĚJŠÍ ROLE</div>
+                <div class="kpi-value" id="kpi-role" style="font-size: 1.8rem;">{{ kpi_top_role }}</div>
+                <div class="kpi-subtext" id="kpi-role-count">{{ kpi_top_role_count }} pozic</div>
+            </div>
+            <div class="kpi-card">
+                <span class="benchmark" style="background: {{ ghost_color }}20; color: {{ ghost_color }};">
+                    {% if kpi_ghost_rate < 2 %}✓ Nízké{% elif kpi_ghost_rate < 5 %}! Střední{% else %}!! Vysoké{% endif
+                        %} </span>
+                        <div class="kpi-label">RIZIKO GHOST JOBS</div>
+                        <div class="kpi-value" style="color: {{ ghost_color }};">{{ kpi_ghost_rate }}%</div>
+                        <div class="kpi-subtext">{{ kpi_ghost_count }} podezřelých signálů</div>
+            </div>
+            <div class="kpi-card">
+                <span class="benchmark up">{{ kpi_remote_premium }} bonus</span>
+                <div class="kpi-label">PODÍL REMOTE</div>
+                <div class="kpi-value" id="kpi-remote">{{ kpi_remote_rate }}%</div>
+                <div style="font-size: 0.8rem; color: var(--sentiment-positive);">Rostoucí trend</div>
+            </div>
+            <div class="kpi-card">
+                <span class="benchmark"
+                    style="background: {{ kpi_tech_health_color }}20; color: {{ kpi_tech_health_color }};">
+                    {{ kpi_tech_health_label }}</span>
+                <div class="kpi-label">TECH STACK ZDRAVÍ</div>
+                <div class="kpi-value" style="font-size: 1.6rem;">
+                    <span style="color: var(--sentiment-positive);">{{ kpi_modern_count }}</span>
+                    <span style="font-size: 0.9rem; color: var(--text-secondary);">Modern</span>
+                </div>
+                <div class="kpi-subtext">
+                    <span style="color: var(--sentiment-negative);">{{ kpi_dinosaur_count }}</span> Dinosaur |
+                    <span style="color: {{ kpi_tech_health_color }};">{{ kpi_modern_rate }}%</span> moderních
+                </div>
+            </div>
+        </div>
+
+        <!-- CHARTS ROW 1 -->
+        <div class="main-grid">
+            <div class="chart-card">
+                <div class="chart-loading hidden" id="loading-salary">
+                    <div class="spinner"></div>
+                </div>
+                <div style="font-weight: 600; margin-bottom: 1rem;">Salary Distribution by Role</div>
+                <div id="salary_box_plot" style="height: 400px;"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-loading hidden" id="loading-seniority">
+                    <div class="spinner"></div>
+                </div>
+                <div style="font-weight: 600; margin-bottom: 1rem;">Seniority Mix</div>
+                <div id="seniority_pie_chart" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- CHARTS ROW 2 -->
+        <div class="main-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="chart-card">
+                <div class="chart-loading hidden" id="loading-companies">
+                    <div class="spinner"></div>
+                </div>
+                <div style="font-weight: 600; margin-bottom: 1rem;">Top Hiring Volume (Employers)</div>
+                <div id="top_companies_bar" style="height: 400px;"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-loading hidden" id="loading-city">
+                    <div class="spinner"></div>
+                </div>
+                <div style="font-weight: 600; margin-bottom: 1rem;">Geographic Distribution</div>
+                <div id="city_treemap" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- STRATEGIC INTELLIGENCE SECTION -->
+        <div class="insights-section">
+            <h2
+                style="margin:0 0 2rem 0; border-bottom: 2px solid var(--brand-primary); display: inline-block; padding-bottom: 0.5rem;">
+                Strategic Market Intelligence</h2>
+
+            <div class="insights-container">
+                {% for insight in llm_insights %}
+                <div class="insight-card confidence-{{ insight.confidence }}">
+                    <div class="insight-emoji">{{ insight.emoji }}</div>
+                    <div class="insight-content">
+                        <h3>{{ insight.title }}</h3>
+                        <p>{{ insight.insight }}</p>
+                        {% if insight.implication %}
+                        <p style="margin-top: 0.75rem; font-style: italic; color: var(--brand-primary);">🚀 {{
+                            insight.implication }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="insight-visual">
+                        <div class="metric-label">
+                            <span>{{ insight.metric_name }}</span>
+                            <span>{{ insight.metric_value }}%</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {{ insight.metric_value }}%;"></div>
+                        </div>
+                        <div class="trend-indicator {{ insight.trend_direction }}">
+                            {% if insight.trend_direction == 'up' %}
+                            <span class="trend-arrow">↑</span> Rostoucí
+                            {% elif insight.trend_direction == 'down' %}
+                            <span class="trend-arrow">↓</span> Klesající
+                            {% else %}
+                            <span class="trend-arrow">→</span> Stabilní
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-sources">
+            <span class="source-badge">🔵 Jobs.cz</span>
+            <span class="source-badge">🟢 Prace.cz</span>
+            <span class="source-badge">🟣 StartupJobs</span>
+        </div>
+        <p>Market Intelligence Report • Generated {{ generation_date }} {{ generation_time }} • Internal Use Only</p>
+        <p style="margin-top: 0.5rem; opacity: 0.7;">Data refreshed daily • {{ total_jobs }} signals analyzed</p>
+    </footer>
+
+    <script>
+        // ========== RAW DATA ==========
+        const RAW_DATA = {{ raw_data_json | safe }};
+        const TOTAL_JOBS = {{ total_jobs }};
+
+        // Color palettes
+        const PRISM_COLORS = ['#5F4690', '#1D6996', '#38A6A5', '#0F8554', '#73AF48', '#EDAD08', '#E17C05', '#CC503E', '#94346E', '#6F4070'];
+        const SENIORITY_COLORS = {
+            'Junior': '#BFDBFE', 'Mid': '#60A5FA', 'Senior': '#2563EB', 'Lead': '#1E40AF', 'Executive': '#0F172A'
+        };
+
+        // Plotly config
+        const config = { responsive: true, displayModeBar: false };
+
+        // ========== INITIAL RENDER ==========
+        function renderInitialCharts() {
+            Plotly.newPlot('salary_box_plot', {{ salary_box_plot_json | safe }}.data, {{ salary_box_plot_json | safe }}.layout, config);
+        Plotly.newPlot('seniority_pie_chart', {{ seniority_pie_json | safe }}.data, {{ seniority_pie_json | safe }}.layout, config);
+        Plotly.newPlot('top_companies_bar', {{ top_companies_json | safe }}.data, {{ top_companies_json | safe }}.layout, config);
+        Plotly.newPlot('city_treemap', {{ city_chart_json | safe }}.data, {{ city_chart_json | safe }}.layout, config);
+    }
+        renderInitialCharts();
+
+        // ========== FILTERING ENGINE ==========
+        function getFilteredData() {
+            const roleFilter = document.getElementById('filter-role').value;
+            const cityFilter = document.getElementById('filter-city').value;
+            const seniorityFilter = document.getElementById('filter-seniority').value;
+
+            return RAW_DATA.filter(job => {
+                if (roleFilter && job.role_type !== roleFilter) return false;
+                if (cityFilter && job.city !== cityFilter) return false;
+                if (seniorityFilter && job.seniority_level !== seniorityFilter) return false;
+                return true;
+            });
+        }
+
+        function calculateMedian(arr) {
+            if (arr.length === 0) return 0;
+            const sorted = arr.slice().sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+
+        function formatSalary(val) {
+            if (val >= 1000) {
+                return Math.round(val / 1000) + ' 000 Kč';
+            }
+            return Math.round(val) + ' Kč';
+        }
+
+        function applyFilters() {
+            const filtered = getFilteredData();
+            const isFiltered = filtered.length < RAW_DATA.length;
+
+            // Show/hide filter indicator
+            document.getElementById('filter-count').classList.toggle('hidden', !isFiltered);
+            document.getElementById('reset-btn').classList.toggle('hidden', !isFiltered);
+            document.getElementById('filter-count').textContent = `${filtered.length} of ${TOTAL_JOBS}`;
+            document.getElementById('signal-count').textContent = `${filtered.length} Active Signals`;
+
+            // Update KPIs
+            updateKPIs(filtered);
+
+            // Update charts
+            updateCharts(filtered);
+        }
+
+        function updateKPIs(data) {
+            // Median salary
+            const salaries = data.filter(j => j.avg_salary && j.avg_salary > 0).map(j => j.avg_salary);
+            const medianSal = calculateMedian(salaries);
+            document.getElementById('kpi-salary').textContent = medianSal > 0 ? formatSalary(medianSal) : 'N/A';
+
+            // HPP Median
+            const hppSalaries = data.filter(j => j.contract_type === 'HPP' && j.avg_salary && j.avg_salary > 0).map(j => j.avg_salary);
+            const hppMedianSal = calculateMedian(hppSalaries);
+            document.getElementById('kpi-hpp-salary').textContent = hppMedianSal > 0 ? `HPP: ${formatSalary(hppMedianSal)}` : 'HPP: N/A';
+
+            document.getElementById('kpi-salary-count').textContent = `✓ ${salaries.length} bodů`;
+
+            // Top role
+            const roleCounts = {};
+            data.forEach(j => {
+                if (j.role_type) roleCounts[j.role_type] = (roleCounts[j.role_type] || 0) + 1;
+            });
+            const topRole = Object.entries(roleCounts).sort((a, b) => b[1] - a[1])[0];
+            if (topRole) {
+                document.getElementById('kpi-role').textContent = topRole[0];
+                document.getElementById('kpi-role-count').textContent = `${topRole[1]} pozic`;
+            } else {
+                document.getElementById('kpi-role').textContent = 'N/A';
+                document.getElementById('kpi-role-count').textContent = '0 pozic';
+            }
+        }
+
+        function updateCharts(data) {
+            // Show loaders
+            ['loading-salary', 'loading-seniority', 'loading-companies', 'loading-city'].forEach(id => {
+                document.getElementById(id).classList.remove('hidden');
+            });
+
+            setTimeout(() => {
+                // 1. Salary Box Plot - grouped by role (exclude "Other" and filter super extremes)
+                const SALARY_CAP = 150000;  // Remove only super extreme outliers (225k+)
+                const roleGroups = {};
+                data.forEach(j => {
+                    if (j.role_type && j.role_type !== 'Other' && j.avg_salary > 0 && j.avg_salary <= SALARY_CAP) {
+                        if (!roleGroups[j.role_type]) roleGroups[j.role_type] = [];
+                        roleGroups[j.role_type].push(j.avg_salary);
+                    }
+                });
+
+                // Sort by median and take top 10
+                const sortedRoles = Object.entries(roleGroups)
+                    .map(([role, salaries]) => ({ role, salaries, median: calculateMedian(salaries) }))
+                    .sort((a, b) => a.median - b.median)
+                    .slice(0, 10);
+
+                const boxTraces = sortedRoles.map((item, i) => ({
+                    y: item.salaries,
+                    type: 'box',
+                    name: item.role,
+                    marker: { color: PRISM_COLORS[i % PRISM_COLORS.length] },
+                    boxpoints: false
+                }));
+
+                const boxLayout = {
+                    showlegend: false,
+                    margin: { l: 60, r: 20, t: 20, b: 80 },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { family: 'Plus Jakarta Sans', color: '#64748B' },
+                    yaxis: { title: 'Monthly Salary (CZK)', gridcolor: '#E2E8F0' },
+                    xaxis: { tickangle: -45 }
+                };
+                Plotly.react('salary_box_plot', boxTraces.length ? boxTraces : [{ y: [], type: 'box' }], boxLayout, config);
+                document.getElementById('loading-salary').classList.add('hidden');
+
+                // 2. Seniority Pie
+                const senCounts = {};
+                data.forEach(j => {
+                    if (j.seniority_level) senCounts[j.seniority_level] = (senCounts[j.seniority_level] || 0) + 1;
+                });
+                const senLabels = Object.keys(senCounts);
+                const senValues = Object.values(senCounts);
+                const senColors = senLabels.map(s => SENIORITY_COLORS[s] || '#888');
+
+                Plotly.react('seniority_pie_chart', [{
+                    values: senValues,
+                    labels: senLabels,
+                    type: 'pie',
+                    hole: 0.6,
+                    marker: { colors: senColors },
+                    textinfo: 'percent',
+                    hovertemplate: '%{label}: %{value}<extra></extra>'
+                }], {
+                    showlegend: true,
+                    legend: { orientation: 'h', y: -0.1 },
+                    margin: { l: 20, r: 20, t: 20, b: 40 },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    font: { family: 'Plus Jakarta Sans', color: '#64748B' }
+                }, config);
+                document.getElementById('loading-seniority').classList.add('hidden');
+
+                // 3. Top Companies Bar (exclude empty/unknown companies)
+                const compCounts = {};
+                const invalidCompanies = ['', 'Unknown Employer', 'Unknown', 'N/A', 'null', 'undefined'];
+                data.forEach(j => {
+                    if (j.company && !invalidCompanies.includes(j.company.trim())) {
+                        const name = j.company.substring(0, 25);
+                        compCounts[name] = (compCounts[name] || 0) + 1;
+                    }
+                });
+                const topComps = Object.entries(compCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+                Plotly.react('top_companies_bar', [{
+                    y: topComps.map(c => c[0]),
+                    x: topComps.map(c => c[1]),
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: { color: '#10B981' },
+                    text: topComps.map(c => c[1]),
+                    textposition: 'auto'
+                }], {
+                    yaxis: { categoryorder: 'total ascending' },
+                    margin: { l: 150, r: 20, t: 20, b: 40 },
+                    xaxis: { title: 'Active Roles' },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { family: 'Plus Jakarta Sans', color: '#64748B' }
+                }, config);
+                document.getElementById('loading-companies').classList.add('hidden');
+
+                // 4. City Treemap
+                const cityCounts = {};
+                data.forEach(j => {
+                    if (j.city && j.city !== 'Other') {
+                        cityCounts[j.city] = (cityCounts[j.city] || 0) + 1;
+                    }
+                });
+                const topCities = Object.entries(cityCounts).sort((a, b) => b[1] - a[1]).slice(0, 12);
+
+                const treemapLabels = ['Czechia', ...topCities.map(c => c[0])];
+                const treemapParents = ['', ...topCities.map(() => 'Czechia')];
+                const treemapValues = [0, ...topCities.map(c => c[1])];
+
+                Plotly.react('city_treemap', [{
+                    type: 'treemap',
+                    labels: treemapLabels,
+                    parents: treemapParents,
+                    values: treemapValues,
+                    marker: { colorscale: 'Blues', colors: treemapValues },
+                    hovertemplate: '<b>%{label}</b><br>Jobs: %{value}<extra></extra>'
+                }], {
+                    margin: { l: 10, r: 10, t: 10, b: 10 },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    font: { family: 'Plus Jakarta Sans', color: '#64748B' }
+                }, config);
+                document.getElementById('loading-city').classList.add('hidden');
+
+            }, 100);
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-role').value = '';
+            document.getElementById('filter-city').value = '';
+            document.getElementById('filter-seniority').value = '';
+
+            document.getElementById('filter-count').classList.add('hidden');
+            document.getElementById('reset-btn').classList.add('hidden');
+            document.getElementById('signal-count').textContent = `${TOTAL_JOBS} Active Signals`;
+
+            // Re-render original charts
+            renderInitialCharts();
+
+            // Reset KPIs to original values
+            document.getElementById('kpi-salary').textContent = '{{ kpi_median_salary }}';
+            document.getElementById('kpi-salary-count').textContent = '✓ {{ jobs_with_salary }} bodů';
+            document.getElementById('kpi-hpp-salary').textContent = 'HPP: {{ kpi_hpp_median }}';
+            document.getElementById('kpi-role').textContent = '{{ kpi_top_role }}';
+            document.getElementById('kpi-role-count').textContent = '{{ kpi_top_role_count }} pozic';
+        }
+
+        // Screenshot functionality
+        function downloadPNG() {
+            const element = document.getElementById('dashboard-content');
+            html2canvas(element, {
+                scale: 2,
+                backgroundColor: '#F8FAFC'
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'talent-radar-{{ generation_date }}.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+
+</body>
+
+</html>

@@ -49,6 +49,12 @@ jobs:
         run: |
           python scraper.py
 
+      - name: Discover and Update Tech Whitelist
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python -m tools.whitelist_discovery --min-count 5 --live
+
       - name: Generate Static Report
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -69,7 +75,7 @@ jobs:
           git config --global user.email 'bot@noreply.github.com'
 
           # Add database (tracked via Git LFS), CSVs, report, and README
-          git add data/intelligence.db data/*.csv public/ README.md || echo "No files to add"
+          git add data/intelligence.db classifiers.py report/whitelist_candidates.md data/*.csv public/ README.md || echo "No files to add"
 
           # Only commit if there are changes
           if git diff --staged --quiet; then

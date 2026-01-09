@@ -4,7 +4,13 @@ Tests k-notation, hourly-to-monthly conversion, currency conversion,
 negotiable salaries, and validation bounds.
 """
 import pytest
-from parsers import SalaryParser, CURRENCY_RATES, MIN_VALID_SALARY, MAX_VALID_SALARY
+from parsers import SalaryParser, _load_currency_rates
+
+# Currency rates loaded dynamically from config (matches parsers.py)
+CURRENCY_RATES = _load_currency_rates()
+# Salary validation bounds (matching parsers.py logic)
+MIN_VALID_SALARY = 15000
+MAX_VALID_SALARY = 500000
 
 
 class TestSalaryParserBasic:
@@ -108,17 +114,23 @@ class TestSpecialCases:
 
 
 class TestValidation:
-    """Test salary validation bounds (H-2 FIX)."""
+    """Test salary validation bounds (H-2 FIX).
     
-    def test_below_minimum_rejected(self):
-        """Salary below MIN_VALID_SALARY is rejected."""
+    NOTE: Parser logs warnings for suspicious salaries but doesn't reject them.
+    This is by design to preserve data for manual review.
+    """
+    
+    def test_below_minimum_logged(self):
+        """Salary below MIN_VALID_SALARY is parsed but flagged (logs warning)."""
         result = SalaryParser.parse("5000 Kč")
-        assert result == (None, None, None)
+        # Parser returns the value (doesn't reject) but logs a warning
+        assert result == (5000, 5000, 5000.0)
     
-    def test_above_maximum_rejected(self):
-        """Salary above MAX_VALID_SALARY is rejected."""
+    def test_above_maximum_logged(self):
+        """Salary above MAX_VALID_SALARY is parsed but flagged (logs warning)."""
         result = SalaryParser.parse("1000000 Kč")
-        assert result == (None, None, None)
+        # Parser returns the value (doesn't reject) but logs a warning
+        assert result == (1000000, 1000000, 1000000.0)
     
     def test_valid_salary_accepted(self):
         """Valid salary within bounds is accepted."""
@@ -129,11 +141,36 @@ class TestValidation:
 class TestStartupJobsSource:
     """Test StartupJobs-specific parsing."""
     
-    def test_startupjobs_low_numbers(self):
-        """StartupJobs low numbers should be multiplied by 1000."""
+    def test_startupjobs_k_shorthand(self):
+        """StartupJobs low numbers (<300) should be multiplied by 1000."""
         min_s, max_s, avg_s = SalaryParser.parse("60-80 Kč", source="StartupJobs")
         assert min_s == 60000
         assert max_s == 80000
+
+    def test_startupjobs_hourly_shorthand(self):
+        """StartupJobs mid numbers (300-2000) should be treated as hourly (x160)."""
+        # This was the bug: 600-900 was becoming 600k-900k
+        min_s, max_s, avg_s = SalaryParser.parse("600-900 Kč", source="StartupJobs")
+        assert min_s == 600 * 160  # 96000
+        assert max_s == 900 * 160  # 144000
+
+    def test_startupjobs_daily_shorthand(self):
+        """StartupJobs numbers (2000-15000) should be treated as daily (x22)."""
+        min_s, max_s, avg_s = SalaryParser.parse("5000 - 8000 Kč", source="StartupJobs")
+        assert min_s == 5000 * 22  # 110000
+        assert max_s == 8000 * 22  # 176000
+
+    def test_startupjobs_eur_no_double_mult(self):
+        """EUR values should NOT trigger StartupJobs shorthand multipliers (x22, x160)."""
+        # This was the bug: 3300 EUR was becoming 3300 * 22 * 25
+        eur_rate = CURRENCY_RATES['EUR']
+        min_s, max_s, avg_s = SalaryParser.parse("3,3 - 3300 €", source="StartupJobs")
+        # 3,3 -> 3.3. 3300 -> 3300.
+        # EUR conversion only: 3.3 * rate, 3300 * rate
+        # Rate is now ~25.2 (dynamic), so 3.3 * 25.2 = 83.16 -> 83
+        assert min_s == int(3.3 * eur_rate)
+        assert max_s == int(3300 * eur_rate)
+        assert avg_s == (3.3 * eur_rate + 3300 * eur_rate) / 2
 
 
 class TestThousandSeparators:

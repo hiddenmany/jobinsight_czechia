@@ -1,5 +1,5 @@
 # Pinned dependencies for reproducible builds
-# Last updated: 2026-01-05 (v1.5 LLM Integration)
+# Last updated: 2026-01-07 (v18.0 ML Embeddings)
 
 playwright==1.57.0
 playwright-stealth==2.0.0
@@ -15,3 +15,7 @@ Jinja2==3.1.6
 google-genai>=0.1.0  # Modern Gemini SDK for weekly market insights
 python-dotenv>=1.0.0
 pytest
+
+# Optional: ML-based role classification (420MB model download)
+# Install with: pip install sentence-transformers
+sentence-transformers>=2.2.0  # Optional - falls back to keyword matching if not installed
