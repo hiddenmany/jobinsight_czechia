@@ -1,11 +1,8 @@
 import duckdb
-import re
 import os
-import pandas as pd
-from datetime import datetime
+from settings import settings
 
-# --- CONFIGURATION ---
-DB_PATH = "data/intelligence.db"
+DB_PATH = str(settings.get_db_path())
 OUTPUT_FILE = "LEGAL_AUDIT_REPORT.md"
 
 # --- LEGAL DEFINITIONS (Based on Zakonik_Prace_Raw_Fetch.txt) ---

@@ -4,10 +4,9 @@ Data Quality Validation Script
 Runs sanity checks on the JobsCzInsight database to detect corruption
 """
 import duckdb
-import re
-from datetime import datetime
+from settings import settings
 
-DB_PATH = 'data/intelligence.db'
+DB_PATH = str(settings.get_db_path())
 
 print("=" * 70)
 print("DATA QUALITY VALIDATION REPORT")

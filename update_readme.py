@@ -1,10 +1,11 @@
 import os
 import datetime
 import duckdb
+from settings import settings
 
 def get_stats():
     """Fetch key statistics from the database."""
-    db_path = os.path.join("data", "intelligence.db")
+    db_path = str(settings.get_db_path())
     if not os.path.exists(db_path):
         return None
 

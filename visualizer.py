@@ -3,12 +3,12 @@ import json
 import os
 import yaml
 from datetime import datetime
+from settings import settings
 
-# Configuration - use absolute paths for reliability
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(_BASE_DIR, 'data', 'intelligence.db')
-OUTPUT_HTML = os.path.join(_BASE_DIR, 'public', 'trends.html')
-TAXONOMY_PATH = os.path.join(_BASE_DIR, 'config', 'taxonomy.yaml')
+# Configuration - use centralized settings
+DB_PATH = str(settings.get_db_path())
+OUTPUT_HTML = os.path.join(settings.BASE_DIR, 'public', 'trends.html')
+TAXONOMY_PATH = str(settings.TAXONOMY_PATH)
 
 # Load skill patterns from taxonomy
 def load_skill_patterns():

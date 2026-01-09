@@ -5,6 +5,10 @@ import datetime
 from collections import Counter
 from typing import List, Dict
 from settings import settings
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Try import google-genai, handle failure gracefully
 try:
@@ -159,6 +163,40 @@ def calculate_proximity_score(text: str, term: str, context_keywords: List[str],
                 
     return 0.0
 
+def group_similar_terms(candidates: List[str]) -> Dict[str, List[str]]:
+    """
+    Group similar terms together to save tokens and improve analysis.
+    e.g., 'react js' and 'reactjs' -> 'react js'
+    Returns {canonical_term: [original_terms]}
+    """
+    groups = {}
+    processed = set()
+    
+    # Sort by length (longest first) to prefer more descriptive terms as canonical
+    sorted_candidates = sorted(candidates, key=len, reverse=True)
+    
+    for term in sorted_candidates:
+        if term in processed: continue
+        
+        # Simple normalization: remove spaces
+        norm_term = term.replace(" ", "")
+        
+        found_group = False
+        for canonical, variants in groups.items():
+            norm_canonical = canonical.replace(" ", "")
+            # If terms match when spaces are removed, they are variants
+            if norm_term == norm_canonical:
+                variants.append(term)
+                processed.add(term)
+                found_group = True
+                break
+                
+        if not found_group:
+            groups[term] = [term]
+            processed.add(term)
+            
+    return groups
+
 def validate_candidates_with_llm(candidates: List[str]) -> Dict[str, str]:
     """
     Validate a list of candidate terms using Gemini.
@@ -168,6 +206,10 @@ def validate_candidates_with_llm(candidates: List[str]) -> Dict[str, str]:
     if not candidates:
         return {}
         
+    # Group similar terms to save tokens
+    groups = group_similar_terms(candidates)
+    canonical_candidates = list(groups.keys())
+    
     # Check if genai is available
     if not genai:
         print("google-genai not installed. Skipping LLM validation.")
@@ -180,47 +222,61 @@ def validate_candidates_with_llm(candidates: List[str]) -> Dict[str, str]:
         
     client = genai.Client(api_key=api_key)
     
-    prompt = """
-    Classify the following terms into one of these categories:
-    - Tech: A specific technical skill, programming language, tool, framework, or IT job role (e.g., Python, AWS, Scrum Master, React).
-    - Non-Tech: A professional skill or role but NOT specific to IT/Engineering (e.g., Driver, Accountant, Sales).
-    - Unrelated: Garbage text, stopwords, or irrelevant words.
+    # Process in batches if list is long (Gemini limits)
+    batch_size = 50
+    all_results = {}
     
-    Output the result as a list in the format: "Term: Category"
-    
-    Terms to classify:
-    """ + "\n".join(candidates)
-    
-    try:
-        response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=prompt
-        )
-    except Exception as e:
-        print(f"LLM Error: {e}")
-        return {c: 'Error' for c in candidates}
-    
-    results = {}
-    if response.text:
-        for line in response.text.strip().split('\n'):
-            if ':' in line:
-                parts = line.split(':', 1)
-                term = parts[0].strip()
-                category = parts[1].strip()
-                # Simple normalization
-                if 'Tech' in category and 'Non-Tech' not in category:
-                    results[term] = 'Tech'
-                elif 'Non-Tech' in category:
-                    results[term] = 'Non-Tech'
-                else:
-                    results[term] = 'Unrelated'
-                    
-    # Fill in missing as Unrelated or handle error
-    for c in candidates:
-        if c not in results:
-            results[c] = 'Unrelated' # Default fallback
+    for i in range(0, len(canonical_candidates), batch_size):
+        batch = canonical_candidates[i:i+batch_size]
+        
+        prompt = """
+        Classify the following terms into one of these categories:
+        - Tech: A specific technical skill, programming language, tool, framework, or IT job role (e.g., Python, AWS, Scrum Master, React).
+        - Non-Tech: A professional skill or role but NOT specific to IT/Engineering (e.g., Driver, Accountant, Sales).
+        - Unrelated: Garbage text, stopwords, or irrelevant words.
+        
+        Output EXACTLY one line per term in the format: "Term: Category"
+        
+        Terms to classify:
+        """ + "\n".join(batch)
+        
+        try:
+            response = client.models.generate_content(
+                model='gemini-3-flash-preview',
+                contents=prompt
+            )
+        except Exception as e:
+            print(f"LLM Error in batch {i//batch_size}: {e}")
+            for c in batch: all_results[c] = 'Error'
+            continue
+        
+        if response.text:
+            for line in response.text.strip().split('\n'):
+                if ':' in line:
+                    parts = line.split(':', 1)
+                    term = parts[0].strip()
+                    category = parts[1].strip()
+                    # Simple normalization
+                    if 'Tech' in category and 'Non-Tech' not in category:
+                        all_results[term] = 'Tech'
+                    elif 'Non-Tech' in category:
+                        all_results[term] = 'Non-Tech'
+                    else:
+                        all_results[term] = 'Unrelated'
+                        
+    # Map results back to original terms
+    final_results = {}
+    for canonical, variants in groups.items():
+        res = all_results.get(canonical, 'Unrelated')
+        for v in variants:
+            final_results[v] = res
             
-    return results
+    # Fill in any missing
+    for c in candidates:
+        if c not in final_results:
+            final_results[c] = 'Unrelated'
+            
+    return final_results
 
 def update_classifiers_file(new_terms: List[str], file_path: str = None) -> bool:
     """
